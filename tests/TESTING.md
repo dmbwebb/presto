@@ -5,6 +5,12 @@ windows and keystrokes interrupt Duncan's work. Verify source parity first
 and pass `PRESTO_APP_EXECUTABLE` to the exact rebuilt bundle. The
 non-foreground suite can run on either Mac.
 
+Run the suite from a checkout under your home folder: from a clone in `/tmp`,
+18 Presto transaction tests that load `examples/kitchen-sink` in WebKit fail,
+and with an empty scratch `HOME` the Chrome layout harness
+(`chrome-edit-preview-layout.js`) hangs ("Execution context was destroyed").
+Both pass from `~/...` with the normal `HOME`.
+
 ## Quick Start
 
 ```bash

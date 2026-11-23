@@ -36,6 +36,7 @@ For ordinary edits, start with this file plus `scripts/locate_deck.py`. Read
 - `<engine>` — the WebSlides engine repo (the folder containing `engine/webslides.js`): `$WEBSLIDES_HOME` if set, otherwise the path printed by `python3 ~/.claude/skills/webslides/scripts/_engine.py` (which also reads `scripts/local.json` and, when the skill is installed from the repo's `skill/webslides/`, finds the repo itself). Commands below that start with `<engine>/` need this path substituted.
 - Skill docs: `~/.claude/skills/webslides`
 - Deck manifest: `references/deck_locations.yaml` (optional; without it, pass deck folders or `index.html` paths instead of aliases)
+- This skill is published in the public `dmbwebb/presto` repo by `<engine>/publish/export.py`, which fails on personal paths, emails or project names. Keep tracked skill files impersonal; machine paths, the presenter's details and examples from real decks go in the private `references/local.md`.
 
 Resolve named decks before editing:
 

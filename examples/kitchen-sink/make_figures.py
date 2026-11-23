@@ -1,15 +1,17 @@
 """Figures for the kitchen-sink deck (invented numbers, for illustration only).
 
     python3 make_figures.py                  # every figure
+    python3 make_figures.py --only coefplot  # one figure
     python3 make_figures.py --list
 """
 import os
 import sys
 
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "tools"))
+HERE = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, os.path.join(HERE, "..", "..", "tools"))
 from svgkit import SVG, Scale, figure, run_cli  # noqa: E402
 
-# (outcome, [(effect, standard error) for arm A, arm B]); invented numbers
+# (outcome, [(effect, standard error) for arm A, arm B])
 ROWS = [
     ("Learning", [(0.20, 0.07), (0.12, 0.05)]),
     ("Attendance", [(0.01, 0.06), (-0.02, 0.05)]),
@@ -38,8 +40,9 @@ def coefplot():
         svg.text(sx.p0 - 20, y + 7, name, size=22, anchor="end")
         for k, ((est, se), (_, colour)) in enumerate(zip(ests, ARMS)):
             yy = y + (k - 0.5) * 18
-            significant = abs(est) > 1.96 * se
-            svg.errorbar(sx(est), yy, sx(est - 1.96 * se), sx(est + 1.96 * se), color=colour,
+            half_ci = 1.96 * se
+            significant = abs(est) > half_ci
+            svg.errorbar(sx(est), yy, sx(est - half_ci), sx(est + half_ci), color=colour,
                          horizontal=True, width=2.5, opacity=None if significant else 0.4)
     for k, (arm, colour) in enumerate(ARMS):
         x = sx(0.45) + k * 130
@@ -49,4 +52,4 @@ def coefplot():
 
 
 if __name__ == "__main__":
-    run_cli(out=os.path.join(os.path.dirname(os.path.abspath(__file__)), "figures"))
+    run_cli(out=os.path.join(HERE, "figures"))
