@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Morph fixture deck</title>
+    <link rel="stylesheet" href="../../../engine/webslides.css">
+    <script defer src="../../../engine/webslides.js"></script>
+    <style>
+        .slide { background: #fff; }
+        .figure-main { position: absolute; left: 40px; top: 100px; width: 800px; height: 400px; }
+        .figure-other { position: absolute; left: 860px; top: 100px; width: 400px; height: 200px; }
+        .figure-other svg { display: block; width: 400px; height: 200px; }
+        .box { position: absolute; background: #c96; }
+    </style>
+</head>
+<body>
+<div class="ws-deck">
+    <!-- Slide 0: morphs inside one SVG, across two SVGs, and between HTML boxes -->
+    <section class="slide" id="morph-slide">
+        <img data-inline class="figure-main" src="morph.svg" alt="">
+        <div class="figure-other" data-step="2"><img data-inline src="morph-other.svg" alt=""></div>
+        <div id="ha" class="box" data-step="0-1" data-morph="h" style="left: 100px; top: 540px; width: 120px; height: 40px;"></div>
+        <div id="hb" class="box" data-step="2" data-morph="h" style="left: 900px; top: 600px; width: 240px; height: 60px;"></div>
+    </section>
+    <!-- Slide 1: plain, to step past the morph slide and back -->
+    <section class="slide" id="after-slide">
+        <p>After</p>
+    </section>
+</div>
+</body>
+</html>

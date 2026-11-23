@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=1280">
+    <title>WebSlides Mode Tests</title>
+    <link rel="stylesheet" href="../engine/webslides.css">
+    <link rel="stylesheet" href="../engine/themes/academic.css">
+    <script defer src="../engine/webslides.js"></script>
+    <style>
+        #test-results {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            z-index: 9999;
+            background: rgba(0,0,0,0.9);
+            color: #fff;
+            padding: 16px;
+            border-radius: 8px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            max-width: 500px;
+        }
+        #test-results .pass { color: #4ade80; }
+        #test-results .fail { color: #f87171; }
+        #test-results .section { color: #60a5fa; font-weight: bold; margin-top: 8px; }
+        #test-results .summary { margin-top: 12px; padding-top: 8px; border-top: 1px solid #555; font-weight: bold; }
+        #test-results .info { color: #fbbf24; }
+    </style>
+</head>
+<body>
+<div class="ws-deck">
+    <section class="slide title">
+        <h1>Mode Test Deck</h1>
+    </section>
+    <section class="slide content">
+        <h2>Slide 2</h2>
+        <p data-step="1">Step 1</p>
+    </section>
+    <section class="slide content">
+        <h2>Slide 3</h2>
+    </section>
+</div>
+<div id="ws-footer">
+    <span id="ws-footer-left">Mode Tests</span>
+    <span id="ws-footer-right"></span>
+</div>
+
+<div id="test-results"></div>
+
+<script>
+window.addEventListener('load', function() {
+    setTimeout(runTests, 500);
+});
+
+function runTests() {
+    var results = document.getElementById('test-results');
+    var passed = 0;
+    var failed = 0;
+
+    function log(html) {
+        results.innerHTML += html + '<br>';
+    }
+    function section(name) {
+        log('<span class="section">— ' + name + ' —</span>');
+    }
+    function assert(name, condition) {
+        if (condition) { log('<span class="pass">✓ ' + name + '</span>'); passed++; }
+        else { log('<span class="fail">✗ ' + name + '</span>'); failed++; }
+    }
+    function assertEqual(name, actual, expected) {
+        if (actual === expected) { log('<span class="pass">✓ ' + name + '</span>'); passed++; }
+        else { log('<span class="fail">✗ ' + name + ' — expected: ' + JSON.stringify(expected) + ', got: ' + JSON.stringify(actual) + '</span>'); failed++; }
+    }
+    function parseExpectedInteger(paramName) {
+        var raw = params.get(paramName);
+        var value = Number(raw);
+        if (!Number.isInteger(value)) {
+            assert(paramName + ' is an integer expectation', false);
+            return null;
+        }
+        return value;
+    }
+
+    // Detect current mode from URL
+    var params = new URLSearchParams(window.location.search);
+    var rawMode = params.get('expectMode') || params.get('mode') || 'normal';
+    var allowedModes = ['preview', 'audience'];
+    var mode = allowedModes.includes(rawMode) ? rawMode : 'normal';
+
+    log('<span class="info">Testing mode: ' + mode + '</span>');
+    var initialState = WS.getState();
+
+    section('Mode Detection');
+    assertEqual('WS.mode matches URL param', WS.mode, mode);
+    assertEqual('exactly one slide is active after init',
+        document.querySelectorAll('.slide.ws-active').length, 1);
+    assert('active slide index is valid after init',
+        Number.isInteger(WS.currentIndex) && WS.currentIndex >= 0 && WS.currentIndex < WS.slides.length);
+    if (params.has('expectIndex')) {
+        var expectedIndex = parseExpectedInteger('expectIndex');
+        if (expectedIndex !== null) {
+            assertEqual('initial index matches expectation', initialState.index, expectedIndex);
+        }
+    }
+    if (params.has('expectStep')) {
+        var expectedStep = parseExpectedInteger('expectStep');
+        if (expectedStep !== null) {
+            assertEqual('initial step matches expectation', initialState.step, expectedStep);
+        }
+    }
+
+    if (mode === 'preview') {
+        section('Preview Mode');
+        assert('body has ws-mode-preview', document.body.classList.contains('ws-mode-preview'));
+        var footer = document.getElementById('ws-footer');
+        var footerDisplay = window.getComputedStyle(footer).display;
+        assertEqual('footer hidden in preview', footerDisplay, 'none');
+        var progress = document.getElementById('ws-progress');
+        var progressDisplay = window.getComputedStyle(progress).display;
+        assertEqual('progress hidden in preview', progressDisplay, 'none');
+    } else if (mode === 'audience') {
+        section('Audience Mode');
+        assert('body has ws-mode-audience', document.body.classList.contains('ws-mode-audience'));
+        var footer = document.getElementById('ws-footer');
+        var footerDisplay = window.getComputedStyle(footer).display;
+        assert('footer visible in audience', footerDisplay !== 'none');
+    } else {
+        section('Normal Mode');
+        assert('no mode class on body', !document.body.classList.contains('ws-mode-preview') && !document.body.classList.contains('ws-mode-audience'));
+    }
+
+    section('API Still Works in ' + mode + ' Mode');
+    WS.goToSlide(1, 0);
+    var state = WS.getState();
+    assertEqual('goToSlide works', state.index, 1);
+    WS.nextStep();
+    state = WS.getState();
+    assertEqual('nextStep works via API', state.step, 1);
+    WS.goToSlide(0, 0);
+
+    // URL param navigation test
+    var slideParam = params.get('slide');
+    if (slideParam) {
+        section('URL Parameter Navigation');
+        log('<span class="info">Slide param: ' + slideParam + '</span>');
+        // Initial URL state is checked before the API navigation block above.
+    }
+
+    var total = passed + failed;
+    var color = failed === 0 ? 'pass' : 'fail';
+    log('<span class="summary ' + color + '">' + passed + '/' + total + ' passed</span>');
+    window.MODE_TEST_RESULTS = { mode: mode, passed: passed, failed: failed, total: total };
+    console.log('MODE_TESTS (' + mode + '): ' + passed + '/' + total + ' passed, ' + failed + ' failed');
+}
+</script>
+</body>
+</html>

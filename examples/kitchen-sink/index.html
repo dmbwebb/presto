@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=1280">
+    <title>WebSlides Kitchen Sink</title>
+
+    <!-- KaTeX (equations) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/contrib/auto-render.min.js"
+        onload="renderMathInElement(document.body, {
+            delimiters: [
+                {left: '$$', right: '$$', display: true},
+                {left: '$', right: '$', display: false}
+            ]
+        });"></script>
+
+    <!-- WebSlides Engine -->
+    <link rel="stylesheet" href="../../engine/webslides.css">
+    <link rel="stylesheet" href="../../engine/themes/academic.css">
+    <script defer src="../../engine/webslides.js"></script>
+</head>
+<body>
+<div class="ws-deck" data-section-nav>
+
+    <!-- ===== 1. TITLE SLIDE ===== -->
+    <section class="slide title">
+        <h1>WebSlides Kitchen Sink</h1>
+        <div class="subtitle">A demonstration of all slide types and features</div>
+        <div class="author">Duncan Webb</div>
+        <div class="venue">WebSlides Framework Demo</div>
+        <div class="date">March 2026</div>
+        <aside class="notes">
+            Welcome everyone. This is a kitchen-sink demo of all WebSlides features.
+            Remember to highlight the progressive reveal system.
+        </aside>
+    </section>
+
+    <!-- ===== 2. OUTLINE / TOC ===== -->
+    <section class="slide content outline">
+        <h2>Outline</h2>
+        <div class="toc-item active">
+            <span class="toc-number">1</span>
+            <span class="toc-label">Text & Lists</span>
+        </div>
+        <div class="toc-item">
+            <span class="toc-number">2</span>
+            <span class="toc-label">Figures & Images</span>
+        </div>
+        <div class="toc-item">
+            <span class="toc-number">3</span>
+            <span class="toc-label">Tables & Data</span>
+        </div>
+        <div class="toc-item">
+            <span class="toc-number">4</span>
+            <span class="toc-label">Equations & Boxes</span>
+        </div>
+        <div class="toc-item">
+            <span class="toc-number">5</span>
+            <span class="toc-label">Diagrams & Reveals</span>
+        </div>
+    </section>
+
+    <!-- ===== 3. SECTION HEADER ===== -->
+    <section class="slide section-header">
+        <h1>Text & Lists</h1>
+        <div class="section-number">1</div>
+    </section>
+
+    <!-- ===== 4. BULLET REVEAL ===== -->
+    <section class="slide content">
+        <h2>Progressive Bullet Reveal</h2>
+        <ul>
+            <li>This short bullet is visible before any click.</li>
+            <li data-step="1"><strong>First reveal</strong> - this appears on the <span class="accent">first click</span>.</li>
+            <li data-step="2"><strong>Second reveal</strong> - this appears on the <span class="accent2">second click</span>.</li>
+            <li data-step="3"><strong>Grouped reveal</strong> - this appears on the <span class="red">third click</span>.
+                <ul>
+                    <li data-step="3">Sub-bullets can appear together</li>
+                    <li data-step="3">All sharing the same step number</li>
+                </ul>
+            </li>
+        </ul>
+        <p data-step="4" class="footnote muted" style="margin-top: 16px;">
+            And a footnote can appear last.
+        </p>
+    </section>
+
+    <!-- ===== 5. EMPHASIS CLASSES ===== -->
+    <section class="slide content">
+        <h2>Text Emphasis</h2>
+        <ul>
+            <li><span class="accent">Accent color</span> for primary emphasis (burnt sienna)</li>
+            <li><span class="accent2">Accent 2</span> for secondary emphasis (blue)</li>
+            <li><span class="red">Red</span> for warnings or critical findings</li>
+            <li><span class="blue">Blue</span> for links or references</li>
+            <li><span class="green">Green</span> for positive outcomes</li>
+            <li><span class="orange">Orange</span> for data/results</li>
+            <li><span class="muted">Muted</span> for de-emphasized text</li>
+            <li><span class="highlight">Highlighted text</span> with background</li>
+            <li><strong class="bold">Bold text</strong> for structural emphasis</li>
+        </ul>
+    </section>
+
+    <!-- ===== 6. TWO-COLUMN LAYOUT ===== -->
+    <section class="slide content">
+        <h2>Two-Column Layout</h2>
+        <div class="columns">
+            <div>
+                <h3>Left Column</h3>
+                <ul>
+                    <li>Columns use CSS Grid</li>
+                    <li>Equal width by default</li>
+                    <li data-step="1">Left content reveals first</li>
+                </ul>
+            </div>
+            <div>
+                <h3>Right Column</h3>
+                <ul>
+                    <li data-step="2">Right content reveals second</li>
+                    <li data-step="2">Supporting the narrative flow</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== 7. SECTION HEADER ===== -->
+    <section class="slide section-header">
+        <h1>Figures &amp; Images</h1>
+        <div class="section-number">2</div>
+    </section>
+
+    <!-- ===== 7b. SUBSECTION HEADER (Beamer-style) =====
+         A subsection-header slide automatically:
+           - Inherits the parent section ("Figures & Images")
+           - Renders the parent section name as a small "eyebrow" above the h1
+           - Expands the subsection list under the active section in the TOC
+           - Does NOT appear in the top section nav bar (sections-only)
+         No manual TOC needed — the engine auto-injects from the deck structure.  -->
+    <section class="slide subsection-header">
+        <h1>Static figures</h1>
+    </section>
+
+    <!-- ===== 8. FIGURE SLIDE ===== -->
+    <section class="slide figure">
+        <h2>Figure Slide with SVG</h2>
+        <svg viewBox="0 0 500 280" style="max-width: 600px; margin: 0 auto;">
+            <!-- Axes -->
+            <line x1="60" y1="20" x2="60" y2="240" stroke="#2D2D2D" stroke-width="2"/>
+            <line x1="60" y1="240" x2="480" y2="240" stroke="#2D2D2D" stroke-width="2"/>
+
+            <!-- Y-axis labels (17 units ≈ 20px at the 600px display width) -->
+            <text x="50" y="245" text-anchor="end" font-size="17" fill="#6F747C">0</text>
+            <text x="50" y="185" text-anchor="end" font-size="17" fill="#6F747C">0.1</text>
+            <text x="50" y="125" text-anchor="end" font-size="17" fill="#6F747C">0.2</text>
+            <text x="50" y="65" text-anchor="end" font-size="17" fill="#6F747C">0.3</text>
+
+            <!-- Grid lines -->
+            <line x1="60" y1="180" x2="480" y2="180" stroke="#eee" stroke-width="1"/>
+            <line x1="60" y1="120" x2="480" y2="120" stroke="#eee" stroke-width="1"/>
+            <line x1="60" y1="60" x2="480" y2="60" stroke="#eee" stroke-width="1"/>
+
+            <!-- Bar 1: Learning -->
+            <rect data-step="1" x="100" y="140" width="70" height="100" fill="#C0582B" rx="3"/>
+            <text data-step="1" x="135" y="128" text-anchor="middle" font-size="18" font-weight="700" fill="#C0582B">0.17**</text>
+            <text data-step="1" x="135" y="263" text-anchor="middle" font-size="17" fill="#2D2D2D">Learning</text>
+
+            <!-- Bar 2: Attendance -->
+            <rect data-step="2" x="220" y="210" width="70" height="30" fill="#2E7D6F" rx="3"/>
+            <text data-step="2" x="255" y="198" text-anchor="middle" font-size="18" font-weight="700" fill="#2E7D6F">0.05</text>
+            <text data-step="2" x="255" y="263" text-anchor="middle" font-size="17" fill="#2D2D2D">Attendance</text>
+
+            <!-- Bar 3: Stigma -->
+            <rect data-step="3" x="340" y="100" width="70" height="140" fill="#1A3A5C" rx="3"/>
+            <text data-step="3" x="375" y="88" text-anchor="middle" font-size="18" font-weight="700" fill="#1A3A5C">-0.23***</text>
+            <text data-step="3" x="375" y="263" text-anchor="middle" font-size="17" fill="#2D2D2D">Stigma</text>
+        </svg>
+        <div class="caption">Figure 1: Treatment effects on key outcomes (standard deviations)</div>
+    </section>
+
+    <!-- ===== 8b. STATIC SVG FIGURE (made by make_figures.py with tools/svgkit.py) ===== -->
+    <section class="slide figure">
+        <h2>Static SVG Figure</h2>
+        <img src="figures/coefplot.svg" alt="Treatment effects by outcome" style="max-height: 500px;">
+        <div class="caption">Figure: Treatment effects by outcome (invented numbers, for illustration)</div>
+    </section>
+
+    <!-- ===== 8c. FIGURE WITH SIDE NOTES =====
+         .fig-notes: the figure fills the height left below the title, short
+         notes on the right (.wide / .narrow change the figure column).
+         .swap-stack: notes that replace each other in one spot.
+         .so-what: the implication line. .cite: a small reference.
+         .header-links: appendix buttons, pinned bottom-right. -->
+    <section class="slide content">
+        <h2>Figure With Side Notes</h2>
+        <div class="fig-notes narrow">
+            <div class="fig-plot"><img src="figures/coefplot.svg" alt="Treatment effects by outcome"></div>
+            <div class="side-notes">
+                <div class="side-note" data-step="1"><b>Learning +0.15 SD</b> in the soft arm
+                    <span class="cite">About the 75th percentile of learning programmes (Evans &amp; Yuan 2022)</span></div>
+                <div class="swap-stack">
+                    <div class="side-note" data-step="2-2"><b>Attendance</b> — no detectable change</div>
+                    <div class="side-note" data-step="3+"><b>Stigma</b> — falls by 0.23 SD</div>
+                </div>
+                <div class="side-note so-what" data-step="4">Psychosocial channels, not more time in school</div>
+            </div>
+        </div>
+        <div class="header-links">
+            <a class="ws-appendix-link" href="#appendix-balance">Balance</a>
+            <a class="ws-appendix-link" href="#appendix-robustness">Robustness</a>
+        </div>
+    </section>
+
+    <!-- ===== 9. SIDE-BY-SIDE IMAGES ===== -->
+    <section class="slide content">
+        <h2>Side-by-Side Images</h2>
+        <div class="columns">
+            <div class="fig-plot">
+                <svg viewBox="0 0 200 150" style="max-width: 300px; border-radius: 8px; background: #f5f5f5;">
+                    <rect x="20" y="20" width="160" height="110" fill="#E8F5F1" rx="8"/>
+                    <text x="100" y="80" text-anchor="middle" font-size="16" fill="#2E7D6F">Image A</text>
+                </svg>
+                <div class="caption">Control group</div>
+            </div>
+            <div class="fig-plot" data-step="1">
+                <svg viewBox="0 0 200 150" style="max-width: 300px; border-radius: 8px; background: #f5f5f5;">
+                    <rect x="20" y="20" width="160" height="110" fill="#FFF3E0" rx="8"/>
+                    <text x="100" y="80" text-anchor="middle" font-size="16" fill="#C0582B">Image B</text>
+                </svg>
+                <div class="caption">Treatment group</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== 10. SECTION HEADER ===== -->
+    <section class="slide section-header">
+        <h1>Tables & Data</h1>
+        <div class="section-number">3</div>
+    </section>
+
+    <!-- ===== 11. TABLE WITH COLUMN HIGHLIGHTING ===== -->
+    <section class="slide content">
+        <h2>Regression Results</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th></th>
+                    <th data-highlight="1" data-dim="2">Full Package</th>
+                    <th data-highlight="2">Soft Only</th>
+                    <th data-highlight="3" data-dim="1-2">Hard Only</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Learning (SD)</td>
+                    <td data-highlight="1" data-dim="2">0.15<span class="stars">**</span><br><span class="se">(0.06)</span></td>
+                    <td data-highlight="2">0.14<span class="stars">**</span><br><span class="se">(0.07)</span></td>
+                    <td data-highlight="3" data-dim="1-2">0.02<br><span class="se">(0.06)</span></td>
+                </tr>
+                <tr>
+                    <td>Attendance (%)</td>
+                    <td data-highlight="1" data-dim="2">2.1<br><span class="se">(1.8)</span></td>
+                    <td data-highlight="2">1.8<br><span class="se">(1.9)</span></td>
+                    <td data-highlight="3" data-dim="1-2">0.5<br><span class="se">(1.7)</span></td>
+                </tr>
+                <tr>
+                    <td>Stigma (SD)</td>
+                    <td data-highlight="1" data-dim="2">-0.23<span class="stars">***</span><br><span class="se">(0.05)</span></td>
+                    <td data-highlight="2">-0.21<span class="stars">***</span><br><span class="se">(0.06)</span></td>
+                    <td data-highlight="3" data-dim="1-2">-0.08<br><span class="se">(0.05)</span></td>
+                </tr>
+            </tbody>
+        </table>
+        <p data-step="4" class="footnote">
+            Illustrative numbers. Standard errors clustered at school level. *** p&lt;0.01, ** p&lt;0.05, * p&lt;0.1
+        </p>
+        <div class="appendix-links" data-step="4">
+            <a class="ws-appendix-link" href="#appendix-balance">Balance Table</a>
+            <a class="ws-appendix-link" href="#appendix-robustness">Robustness</a>
+        </div>
+    </section>
+
+    <!-- ===== 12. SECTION HEADER ===== -->
+    <section class="slide section-header">
+        <h1>Equations & Boxes</h1>
+        <div class="section-number">4</div>
+    </section>
+
+    <!-- ===== 13. EQUATION SLIDE ===== -->
+    <section class="slide content">
+        <h2>Identification Strategy</h2>
+        <div class="box">
+            <div class="box-title">Intent-to-Treat Estimation</div>
+            $$Y_{is} = \alpha + \beta_1 T^{soft}_s + \beta_2 T^{hard}_s + \gamma X_{is} + \delta_b + \varepsilon_{is}$$
+        </div>
+        <ul>
+            <li data-step="1">$T^{soft}_s$ and $T^{hard}_s$ are treatment dummies at the school level</li>
+            <li data-step="2">$\delta_b$ are randomization block fixed effects</li>
+            <li data-step="3">$X_{is}$ are baseline controls (optional, for precision)</li>
+        </ul>
+        <p data-step="4" class="footnote">
+            Standard errors clustered at school level ($s$).
+        </p>
+    </section>
+
+    <!-- ===== 14. RESULT BOX ===== -->
+    <section class="slide content">
+        <h2>Key Findings</h2>
+        <div class="box result" data-step="1">
+            <div class="box-title">Main Result</div>
+            The soft component alone drives <span class="accent">0.14 SD</span> improvement in learning,
+            equivalent to moving from the 50th to the <span class="accent">56th percentile</span>.
+        </div>
+        <div class="box warning" data-step="2">
+            <div class="box-title">Caveat</div>
+            No significant effects on school attendance ($\beta = 0.018$, $p = 0.34$),
+            suggesting the mechanism operates through <span class="accent2">psychosocial pathways</span>.
+        </div>
+    </section>
+
+    <!-- ===== 15. SECTION HEADER ===== -->
+    <section class="slide section-header">
+        <h1>Diagrams & Reveals</h1>
+        <div class="section-number">5</div>
+    </section>
+
+    <!-- ===== 16. THEORY OF CHANGE DIAGRAM ===== -->
+    <section class="slide content">
+        <h2>Theory of Change</h2>
+        <div class="diagram-flow" style="margin-top: 40px;">
+            <div class="node accent-bg">MH Education<br><span style="opacity: 0.85;">+ Kit Distribution</span></div>
+            <div class="arrow" data-step="1">&rarr;</div>
+            <div class="node" data-step="1">Stigma<br>Reduction</div>
+            <div class="arrow" data-step="2">&rarr;</div>
+            <div class="node" data-step="2">Classroom<br>Engagement</div>
+            <div class="arrow" data-step="3">&rarr;</div>
+            <div class="node result-bg" data-step="3">Learning<br>Gains</div>
+        </div>
+        <div class="diagram-flow" data-step="4" style="margin-top: 24px;">
+            <div class="node" style="background: #fff; border-color: #ccc; color: #aaa;">WASH<br>Infrastructure</div>
+            <div class="arrow" style="color: #ccc;">&rarr;</div>
+            <div class="node" style="background: #fff; border-color: #ccc; color: #aaa;">Attendance?</div>
+            <div class="arrow" style="color: #ccc;">&nrarr;</div>
+            <div class="node" style="background: #fff; border-color: #ccc; color: #aaa; text-decoration: line-through;">Learning<br>Gains</div>
+        </div>
+        <div data-step="4" class="so-what" style="margin-top: 24px;">
+            Hard component (WASH) shows no significant pathway to learning
+        </div>
+    </section>
+
+    <!-- ===== 17. PAUSE-STYLE SLIDE ===== -->
+    <section class="slide content">
+        <h2>A Question for the Audience</h2>
+        <div class="question-box">
+            <b>Question</b> — what mechanism would you expect?
+        </div>
+        <p class="muted">
+            Menstrual health education &rarr; ??? &rarr; Better learning outcomes
+        </p>
+        <div class="spacer"></div>
+        <div data-step="1">
+            <div class="box result">
+                <div class="box-title">Answer: Psychosocial, Not Attendance</div>
+                <ul style="margin-top: 8px;">
+                    <li>No attendance effects ($\beta = 0.02$, $SE = 0.018$)</li>
+                    <li>Large stigma reduction ($-0.23$ SD, $p < 0.001$)</li>
+                    <li>Heart rate evidence of reduced chronic stress</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== 17b. RELATIVE STEPS AND FADES =====
+         data-step="+": one step after the last one above (document order, inlined SVGs
+         included); "=": the same step as the previous one; "+:2": two steps long.
+         data-fade-after="+": dimmed once the next point appears (--ws-fade-opacity). -->
+    <section class="slide content v-center">
+        <h2>Relative Steps and Fades</h2>
+        <ul>
+            <li data-step="+" data-fade-after="+">Steps written as <code>+</code> follow the order of the slide</li>
+            <li data-step="+" data-fade-after="+">Insert a point anywhere: nothing to renumber</li>
+            <li data-step="+">Earlier points fade as the next one appears</li>
+        </ul>
+        <div class="takeaway-box" data-step="=">Shown with the third point: <code>data-step="="</code></div>
+    </section>
+
+    <!-- ===== 17c. FOCUS ON PART OF A FIGURE =====
+         data-focus="R:SELECTOR; ..." on a container (slide, div, svg, g): during steps R,
+         everything inside it that is not SELECTOR (or around it) is dimmed. The later
+         part replaces the earlier one. -->
+    <section class="slide figure">
+        <h2>Focus on Part of a Figure</h2>
+        <svg viewBox="0 0 500 280" style="max-width: 600px; margin: 0 auto;" data-focus="1:.axis, .learning; 2:.axis, .stigma">
+            <g class="axis">
+                <line x1="60" y1="20" x2="60" y2="240" stroke="#2D2D2D" stroke-width="2"/>
+                <line x1="60" y1="240" x2="480" y2="240" stroke="#2D2D2D" stroke-width="2"/>
+                <text x="50" y="245" text-anchor="end" font-size="17" fill="#6F747C">0</text>
+                <text x="50" y="125" text-anchor="end" font-size="17" fill="#6F747C">0.2</text>
+            </g>
+            <g class="learning">
+                <rect x="100" y="140" width="70" height="100" fill="#C0582B" rx="3"/>
+                <text x="135" y="128" text-anchor="middle" font-size="18" font-weight="700" fill="#C0582B">0.17**</text>
+                <text x="135" y="263" text-anchor="middle" font-size="17" fill="#2D2D2D">Learning</text>
+            </g>
+            <g class="attendance">
+                <rect x="220" y="210" width="70" height="30" fill="#2E7D6F" rx="3"/>
+                <text x="255" y="198" text-anchor="middle" font-size="18" font-weight="700" fill="#2E7D6F">0.05</text>
+                <text x="255" y="263" text-anchor="middle" font-size="17" fill="#2D2D2D">Attendance</text>
+            </g>
+            <g class="stigma">
+                <rect x="340" y="100" width="70" height="140" fill="#1A3A5C" rx="3"/>
+                <text x="375" y="88" text-anchor="middle" font-size="18" font-weight="700" fill="#1A3A5C">-0.23***</text>
+                <text x="375" y="263" text-anchor="middle" font-size="17" fill="#2D2D2D">Stigma</text>
+            </g>
+        </svg>
+        <div class="caption">Step 1 focuses on learning, step 2 on stigma; the rest dims</div>
+    </section>
+
+    <!-- ===== 17d. MORPH BETWEEN LAYOUTS =====
+         Elements sharing data-morph="KEY" are one object: when the shown one changes,
+         the engine moves it from the old place to the new (both ways; instant when
+         jumping, in exports and with reduced motion). -->
+    <section class="slide figure">
+        <h2>Morph Between Layouts</h2>
+        <svg viewBox="0 0 600 300" style="max-width: 720px; margin: 0 auto;">
+            <line x1="40" y1="270" x2="580" y2="270" stroke="#2D2D2D" stroke-width="2"/>
+            <g data-step="0-0">
+                <line x1="100" y1="40" x2="100" y2="270" stroke="#BBB" stroke-width="1.5" stroke-dasharray="4 4"/>
+                <line x1="340" y1="60" x2="460" y2="60" stroke="#C0582B" stroke-width="3"/>
+                <line x1="260" y1="115" x2="380" y2="115" stroke="#C0582B" stroke-width="3"/>
+                <line x1="190" y1="170" x2="310" y2="170" stroke="#C0582B" stroke-width="3"/>
+                <line x1="120" y1="225" x2="240" y2="225" stroke="#C0582B" stroke-width="3"/>
+                <circle data-morph="est-1" cx="400" cy="60" r="9" fill="#C0582B"/>
+                <circle data-morph="est-3" cx="320" cy="115" r="9" fill="#C0582B"/>
+                <circle data-morph="est-5" cx="250" cy="170" r="9" fill="#C0582B"/>
+                <circle data-morph="est-8" cx="180" cy="225" r="9" fill="#C0582B"/>
+                <text x="320" y="295" text-anchor="middle" font-size="17" fill="#6F747C">Effect (SD), one row per follow-up</text>
+            </g>
+            <g data-step="1">
+                <line x1="100" y1="34" x2="100" y2="106" stroke="#1A3A5C" stroke-width="3"/>
+                <line x1="220" y1="82" x2="220" y2="154" stroke="#1A3A5C" stroke-width="3"/>
+                <line x1="340" y1="124" x2="340" y2="196" stroke="#1A3A5C" stroke-width="3"/>
+                <line x1="520" y1="166" x2="520" y2="238" stroke="#1A3A5C" stroke-width="3"/>
+                <circle data-morph="est-1" cx="100" cy="70" r="9" fill="#1A3A5C"/>
+                <circle data-morph="est-3" cx="220" cy="118" r="9" fill="#1A3A5C"/>
+                <circle data-morph="est-5" cx="340" cy="160" r="9" fill="#1A3A5C"/>
+                <circle data-morph="est-8" cx="520" cy="202" r="9" fill="#1A3A5C"/>
+                <text x="320" y="295" text-anchor="middle" font-size="17" fill="#6F747C">Years since treatment: 1, 3, 5, 8</text>
+            </g>
+        </svg>
+        <div class="caption">Step 1 moves each estimate from the forest plot to its follow-up year</div>
+    </section>
+
+    <!-- ===== 18. CONCLUSION ===== -->
+    <section class="slide content">
+        <h2>Conclusion</h2>
+        <ul>
+            <li data-step="1"><span class="accent">Soft interventions</span> drive meaningful learning gains</li>
+            <li data-step="2">The mechanism is <span class="accent2">psychosocial</span>, not attendance-based</li>
+            <li data-step="3">Hard infrastructure alone is <span class="red">not sufficient</span></li>
+            <li data-step="4">Implications for <span class="blue">scalable education policy</span></li>
+        </ul>
+        <div class="takeaway-box" data-step="5">
+            Stigma, not access, may be the binding constraint on girls' learning
+        </div>
+    </section>
+
+    <!-- ===== 19. THANK YOU (closing slide every talk ends on) ===== -->
+    <section class="slide thanks">
+        <h1>Thank you!</h1>
+        <div class="email">you@university.edu</div>
+    </section>
+
+    <!-- ===== APPENDIX SLIDES ===== -->
+
+    <section class="slide appendix content" id="appendix-balance">
+        <h2>Balance Table</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Variable</th>
+                    <th>Control</th>
+                    <th>Treatment</th>
+                    <th>p-value</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Age</td>
+                    <td>13.2</td>
+                    <td>13.4</td>
+                    <td>0.42</td>
+                </tr>
+                <tr>
+                    <td>Baseline test score</td>
+                    <td>0.01</td>
+                    <td>-0.02</td>
+                    <td>0.78</td>
+                </tr>
+                <tr>
+                    <td>Attendance rate (%)</td>
+                    <td>82.1</td>
+                    <td>81.8</td>
+                    <td>0.91</td>
+                </tr>
+                <tr>
+                    <td>Household size</td>
+                    <td>5.8</td>
+                    <td>5.9</td>
+                    <td>0.65</td>
+                </tr>
+            </tbody>
+        </table>
+        <p class="footnote">Joint F-test p-value: 0.72</p>
+        <a class="ws-back-link" href="#">&larr; Back</a>
+    </section>
+
+    <section class="slide appendix content" id="appendix-robustness">
+        <h2>Robustness Checks</h2>
+        <ul>
+            <li>Lee bounds: [0.08, 0.21] SD</li>
+            <li>Multiple hypothesis testing (Westfall-Young): results hold</li>
+            <li>Excluding top/bottom 1% of test scores: $\beta = 0.14$ (unchanged)</li>
+            <li>School-level analysis: $\beta = 0.16^{**}$ ($N = 150$ schools)</li>
+        </ul>
+        <a class="ws-back-link" href="#">&larr; Back</a>
+    </section>
+
+</div>
+
+<!-- Footer -->
+<div id="ws-footer">
+    <span id="ws-footer-left">Webb &middot; WebSlides Demo</span>
+    <span id="ws-footer-right"></span>
+</div>
+
+</body>
+</html>

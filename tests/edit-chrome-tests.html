@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=1280">
+    <title>Presto edit chrome tests</title>
+    <link rel="stylesheet" href="../engine/webslides.css">
+    <link rel="stylesheet" href="../engine/themes/academic.css">
+    <link rel="stylesheet" href="../presto/ui-tokens.css">
+    <link rel="stylesheet" href="../presto/edit-chrome.css">
+    <script defer src="../engine/webslides.js"></script>
+    <script defer src="../presto/edit-chrome.js"></script>
+    <script defer src="../presto/wysiwyg.js"></script>
+    <style>
+        #test-results {
+            position: fixed; top: 10px; right: 10px; z-index: 2147483600;
+            background: rgba(0,0,0,0.9); color: #fff; padding: 16px; border-radius: 8px;
+            font-family: monospace; font-size: 11px; max-height: 90vh; overflow-y: auto; min-width: 420px;
+        }
+        #test-results .pass { color: #4ade80; }
+        #test-results .fail { color: #f87171; }
+        #test-results .section { color: #60a5fa; font-weight: bold; margin-top: 8px; }
+        #test-results .summary { margin-top: 12px; padding-top: 8px; border-top: 1px solid #555; font-weight: bold; }
+    </style>
+</head>
+<body>
+<div class="ws-deck" data-section-nav>
+    <section class="slide title" id="c-title"><h1>Chrome Deck</h1></section>
+    <section class="slide content" id="c-intro2"><h2>Why it matters</h2><p id="intro-p">Opening</p></section>
+    <section class="slide section-header"><h1>Methods</h1></section>
+    <section class="slide content" id="c-methods">
+        <h2>Methods detail</h2>
+        <p id="m-a" data-step="1-2">Early point</p>
+        <p id="m-b" data-step="3">Late point</p>
+        <div class="header-links bl"><a class="ws-appendix-link" id="lnk" href="#appendix-balance">Balance</a> <a class="ws-appendix-link" id="lost" href="#nowhere">Lost</a> <a id="web" href="https://example.org/">Web</a></div>
+    </section>
+    <section class="slide section-header"><h1>Results</h1></section>
+    <section class="slide content" id="c-results">
+        <h2>Results table</h2>
+        <ul><li data-step="1">A</li><li data-step="2">B</li><li data-step="3">C</li><li data-step="4">D</li><li data-step="5">E</li><li data-step="6">F</li><li data-step="7">G</li><li data-step="8">H</li></ul>
+    </section>
+    <section class="slide content" id="c-end"><h2>Wrap up</h2><p>Done</p></section>
+    <section class="slide appendix content" id="appendix-balance">
+        <h2>Appendix: balance</h2><p id="balance-p" data-step="1">Balance table</p>
+        <a class="ws-back-link" href="#">&larr; Back</a>
+    </section>
+    <section class="slide appendix content" id="appendix-robust"><h2>Appendix: robustness</h2><p>Checks</p></section>
+</div>
+<div id="ws-footer"><span id="ws-footer-left">Chrome</span><span id="ws-footer-right"></span></div>
+<div id="test-results"></div>
+
+<script>
+window.addEventListener('load', function () { runAllTests(); });
+
+var passed = 0, failed = 0, total = 0;
+var resultsEl = null;
+function log(cls, text) {
+    var div = document.createElement('div');
+    div.className = cls;
+    div.textContent = text;
+    resultsEl.appendChild(div);
+}
+function section(name) { log('section', name); }
+function assert(name, condition, detail) {
+    total++;
+    if (condition) { passed++; log('pass', '✓ ' + name); }
+    else {
+        failed++;
+        log('fail', '✗ ' + name + (detail !== undefined ? ' — ' + JSON.stringify(detail) : ''));
+        console.error('FAIL: ' + name, detail);
+    }
+}
+function assertEqual(name, actual, expected) {
+    assert(name, actual === expected, 'got ' + JSON.stringify(actual) + ', expected ' + JSON.stringify(expected));
+}
+function tick(ms) { return new Promise(function (r) { setTimeout(r, ms || 0); }); }
+function frame() { return new Promise(function (r) { requestAnimationFrame(function () { requestAnimationFrame(r); }); }); }
+function waitFor(cond, timeoutMs) {
+    var deadline = Date.now() + (timeoutMs || 5000);
+    return new Promise(function (resolve, reject) {
+        (function poll() {
+            if (cond()) return resolve();
+            if (Date.now() > deadline) return reject(new Error('waitFor timeout'));
+            setTimeout(poll, 40);
+        })();
+    });
+}
+function mouse(type, target, x, y, opts) {
+    target.dispatchEvent(new MouseEvent(type, Object.assign({
+        bubbles: true, cancelable: true, view: window, clientX: x || 0, clientY: y || 0, button: 0
+    }, opts || {})));
+}
+function keydown(target, key, opts) {
+    target.dispatchEvent(new KeyboardEvent('keydown', Object.assign({ bubbles: true, cancelable: true, key: key }, opts || {})));
+}
+function center(el) {
+    var r = el.getBoundingClientRect();
+    return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+}
+function thumb(index) { return document.querySelector('.pec-th[data-index="' + index + '"]'); }
+function chromeMessages() { return chromeMsgs; }
+var chromeMsgs = [];
+function withSwift(fn) {
+    var sent = [];
+    window.webkit = { messageHandlers: { presto: { postMessage: function (m) { sent.push(m); } } } };
+    try { fn(); } finally { delete window.webkit; }
+    return sent;
+}
+
+async function runAllTests() {
+    resultsEl = document.getElementById('test-results');
+    try {
+        await waitFor(function () { return window.WS && WS.slides && WS.slides.length === 9 && window.PrestoEditChrome; });
+        await WS.ready;
+    } catch (e) {
+        assert('deck initialized', false, String(e));
+        return finish();
+    }
+    var C = window.PrestoEditChrome;
+    var W = window.__prestoWysiwyg;
+    C.onMessage = function (m) { chromeMsgs.push(m); };
+    if (typeof applyPrestoEditViewport === 'function') applyPrestoEditViewport({ railWidth: 232 });
+    assert('install() succeeds', C.install({ railVisible: true, ghostFuture: true }) === true);
+    W.enable();
+    await waitFor(function () { return W.state().enabled; });
+    await frame();
+
+    section('Install');
+    assert('posts editChromeReady', chromeMsgs.some(function (m) { return m.type === 'editChromeReady'; }));
+    assert('marks the body', document.body.classList.contains('presto-edit-chrome-on'));
+    var rail = document.getElementById('presto-edit-rail');
+    assert('builds the 232px rail', !!rail && Math.round(rail.getBoundingClientRect().width) === 232);
+    assert('builds the step strip and zoom label', !!document.getElementById('presto-step-strip') && !!document.getElementById('presto-zoom-label'));
+    assert('does not use the engine rail', !document.getElementById('presto-slide-rail') && !document.body.classList.contains('presto-edit-sidebar-active'));
+    assert('install() twice does not duplicate the rail', C.install() === true && document.querySelectorAll('#presto-edit-rail').length === 1);
+    assert('the rail is light, not black', getComputedStyle(rail).backgroundColor !== 'rgb(32, 32, 32)');
+    assertEqual('wysiwyg took the ghost setting from the chrome', W.state().hiddenStepOpacity, 0.33);
+
+    section('Rail: grouped under the deck sections');
+    var groups = C.state().groups;
+    assertEqual('groups: Intro, Methods, Results, Appendix', groups.map(function (g) { return g.name; }).join(','), 'Intro,Methods,Results,Appendix');
+    assertEqual('Intro holds slides 0-1', groups[0].slides.join(','), '0,1');
+    assertEqual('Methods holds its header and slide', groups[1].slides.join(','), '2,3');
+    assertEqual('appendix is grouped last', groups[3].slides.join(','), '7,8');
+    var heads = document.querySelectorAll('.pec-sec-h');
+    assertEqual('section headers show slide ranges', heads[1].querySelector('em').textContent, '3–4');
+    assertEqual('the appendix range uses A-numbers', heads[3].querySelector('em').textContent, 'A1–A2');
+    assertEqual('numbers sit beside thumbnails', thumb(3).querySelector('.pec-n').textContent, '4');
+    assertEqual('appendix thumbnails are numbered A1…', thumb(7).querySelector('.pec-n').textContent, 'A1');
+    assert('no dark label bar over thumbnails', !document.querySelector('.presto-slide-thumb-label'));
+    assertEqual('reveal dots count the steps', thumb(3).querySelectorAll('.pec-dots i').length, 3);
+    assertEqual('reveal dots stop at seven', thumb(5).querySelectorAll('.pec-dots i').length, 7);
+    assertEqual('no dots on a slide without steps', thumb(0).querySelectorAll('.pec-dots i').length, 0);
+
+    section('Rail: current slide and folding');
+    WS.goToSlide(3, 0);
+    await tick(20);
+    assert('the current slide is ringed', thumb(3).classList.contains('on') && document.querySelectorAll('.pec-th.on').length === 1);
+    assertEqual('the current thumbnail is the one in the tab order', thumb(3).tabIndex, 0);
+    heads[2].click();
+    assert('clicking a header folds its section', C.state().groups[2].folded && heads[2].getAttribute('aria-expanded') === 'false');
+    assert('a folded section hides its thumbnails', thumb(5).offsetParent === null);
+    WS.goToSlide(5, 0);
+    await tick(20);
+    assert('navigating into a folded section unfolds it', !C.state().groups[2].folded && thumb(5).offsetParent !== null);
+    WS.goToSlide(3, 0);
+    await tick(20);
+
+    section('Rail: thumbnails');
+    C.flushThumbnails();
+    await frame();
+    C.flushThumbnails();
+    var canvas = thumb(3).querySelector('.pec-canvas');
+    assert('the thumbnail is a rendered clone', !!canvas && !!canvas.querySelector('.slide'));
+    assert('thumbnails scale with transform (never CSS zoom: KaTeX)', /scale\(0\.140625\)/.test(canvas.style.transform), canvas.style.transform);
+    var cloneSlide = canvas.querySelector('.slide');
+    assertEqual('the clone itself is unzoomed', getComputedStyle(cloneSlide).zoom, '1');
+    assert('clones drop ids outside SVG (no duplicate ids)', !canvas.querySelector('[id]') && !cloneSlide.id);
+    assertEqual('document ids still resolve to the real slide', document.getElementById('m-a').closest('.slide'), WS.slides[3]);
+    var clonePs = canvas.querySelectorAll('p');
+    assert('the thumbnail shows the final step: a 1-2 range is hidden', !clonePs[0].classList.contains('ws-visible'));
+    assert('…and the step-3 point is shown', clonePs[1].classList.contains('ws-visible'));
+    W.select('#intro-p');
+    WS.goToSlide(1, 0);
+    await tick(20);
+    W.select('#intro-p');
+    W.setFontSize(52);
+    C.flushThumbnails();
+    await frame();
+    C.flushThumbnails();
+    var t1 = thumb(1).querySelector('.pec-canvas p');
+    assertEqual('the thumbnail refreshes after an edit (BACKLOG 13)', t1 && t1.style.fontSize, '52px');
+    assert('selection chrome never shows in a thumbnail', !thumb(1).querySelector('.presto-wysiwyg-selected'));
+    W.deselect();
+    // Typing refreshes after the burst goes quiet (MutationObserver). The rail
+    // renders a thumbnail once it is on screen, so poll rather than time it.
+    function thumbText(i) {
+        C.flushThumbnails();
+        var p = thumb(i) && thumb(i).querySelector('.pec-canvas p');
+        return p ? p.textContent : null;
+    }
+    document.getElementById('intro-p').textContent = 'Opening, edited outside';
+    await waitFor(function () { return thumbText(1) === 'Opening, edited outside'; }, 3000).catch(function () {});
+    assertEqual('a DOM change inside a slide refreshes its thumbnail', thumbText(1), 'Opening, edited outside');
+    // An in-page slide replacement (the patch path) refreshes too.
+    window.replacePrestoEditSlideHTML(6, '<section class="slide content" id="c-end"><h2>Wrap up</h2><p>Patched</p></section>');
+    WS.goToSlide(6, 0);
+    await waitFor(function () { return thumbText(6) === 'Patched'; }, 3000).catch(function () {});
+    assertEqual('a patched slide refreshes its thumbnail', thumbText(6), 'Patched');
+
+    section('Rail: navigation');
+    WS.goToSlide(3, 0);
+    await tick(20);
+    thumb(5).click();
+    await tick(20);
+    assertEqual('outside Presto a rail click navigates', WS.currentIndex, 5);
+    var sent = withSwift(function () { thumb(3).click(); });
+    var nav = sent.filter(function (m) { return m.type === 'sidebarNavigate'; })[0];
+    assert('inside Presto a rail click posts sidebarNavigate {index, step}', !!nav && nav.index === 3 && nav.step === 0, sent);
+    assertEqual('…and leaves navigating to Swift', WS.currentIndex, 5);
+    thumb(5).focus();
+    keydown(thumb(5), 'ArrowDown');
+    await tick(20);
+    assertEqual('ArrowDown in the rail opens the next slide', WS.currentIndex, 6);
+    keydown(document.activeElement, 'ArrowUp');
+    await tick(20);
+    assertEqual('ArrowUp goes back', WS.currentIndex, 5);
+    keydown(document.activeElement, 'ArrowLeft');
+    assert('ArrowLeft folds the section', C.state().groups[2].folded);
+    keydown(document.activeElement, 'ArrowRight');
+    assert('ArrowRight unfolds it', !C.state().groups[2].folded);
+    document.activeElement.blur();
+
+    section('Step strip');
+    WS.goToSlide(3, 1);
+    await tick(20);
+    var strip = document.getElementById('presto-step-strip');
+    var stepButtons = strip.querySelectorAll('.pec-step');
+    assertEqual('Reveal 0..n buttons', Array.prototype.map.call(stepButtons, function (b) { return b.textContent; }).join(','), '0,1,2,3');
+    assert('the current step is filled', stepButtons[1].classList.contains('on') && stepButtons[0].classList.contains('done'));
+    assert('step buttons are visible (not hidden by reveal CSS)', getComputedStyle(stepButtons[2]).opacity === '1');
+    stepButtons[3].click();
+    await tick(20);
+    assertEqual('clicking a step goes there', WS.currentStep, 3);
+    assert('the strip follows', strip.querySelectorAll('.pec-step')[3].classList.contains('on'));
+    assert('the ←/→ hint is shown', strip.querySelector('.pec-keys').style.display !== 'none');
+    WS.goToSlide(0, 0);
+    await tick(20);
+    assert('a slide without steps says so', strip.querySelector('.pec-none') && strip.querySelector('.pec-none').textContent === 'No reveal steps');
+    assert('…and disables the ghost toggle', document.getElementById('presto-ghost-toggle').disabled);
+    var toggle = document.getElementById('presto-ghost-toggle');
+    function switchLooksOn() {
+        return getComputedStyle(toggle, '::after').transform !== 'none' &&
+            getComputedStyle(toggle).backgroundColor === 'rgb(47, 107, 216)';
+    }
+    await tick(250); // past the switch's 140 ms transition
+    assert('…which shows off while disabled, though the setting is on',
+        toggle.getAttribute('aria-checked') === 'true' && !switchLooksOn(),
+        [getComputedStyle(toggle, '::after').transform, getComputedStyle(toggle).backgroundColor]);
+    WS.goToSlide(3, 0);
+    await tick(250);
+    assertEqual('the toggle shows the ghost setting', toggle.getAttribute('aria-checked'), 'true');
+    assert('…and looks on again once enabled', switchLooksOn(),
+        [getComputedStyle(toggle, '::after').transform, getComputedStyle(toggle).backgroundColor]);
+    chromeMsgs.length = 0;
+    strip.querySelector('.pec-ghost').click();
+    assertEqual('the toggle turns ghosts off', W.state().hiddenStepOpacity, 0);
+    assert('…and posts ghostFutureChanged {on:false}', chromeMsgs.some(function (m) { return m.type === 'ghostFutureChanged' && m.on === false; }));
+    chromeMsgs.length = 0;
+    C.setGhostFuture(true);
+    assertEqual('the shell menu turns them back on', W.state().hiddenStepOpacity, 0.33);
+    assertEqual('…the toggle follows', toggle.getAttribute('aria-checked'), 'true');
+    assert('…without echoing a message back', !chromeMsgs.some(function (m) { return m.type === 'ghostFutureChanged'; }));
+    keydown(document.body, 'O', { metaKey: true, shiftKey: true });
+    assertEqual('⇧⌘O in the page updates the toggle too', toggle.getAttribute('aria-checked'), 'false');
+    C.setGhostFuture(true);
+
+    section('Zoom label and geometry');
+    var zoom = document.getElementById('presto-zoom-label');
+    assert('the zoom label says Fit with the scale', zoom.textContent.indexOf('Fit') === 0 && /\d+%/.test(zoom.textContent), zoom.textContent);
+    document.dispatchEvent(new CustomEvent('presto:layout', { detail: { scale: 0.5, slideLeft: 300, slideTop: 100, slideW: 640, slideH: 360, viewportW: 1280, viewportH: 720 } }));
+    var sr = strip.getBoundingClientRect();
+    assert('presto:layout centres the strip under the slide', Math.abs(sr.left + sr.width / 2 - 620) < 1.5, sr.left + sr.width / 2);
+    assert('…in the bottom band, below the slide', sr.top >= 100 + 360 - 1 && sr.bottom <= 720, [sr.top, sr.bottom]);
+    assert('…and updates the zoom label', zoom.textContent.indexOf('50%') >= 0, zoom.textContent);
+
+    section('Link card');
+    WS.goToSlide(3, 2);
+    await tick(20);
+    W.select('#lnk');
+    await tick(10);
+    var card = document.getElementById('presto-link-card');
+    assert('selecting a link opens the link card', C.state().cardVisible);
+    assertEqual('the card names the link', card.querySelector('.pec-lc-h b').textContent, 'Balance');
+    assertEqual('the card shows the target slide', card.querySelector('.pec-lc-t b').textContent, 'A1 · Appendix: balance');
+    assert('…with its number in the deck and the target step', card.querySelector('.pec-lc-t small').textContent === 'Appendix slide 8 · step 0' ||
+        card.querySelector('.pec-lc-t small').textContent === 'Appendix slide 8', card.querySelector('.pec-lc-t small').textContent);
+    assert('…and a thumbnail', !!card.querySelector('.pec-lc-t .pec-canvas .slide'));
+    assert('Go to slide, Edit label, Change target… are offered', !!card.querySelector('.pec-go') && !!card.querySelector('.pec-edit-label') && !!card.querySelector('.pec-change-target'));
+    var cr = card.getBoundingClientRect();
+    var lr = document.getElementById('lnk').getBoundingClientRect();
+    assert('the card never covers the link', cr.bottom <= lr.top || cr.top >= lr.bottom || cr.right <= lr.left || cr.left >= lr.right);
+    assert('the card stays clear of the rail', cr.left >= 232);
+    card.querySelector('.pec-go').click();
+    await tick(30);
+    assertEqual('Go to slide jumps to the target', WS.currentIndex, 7);
+    assert('…and the card closes', !C.state().cardVisible);
+    var chip = document.getElementById('presto-back-chip');
+    assert('a Back chip appears', C.state().backVisible);
+    assertEqual('it names where you came from', chip.textContent, 'Back to 4 · Methods detail');
+    assert('the engine return stack was not touched', WS.returnStack.length === 0);
+    chip.click();
+    await tick(30);
+    assert('Back returns to the slide and step you came from', WS.currentIndex === 3 && WS.currentStep === 2, [WS.currentIndex, WS.currentStep]);
+    assert('…and the chip goes away', !C.state().backVisible);
+
+    section('Back chip lifetime');
+    C.goToSlide(7, 0, { recordBack: true });
+    await tick(20);
+    assert('a recorded jump shows the chip', C.state().backVisible);
+    WS.goToSlide(8, 0);
+    await tick(20);
+    assert('moving on once keeps it', C.state().backVisible);
+    WS.goToSlide(6, 0);
+    await tick(20);
+    assert('moving on twice clears it', !C.state().backVisible);
+    assertEqual('the jump was recorded from slide 7 (index 6)', WS.currentIndex, 6);
+    C.goToSlide(7, 1, { recordBack: true });
+    await tick(20);
+    WS.goToSlide(6, 0);
+    await tick(20);
+    assert('going back by hand clears it', !C.state().backVisible);
+
+    section('⌘-click goes straight there');
+    WS.goToSlide(3, 0);
+    await tick(20);
+    var lnk = document.getElementById('lnk');
+    var lc = center(lnk);
+    mouse('mousedown', lnk, lc.x, lc.y, { metaKey: true });
+    mouse('mouseup', lnk, lc.x, lc.y, { metaKey: true });
+    mouse('click', lnk, lc.x, lc.y, { metaKey: true });
+    await tick(30);
+    assertEqual('⌘-click jumps to the target', WS.currentIndex, 7);
+    assert('…without selecting the link', !W.state().hasSelection);
+    assert('…with a Back chip', C.state().backVisible);
+    assertEqual('…and the engine did not also follow the link', WS.returnStack.length, 0);
+    C.back();
+    await tick(20);
+
+    section('Change target');
+    WS.goToSlide(3, 0);
+    await tick(20);
+    W.select('#lnk');
+    await tick(10);
+    card.querySelector('.pec-change-target').click();
+    assertEqual('Change target… opens a slide list', C.state().cardMode, 'pick');
+    var groupsInPicker = Array.prototype.map.call(card.querySelectorAll('.pec-pick-group'), function (g) { return g.textContent; });
+    assertEqual('appendix slides are listed first', groupsInPicker.join(','), 'Appendix,Slides');
+    var search = card.querySelector('.pec-pick-search');
+    assert('the search field has focus', document.activeElement === search);
+    assert('the field reports textEditing', W.state().chromeTextFocus === true);
+    search.value = 'robust';
+    search.dispatchEvent(new Event('input'));
+    var rows = card.querySelectorAll('.pec-pick-row');
+    assertEqual('typing filters the list', rows.length, 1);
+    assert('the current target carries a check', (function () {
+        search.value = '';
+        search.dispatchEvent(new Event('input'));
+        var current = card.querySelector('.pec-pick-row[data-index="7"] .pec-pick-check svg');
+        search.value = 'robust';
+        search.dispatchEvent(new Event('input'));
+        return !!current;
+    })());
+    keydown(search, 'Enter');
+    assertEqual('Enter picks the match and rewrites href', document.getElementById('lnk').getAttribute('href'), '#appendix-robust');
+    assertEqual('the card shows the new target', card.querySelector('.pec-lc-t b').textContent, 'A2 · Appendix: robustness');
+    assertEqual('the change is one undo step', PrestoEdit.historyState().undoLabel, 'Undo Link Target');
+    card.querySelector('.pec-change-target').click();
+    assertEqual('Escape closes the list first', PrestoEdit.handleEscape(), 'popover');
+    assert('…back to the card', C.state().cardVisible && C.state().cardMode === 'card');
+    assertEqual('then deselects', PrestoEdit.handleEscape(), 'deselect');
+    assert('…and the card goes', !C.state().cardVisible);
+    PrestoEdit.undo();
+
+    section('Link card: other targets');
+    WS.goToSlide(3, 0);
+    await tick(20);
+    W.select('#lost');
+    await tick(10);
+    assertEqual('a broken link says so', card.querySelector('.pec-lc-t b').textContent, 'No slide has this target');
+    assert('…with no Go button', !card.querySelector('.pec-go'));
+    W.select('#web');
+    await tick(10);
+    assertEqual('a web link shows its address', card.querySelector('.pec-lc-t small').textContent, 'https://example.org/');
+    W.deselect();
+    WS.goToSlide(7, 0);
+    await tick(20);
+    W.select('.ws-back-link');
+    await tick(10);
+    assertEqual('a Back button is described', card.querySelector('.pec-lc-t b').textContent, 'Back button');
+    W.deselect();
+    card.querySelector('.pec-edit-label') && null;
+    WS.goToSlide(3, 0);
+    await tick(20);
+    W.select('#lnk');
+    await tick(10);
+    card.querySelector('.pec-edit-label').click();
+    assert('Edit label starts typing into the link', W.state().textEditing && document.getElementById('lnk').isContentEditable);
+    assert('…and hides the card while typing', !C.state().cardVisible);
+    W.endTextEdit();
+    W.deselect();
+
+    section('Slide titles');
+    var robustHeading = WS.slides[8].querySelector('h2');
+    var robustHTML = robustHeading.innerHTML;
+    robustHeading.innerHTML = 'Appendix:<br>robust <span class="katex"><span class="katex-mathml">MATHML</span>' +
+        '<span class="katex-html">checks</span></span>';
+    assertEqual('a title reads a line break as a space and drops KaTeX MathML', C.slideTitle(8), 'Appendix: robust checks');
+    assert('…without changing the slide', robustHeading.querySelectorAll('br, .katex-mathml').length === 2);
+    robustHeading.innerHTML = robustHTML;
+
+    section('Rail visibility');
+    C.setRailVisible(false);
+    assert('setRailVisible(false) hides the rail', getComputedStyle(rail).display === 'none' && document.body.classList.contains('presto-rail-hidden'));
+    assertEqual('…and tells the chrome the rail is gone', getComputedStyle(document.body).getPropertyValue('--presto-rail-w').trim(), '0px');
+    C.setRailVisible(true);
+    assert('setRailVisible(true) shows it again', getComputedStyle(rail).display !== 'none');
+
+    finish();
+}
+
+function finish() {
+    var summary = document.createElement('div');
+    summary.className = 'summary ' + (failed === 0 ? 'pass' : 'fail');
+    summary.textContent = passed + '/' + total + ' passed';
+    resultsEl.appendChild(summary);
+    window.EDIT_CHROME_TEST_RESULTS = { passed: passed, failed: failed, total: total };
+    console.log('EDIT_CHROME_TESTS: ' + passed + '/' + total + ' passed');
+}
+</script>
+</body>
+</html>

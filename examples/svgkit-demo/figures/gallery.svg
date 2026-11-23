@@ -1,0 +1,84 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1136" height="500" viewBox="0 0 1136 500" font-family="Lato, Helvetica Neue, Arial, sans-serif" data-svgkit="gallery">
+<text x="20" y="30" font-size="22" fill="#6F747C" font-weight="700">Arrows</text>
+<g>
+ <line x1="20" y1="70" x2="213" y2="70" stroke="#1E2A3A" stroke-width="1.5"/>
+ <path d="M220,70 L210,76 L212.2,70 L210,64 Z" fill="#1E2A3A" stroke="none"/>
+</g>
+<g>
+ <line x1="267" y1="70" x2="453" y2="70" stroke="#B8612A" stroke-width="1.5"/>
+ <path d="M260,70 L270,64 L267.8,70 L270,76 Z" fill="#B8612A" stroke="none"/>
+ <path d="M460,70 L450,76 L452.2,70 L450,64 Z" fill="#B8612A" stroke="none"/>
+</g>
+<g>
+ <line x1="20" y1="114" x2="212.65" y2="114" stroke="#1E2A3A" stroke-width="2.5"/>
+ <path d="M220,114 L209.5,120.3 L211.81,114 L209.5,107.7 Z" fill="#1E2A3A" stroke="none"/>
+</g>
+<g>
+ <line x1="267.35" y1="114" x2="452.65" y2="114" stroke="#B8612A" stroke-width="2.5"/>
+ <path d="M260,114 L270.5,107.7 L268.19,114 L270.5,120.3 Z" fill="#B8612A" stroke="none"/>
+ <path d="M460,114 L449.5,120.3 L451.81,114 L449.5,107.7 Z" fill="#B8612A" stroke="none"/>
+</g>
+<g>
+ <line x1="20" y1="158" x2="211.6" y2="158" stroke="#1E2A3A" stroke-width="3"/>
+ <path d="M220,158 L208,165.2 L210.64,158 L208,150.8 Z" fill="#1E2A3A" stroke="none"/>
+</g>
+<g>
+ <line x1="268.4" y1="158" x2="451.6" y2="158" stroke="#B8612A" stroke-width="3"/>
+ <path d="M260,158 L272,150.8 L269.36,158 L272,165.2 Z" fill="#B8612A" stroke="none"/>
+ <path d="M460,158 L448,165.2 L450.64,158 L448,150.8 Z" fill="#B8612A" stroke="none"/>
+</g>
+<g>
+ <line x1="20" y1="202" x2="208.45" y2="202" stroke="#1E2A3A" stroke-width="4.5"/>
+ <path d="M220,202 L203.5,211.9 L207.13,202 L203.5,192.1 Z" fill="#1E2A3A" stroke="none"/>
+</g>
+<g>
+ <line x1="271.55" y1="202" x2="448.45" y2="202" stroke="#B8612A" stroke-width="4.5"/>
+ <path d="M260,202 L276.5,192.1 L272.87,202 L276.5,211.9 Z" fill="#B8612A" stroke="none"/>
+ <path d="M460,202 L443.5,211.9 L447.13,202 L443.5,192.1 Z" fill="#B8612A" stroke="none"/>
+</g>
+<g>
+ <line x1="500" y1="60" x2="634.06" y2="194.06" stroke="#3F73B8" stroke-width="3"/>
+ <path d="M640,200 L626.42,196.61 L633.38,193.38 L636.61,186.42 Z" fill="#3F73B8" stroke="none"/>
+</g>
+<g>
+ <path d="M680,200 Q715,95 812.03,62.66" fill="none" stroke="#C44536" stroke-width="3" stroke-linecap="butt" stroke-linejoin="round"/>
+ <path d="M820,60 L810.89,70.63 L811.12,62.96 L806.34,56.96 Z" fill="#C44536" stroke="none"/>
+</g>
+<g>
+ <line x1="860" y1="68.4" x2="860" y2="191.6" stroke="#2D8A4E" stroke-width="3"/>
+ <path d="M860,60 L867.2,72 L860,69.36 L852.8,72 Z" fill="#2D8A4E" stroke="none"/>
+ <path d="M860,200 L852.8,188 L860,190.64 L867.2,188 Z" fill="#2D8A4E" stroke="none"/>
+</g>
+<g>
+ <path d="M900,200 Q1042,190 1097.01,66.71" fill="none" stroke="#1E2A3A" stroke-width="2.5" stroke-dasharray="6 5" stroke-linecap="butt" stroke-linejoin="round"/>
+ <path d="M1100,60 L1101.48,72.16 L1096.66,67.48 L1089.97,67.02 Z" fill="#1E2A3A" stroke="none"/>
+</g>
+<text x="20" y="270" font-size="22" fill="#6F747C" font-weight="700">Brackets</text>
+<g>
+ <path d="M40,340 L40,328 L240,328 L240,340" fill="none" stroke="#1E2A3A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="miter"/>
+ <text x="140" y="318" font-size="22" fill="#1E2A3A" text-anchor="middle">square, up</text>
+</g>
+<g>
+ <path d="M40,410 Q40,418 48,418 L132,418 Q140,418 140,426 Q140,418 148,418 L232,418 Q240,418 240,410" fill="none" stroke="#1E2A3A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+ <text x="140" y="453.6" font-size="22" fill="#1E2A3A" text-anchor="middle">curly, down</text>
+</g>
+<g>
+ <path d="M320,290 Q328,290 328,298 L328,372 Q328,380 336,380 Q328,380 328,388 L328,462 Q328,470 320,470" fill="none" stroke="#1E2A3A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+ <text x="346" y="373.95" font-size="22" fill="#1E2A3A">curly,<tspan x="346" dy="27.5">right</tspan></text>
+</g>
+<g>
+ <path d="M560,290 L548,290 L548,470 L560,470" fill="none" stroke="#1E2A3A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="miter"/>
+ <text x="538" y="373.95" font-size="22" fill="#1E2A3A" text-anchor="end">square,<tspan x="538" dy="27.5">left</tspan></text>
+</g>
+<g>
+ <rect x="620" y="300" width="154.5" height="78.6" rx="10" fill="#FFFFFF" stroke="#B8612A" stroke-width="2"/>
+ <text x="634" y="331.6" font-size="22" fill="#1E2A3A" font-weight="700">Default</text>
+ <text x="634" y="360.2" font-size="22" fill="#2F3037">A callout box</text>
+</g>
+<g>
+ <rect x="860" y="290" width="184.2" height="144" rx="10" fill="#FFFFFF" stroke="#B8612A" stroke-width="3"/>
+ <text x="878" y="332" font-size="30" fill="#1E2A3A" font-weight="700">Large</text>
+ <text x="878" y="371" font-size="30" fill="#2F3037">Bigger box,</text>
+ <text x="878" y="410" font-size="30" fill="#2F3037">bigger text</text>
+</g>
+</svg>

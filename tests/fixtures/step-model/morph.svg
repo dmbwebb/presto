@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 400" width="800" height="400">
+  <line id="axis" x1="0" y1="390" x2="800" y2="390" stroke="#999" stroke-width="2"/>
+  <g data-step="0-1">
+    <circle id="f-e1" data-morph="e1" cx="100" cy="100" r="8" fill="#246"/>
+    <circle id="f-e2" data-morph="e2" cx="100" cy="200" r="8" fill="#246"/>
+    <line id="f-ci1" data-morph="ci1" x1="160" y1="60" x2="160" y2="140" stroke="#333" stroke-width="3"/>
+    <text id="f-lab" data-morph="lab" x="60" y="320" font-size="24" font-family="sans-serif">effect 0.12</text>
+    <g id="f-grp" data-morph="grp"><rect x="200" y="250" width="40" height="40" fill="#a63"/><circle cx="260" cy="270" r="10" fill="#a63"/></g>
+    <circle id="f-x" data-morph="x" cx="700" cy="300" r="10" fill="#2a6"/>
+  </g>
+  <g data-step="2" transform="translate(300, 0)">
+    <circle id="t-e1" data-step="0-2" data-morph="e1" cx="200" cy="150" r="4" fill="#246"/>
+    <circle id="t-e2" data-morph="e2" cx="100" cy="300" r="8" transform="translate(50, -20)" fill="#246"/>
+    <line id="t-ci1" data-morph="ci1" x1="200" y1="120" x2="200" y2="180" stroke="#333" stroke-width="3"/>
+    <text id="t-lab" data-morph="lab" x="200" y="350" font-size="24" font-family="sans-serif">effect 0.12</text>
+    <g id="t-grp" data-morph="grp" transform="translate(100, 0)"><rect x="200" y="250" width="40" height="40" fill="#a63"/><circle cx="260" cy="270" r="10" fill="#a63"/></g>
+  </g>
+  <circle id="u-e1" data-step="3" data-morph="e1" cx="700" cy="50" r="12" fill="#246"/>
+</svg>

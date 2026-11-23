@@ -1,0 +1,36 @@
+# Deck registry: maps short deck ids and aliases to project-owned deck folders.
+# Copy this file to deck_locations.yaml (same folder) and list your own decks.
+# deck_locations.yaml is personal: keep it out of any shared or public copy.
+#
+# Read by scripts/locate_deck.py and the deck-alias-aware wrappers, by the
+# engine's tools/ws.py, and by Presto's Decks mode (grouped by project_id).
+# The parser is deliberately simple: two-space indentation, one value per line,
+# no quotes needed around paths with spaces. "~" is expanded.
+#
+# Per deck:
+#   project_id    short project label (groups decks in Presto)
+#   project_root  the owning project's folder
+#   root          the deck folder (holds index.html)
+#   tex_dir       optional: folder with the paper's table*.tex files, passed to
+#                 the Beamer export as --tex-dir
+#   aliases       optional: other names that resolve to this deck
+#
+# Optional top-level engine_root: the engine repo. Presto then also lists the
+# engine's examples/kitchen-sink deck and groups decks inside the repo as "engine".
+# engine_root: ~/code/webslides
+
+decks:
+  my-talk-2026:
+    project_id: my-project
+    project_root: ~/research/my-project
+    root: ~/research/my-project/presentations/webslides/my-talk-2026
+    tex_dir: ~/research/my-project/paper/tables
+    aliases:
+      - my talk
+      - job talk
+  seminar-short:
+    project_id: my-project
+    project_root: ~/research/my-project
+    root: ~/research/my-project/presentations/webslides/seminar-short
+    aliases:
+      - short seminar

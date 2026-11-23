@@ -1,0 +1,86 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="560" viewBox="0 0 900 560" font-family="Lato, Helvetica Neue, Arial, sans-serif" data-svgkit="coefplot">
+<g>
+ <line x1="270" y1="480" x2="270" y2="30" stroke="#E6E6E6" stroke-width="1"/>
+ <line x1="388" y1="480" x2="388" y2="30" stroke="#E6E6E6" stroke-width="1"/>
+ <line x1="506" y1="480" x2="506" y2="30" stroke="#E6E6E6" stroke-width="1"/>
+ <line x1="624" y1="480" x2="624" y2="30" stroke="#E6E6E6" stroke-width="1"/>
+ <line x1="742" y1="480" x2="742" y2="30" stroke="#E6E6E6" stroke-width="1"/>
+ <line x1="860" y1="480" x2="860" y2="30" stroke="#E6E6E6" stroke-width="1"/>
+ <line x1="270" y1="480" x2="860" y2="480" stroke="#6F747C" stroke-width="1.4"/>
+ <text x="270" y="508" font-size="20" fill="#6F747C" text-anchor="middle">−0.2</text>
+ <text x="388" y="508" font-size="20" fill="#6F747C" text-anchor="middle">0</text>
+ <text x="506" y="508" font-size="20" fill="#6F747C" text-anchor="middle">0.2</text>
+ <text x="624" y="508" font-size="20" fill="#6F747C" text-anchor="middle">0.4</text>
+ <text x="742" y="508" font-size="20" fill="#6F747C" text-anchor="middle">0.6</text>
+ <text x="860" y="508" font-size="20" fill="#6F747C" text-anchor="middle">0.8</text>
+ <text x="565" y="538" font-size="20" fill="#6F747C" text-anchor="middle">Treatment effect (SD, 95% CI)</text>
+</g>
+<line x1="388" y1="30" x2="388" y2="474" stroke="#979BA2" stroke-width="1.5" stroke-dasharray="6 5"/>
+<text x="250" y="78" font-size="22" fill="#2F3037" text-anchor="end">Learning</text>
+<g>
+ <line x1="425.05" y1="62" x2="586.95" y2="62" stroke="#B8612A" stroke-width="2.5"/>
+ <circle cx="506" cy="62" r="6.5" fill="#B8612A"/>
+</g>
+<g>
+ <line x1="400.98" y1="80" x2="516.62" y2="80" stroke="#3F73B8" stroke-width="2.5"/>
+ <circle cx="458.8" cy="80" r="6.5" fill="#3F73B8"/>
+</g>
+<text x="250" y="140" font-size="22" fill="#2F3037" text-anchor="end">Attendance</text>
+<g opacity="0.4">
+ <line x1="324.52" y1="124" x2="463.28" y2="124" stroke="#B8612A" stroke-width="2.5"/>
+ <circle cx="393.9" cy="124" r="6.5" fill="#B8612A"/>
+</g>
+<g opacity="0.4">
+ <line x1="318.38" y1="142" x2="434.02" y2="142" stroke="#3F73B8" stroke-width="2.5"/>
+ <circle cx="376.2" cy="142" r="6.5" fill="#3F73B8"/>
+</g>
+<text x="250" y="202" font-size="22" fill="#2F3037" text-anchor="end">Wellbeing</text>
+<g>
+ <line x1="406.88" y1="186" x2="522.52" y2="186" stroke="#B8612A" stroke-width="2.5"/>
+ <circle cx="464.7" cy="186" r="6.5" fill="#B8612A"/>
+</g>
+<g>
+ <line x1="400.98" y1="204" x2="516.62" y2="204" stroke="#3F73B8" stroke-width="2.5"/>
+ <circle cx="458.8" cy="204" r="6.5" fill="#3F73B8"/>
+</g>
+<text x="250" y="264" font-size="22" fill="#2F3037" text-anchor="end">Physical health</text>
+<g opacity="0.4">
+ <line x1="288.88" y1="248" x2="404.52" y2="248" stroke="#B8612A" stroke-width="2.5"/>
+ <circle cx="346.7" cy="248" r="6.5" fill="#B8612A"/>
+</g>
+<g opacity="0.4">
+ <line x1="347.64" y1="266" x2="440.16" y2="266" stroke="#3F73B8" stroke-width="2.5"/>
+ <circle cx="393.9" cy="266" r="6.5" fill="#3F73B8"/>
+</g>
+<text x="250" y="326" font-size="22" fill="#2F3037" text-anchor="end">Knowledge</text>
+<g>
+ <line x1="554.85" y1="310" x2="716.75" y2="310" stroke="#B8612A" stroke-width="2.5"/>
+ <circle cx="635.8" cy="310" r="6.5" fill="#B8612A"/>
+</g>
+<g>
+ <line x1="613.38" y1="328" x2="729.02" y2="328" stroke="#3F73B8" stroke-width="2.5"/>
+ <circle cx="671.2" cy="328" r="6.5" fill="#3F73B8"/>
+</g>
+<text x="250" y="388" font-size="22" fill="#2F3037" text-anchor="end">Behaviour</text>
+<g>
+ <line x1="489.95" y1="372" x2="651.85" y2="372" stroke="#B8612A" stroke-width="2.5"/>
+ <circle cx="570.9" cy="372" r="6.5" fill="#B8612A"/>
+</g>
+<g>
+ <line x1="654.92" y1="390" x2="793.68" y2="390" stroke="#3F73B8" stroke-width="2.5"/>
+ <circle cx="724.3" cy="390" r="6.5" fill="#3F73B8"/>
+</g>
+<text x="250" y="450" font-size="22" fill="#2F3037" text-anchor="end">School climate</text>
+<g opacity="0.4">
+ <line x1="336.55" y1="434" x2="498.45" y2="434" stroke="#B8612A" stroke-width="2.5"/>
+ <circle cx="417.5" cy="434" r="6.5" fill="#B8612A"/>
+</g>
+<g>
+ <line x1="436.38" y1="452" x2="552.02" y2="452" stroke="#3F73B8" stroke-width="2.5"/>
+ <circle cx="494.2" cy="452" r="6.5" fill="#3F73B8"/>
+</g>
+<circle cx="653.5" cy="22" r="7" fill="#B8612A"/>
+<text x="667.5" y="29" font-size="20" fill="#B8612A" font-weight="700">Arm A</text>
+<circle cx="783.5" cy="22" r="7" fill="#3F73B8"/>
+<text x="797.5" y="29" font-size="20" fill="#3F73B8" font-weight="700">Arm B</text>
+</svg>

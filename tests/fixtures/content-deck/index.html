@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=1280">
+    <title>Content fixture deck</title>
+    <!-- Behavioural fixture for stats binding (data-stat, \stat) and $...$ math
+         in SVG text; tests/test_deck_content.py asserts on it by element id.
+         KaTeX comes from the CDN like real decks; the test serves a local copy
+         when it can find one. -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/contrib/auto-render.min.js"
+        onload="renderMathInElement(document.body, {
+            delimiters: [{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}]
+        });"></script>
+    <link rel="stylesheet" href="../../../engine/webslides.css">
+    <link rel="stylesheet" href="../../../engine/themes/academic.css">
+    <script defer src="../../../engine/webslides.js"></script>
+</head>
+<body>
+<div class="ws-deck" data-stats-dir="stats" data-stats-src="stats.json">
+
+    <section class="slide content" id="stats-html">
+        <h2>Stats bound to files</h2>
+        <ul>
+            <li>Analyses: <span id="s-count" data-stat="n_analyses">4,000</span></li>
+            <li>Fade-out: <span id="s-pct" data-stat="pct_fadeout">17%</span>, p <span id="s-pval" data-stat="pval">?</span></li>
+            <li>Effect <span id="s-delta" data-stat="delta">-0.06</span>, big <span id="s-big" data-stat="big">5000</span></li>
+            <li>Label <span id="s-label" data-stat="label">Label</span>, months <span id="s-round" data-stat="months" data-stat-round="0">24</span>, share <span id="s-round2" data-stat="share" data-stat-round="2">0.5</span></li>
+            <li>From JSON: <span id="s-json" data-stat="json_only">0</span> and <span id="s-json-str" data-stat="json_text">x</span></li>
+            <li>Missing: <span id="s-missing" data-stat="no_such_stat">99</span></li>
+        </ul>
+    </section>
+
+    <section class="slide content" id="svg-math">
+        <h2>Math in an inlined SVG</h2>
+        <img id="math-img" data-inline src="figures/math.svg" alt="math labels" style="width:1100px">
+    </section>
+
+    <section class="slide content" id="inline-svg-math">
+        <h2>Math in inline SVG</h2>
+        <svg id="inline-svg" xmlns="http://www.w3.org/2000/svg" width="900" height="200" viewBox="0 0 900 200">
+            <line x1="450" y1="20" x2="450" y2="180" stroke="#d33"/>
+            <line x1="20" y1="100" x2="880" y2="100" stroke="#d33"/>
+            <text id="i-math" x="450" y="100" font-size="30" text-anchor="middle" fill="#2F3037">inline $\mu_t \le \bar\mu$ svg</text>
+            <text id="i-stat" x="20" y="170" font-size="24" fill="#6F747C">stat <tspan data-stat="delta">D</tspan> here</text>
+        </svg>
+    </section>
+
+    <section class="slide content" id="table-stats">
+        <h2>Stats in a loaded table</h2>
+        <div class="table-container" data-table-src="tables/stats.html"></div>
+    </section>
+
+    <section class="slide content" id="html-math-stat">
+        <h2>Stat inside HTML math</h2>
+        <p id="p-math">Effect $\hat\beta = \stat{delta}$ per year, display: $$\tau = \stat{pct_fadeout}$$</p>
+        <p id="p-plain">Plain math $x^2$ is the deck's own.</p>
+    </section>
+
+</div>
+<div id="ws-footer">
+    <span id="ws-footer-left">Content fixture</span>
+    <span id="ws-footer-right"></span>
+</div>
+</body>
+</html>

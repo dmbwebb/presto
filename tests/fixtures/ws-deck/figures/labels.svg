@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <circle cx="120" cy="100" r="8" fill="#B01E2F"/>
+  <text x="100" y="108" font-size="24">Over a dot</text>
+  <text x="40" y="200" font-size="24">Clash one</text>
+  <text x="60" y="204" font-size="24">Clash two</text>
+  <text x="330" y="260" font-size="24">Cut at edge</text>
+</svg>

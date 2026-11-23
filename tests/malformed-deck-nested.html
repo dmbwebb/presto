@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=1280">
+    <title>Malformed Deck: Nested Root</title>
+    <link rel="stylesheet" href="../engine/webslides.css">
+    <script defer src="../engine/webslides.js"></script>
+</head>
+<body>
+<div class="ws-deck">
+    <section class="slide content" id="outer">
+        <h2>Outer slide</h2>
+        <div class="ws-deck">
+            <section class="slide content" id="nested">
+                <h2>Nested deck slide</h2>
+            </section>
+        </div>
+    </section>
+</div>
+</body>
+</html>

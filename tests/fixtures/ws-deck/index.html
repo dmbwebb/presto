@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=1280">
+    <title>ws fixture deck</title>
+    <!-- Fixture for tests/test_ws.py: slide addressing, get/put, step renumbering,
+         outline, layout problems. Tests copy this folder before writing to it. -->
+    <link rel="stylesheet" href="../../../engine/webslides.css">
+    <link rel="stylesheet" href="../../../engine/themes/academic.css">
+    <script defer src="../../../engine/webslides.js"></script>
+    <style>
+        .soft { opacity: 0.4; }
+        .hide { visibility: hidden; }
+        .abs { position: absolute; font-size: 28px; margin: 0; }
+    </style>
+</head>
+<body>
+<div class="ws-deck">
+
+    <section class="slide title">
+        <h1>ws fixture<br>deck</h1>
+    </section>
+
+    <section class="slide content" id="html-steps" data-steps="4">
+        <h2>Steps in HTML</h2>
+        <p data-step="1">One</p>
+        <p data-step="2-4" data-class="soft:3 hide:4-4">Two to four</p>
+        <p data-step="-3">Until three</p>
+        <p data-step="3+" data-fade-after="4">Three on</p>
+        <p data-step="4-4" data-highlight="4" id="only-four">Only four</p>
+        <div data-focus="2-3:.keep; 4:.other" data-dim="2">
+            <span class="keep">Keep</span> <span class="other">Other</span>
+        </div>
+    </section>
+
+    <section class="slide content" data-id="svg-steps">
+        <h2>Steps in an inline figure</h2>
+        <div style="display: flex; gap: 20px;">
+            <img data-inline src="figures/fig.svg" alt="Figure" style="width: 600px;">
+            <div>
+                <p data-step="1-2">Bars appear</p>
+                <p data-step="3">Labels</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="slide content" id="layout-problems">
+        <h2>Layout problems</h2>
+        <p class="abs" style="left: 100px; top: 200px;">Overlapping words here</p>
+        <p class="abs" style="left: 140px; top: 205px;">Second text on top</p>
+        <p class="abs" style="left: 1150px; top: 400px; white-space: nowrap;">Past the right edge</p>
+        <div class="abs" style="left: 100px; top: 450px; width: 300px; height: 40px; overflow: hidden;">
+            <p style="margin: 0;">Visible line</p>
+            <p style="margin: 0;">Hidden second line</p>
+        </div>
+        <p class="abs" style="left: 600px; top: 600px; font-size: 12px;">Tiny note text</p>
+        <img data-inline src="figures/labels.svg" alt="Labels" style="position: absolute; left: 600px; top: 150px; width: 400px;">
+    </section>
+
+    <section class="slide content">
+        <h2>Plain slide</h2>
+        <p data-step="+">Next one</p>
+        <p data-step="+">Next two</p>
+        <p data-step="=">Same as two</p>
+        <ul data-reveal="each">
+            <li>Auto three</li>
+            <li>Auto four</li>
+        </ul>
+        <p id="inner-target">An element with an id</p>
+    </section>
+
+    <section class="slide content">
+        <h2>Plain slide</h2>
+        <p>Same title as the previous slide</p>
+    </section>
+
+</div>
+<div id="ws-footer">
+    <span id="ws-footer-left">ws fixture</span>
+    <span id="ws-footer-right"></span>
+</div>
+</body>
+</html>

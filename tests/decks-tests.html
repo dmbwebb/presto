@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Presto Decks page tests</title>
+    <style>
+        html, body { margin: 0; background: #F3F4F6; font-family: -apple-system, sans-serif; }
+        #frame { position: absolute; left: 0; top: 0; width: 1440px; height: 848px; border: 0; background: #fff; }
+        #test-results {
+            position: fixed; top: 10px; right: 10px; z-index: 10; width: 420px; max-height: 92vh; overflow-y: auto;
+            background: rgba(255, 255, 255, .96); color: #1C2532; padding: 14px 16px; border-radius: 10px;
+            font: 11px/1.45 ui-monospace, Menlo, monospace; box-shadow: 0 8px 24px rgba(16, 24, 40, .18);
+        }
+        #test-results .pass { color: #2E8B57; }
+        #test-results .fail { color: #D4462C; font-weight: bold; }
+        #test-results .section { color: #2F6BD8; font-weight: bold; margin-top: 8px; }
+        #test-results .summary { margin-top: 10px; padding-top: 8px; border-top: 1px solid #DDE0E5; font-weight: bold; }
+    </style>
+</head>
+<body>
+<iframe id="frame" title="decks"></iframe>
+<div id="test-results"></div>
+<script>
+(function () {
+    'use strict';
+    var passed = 0, failed = 0, total = 0;
+    var resultsEl = document.getElementById('test-results');
+    var frame = document.getElementById('frame');
+    var W, D, P; // frame window, document, PrestoDecks
+
+    function log(cls, text) {
+        var div = document.createElement('div');
+        div.className = cls;
+        div.textContent = text;
+        resultsEl.appendChild(div);
+    }
+    function section(name) { log('section', name); }
+    function assert(name, condition, detail) {
+        total++;
+        if (condition) { passed++; log('pass', '✓ ' + name); }
+        else { failed++; log('fail', '✗ ' + name + (detail !== undefined ? ' — ' + detail : '')); }
+    }
+    function eq(name, actual, expected) {
+        var a = JSON.stringify(actual), e = JSON.stringify(expected);
+        assert(name, a === e, 'got ' + a + ', expected ' + e);
+    }
+    function sleep(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+    function frames(n) {
+        return new Promise(function (resolve) {
+            var left = n || 2;
+            function tick() { if (--left <= 0) resolve(); else W.requestAnimationFrame(tick); }
+            W.requestAnimationFrame(tick);
+        });
+    }
+    function headerText() {
+        return $$('#decks-results .section-h span').map(function (s) { return s.textContent.trim(); })
+            .filter(Boolean).join(' ');
+    }
+    async function until(fn, ms) {
+        var end = Date.now() + (ms || 2000);
+        while (Date.now() < end) { if (fn()) return true; await sleep(16); }
+        return !!fn();
+    }
+
+    function posted(type) { return W.__posted.filter(function (m) { return !type || m.type === type; }); }
+    function clearPosted() { W.__posted.length = 0; }
+    function $(sel) { return D.querySelector(sel); }
+    function $$(sel) { return Array.prototype.slice.call(D.querySelectorAll(sel)); }
+    function text(sel) { var el = $(sel); return el ? el.textContent.replace(/\s+/g, ' ').trim() : null; }
+    function visible(el) { return !!el && !el.closest('[hidden]') && el.getClientRects().length > 0; }
+    function cardPaths() { return $$('#decks-grid .card').map(function (c) { return c.dataset.path; }); }
+    function card(path) { return $$('#decks-grid .card').filter(function (c) { return c.dataset.path === path; })[0]; }
+    function key(name, opts) {
+        var o = opts || {};
+        var target = D.activeElement && D.activeElement !== D.documentElement ? D.activeElement : D.body;
+        var ev = new W.KeyboardEvent('keydown', { key: name, metaKey: !!o.meta, shiftKey: !!o.shift, bubbles: true, cancelable: true });
+        target.dispatchEvent(ev);
+        return ev;
+    }
+    function mouse(el, type, extra) {
+        var r = el.getBoundingClientRect();
+        var init = { bubbles: true, cancelable: true, clientX: r.left + 10, clientY: r.top + 10, button: type === 'contextmenu' ? 2 : 0 };
+        if (extra) Object.keys(extra).forEach(function (k) { init[k] = extra[k]; });
+        var ev = new W.MouseEvent(type, init);
+        el.dispatchEvent(ev);
+        return ev;
+    }
+    function click(el) { mouse(el, 'mousedown'); mouse(el, 'mouseup'); return mouse(el, 'click'); }
+    function focusedKey() { return W.PrestoDecks._state().focusKey; }
+
+    // ------------------------------------------------------------ fixtures
+    var NOW = new Date(2026, 9, 28, 9, 0).getTime();
+    var swatch = {};
+    function png(color) {
+        if (swatch[color]) return swatch[color];
+        var c = document.createElement('canvas');
+        c.width = 32; c.height = 18;
+        var g = c.getContext('2d');
+        g.fillStyle = '#fff'; g.fillRect(0, 0, 32, 18);
+        g.fillStyle = color; g.fillRect(4, 6, 20, 4);
+        return (swatch[color] = c.toDataURL('image/png'));
+    }
+    var BASE = '/Users/me/Google Drive/RESEARCH/MADA/presentations/webslides/';
+    var LR = '/Users/me/Dropbox/RESEARCH/LONG RUN EFFECTS/presentations/webslides/';
+    var TCD = LR + 'long-run-tcd/index.html';
+    var BREAD = BASE + 'mada-bread-2026/index.html';
+    var NBER = BASE + 'mada-nber-si-2026/index.html';
+    var NORMS = '/Users/me/Dropbox/CODING/talks/presentations/webslides/norms-rewritten-discussant/index.html';
+    var NOVA = BASE + 'mada-novafrica-2026/index.html';
+    var EQ = LR + 'long-run-equalnovaera/index.html';
+    var LISBON = LR + 'long-run-lisbon-micro/index.html';
+    var PRINCETON = BASE + 'mada-princeton-kt-2026/index.html';
+    var CSAE = BASE + 'mada-csae-2026/index.html';
+    var KITCHEN = '/Users/me/Dropbox/CODING/webslides/examples/kitchen-sink/index.html';
+    function t(y, m, d, h, min) { return new Date(y, m - 1, d, h || 12, min || 0).getTime(); }
+    function deck(path, title, headline, occasion, project, modified, extra) {
+        var d = { path: path, folder: path.replace(/\/index\.html$/, ''), title: title, headline: headline, occasion: occasion,
+                  project: project, modified: modified, slideCount: 20, appendixCount: 0, stepCount: 30, pinned: false,
+                  inRecent: true, sources: ['registry'], thumbnailDataURL: png('#2F6BD8'), thumbnailStale: false, cloudOnly: false };
+        Object.keys(extra || {}).forEach(function (k) { d[k] = extra[k]; });
+        return d;
+    }
+    function fixture() {
+        return {
+            continueDeck: TCD,
+            projects: [{ name: 'Long-run', count: 3 }, { name: 'Madagascar', count: 5 }, { name: 'Learner', count: 1 }],
+            folders: [],
+            decks: [
+                deck(TCD, 'Treatment-Effect Persistence and Policy Comparisons - TCD 2026', 'Treatment-Effect Persistence and Policy Comparisons', 'TCD 2026', 'Long-run', t(2026, 10, 28, 7, 42),
+                     { slideCount: 36, appendixCount: 23, stepCount: 104, lastSlide: 17, lastStep: 2, lastSlideLabel: '18', lastSlideTitle: 'Summary: full estimation',
+                       lastSlideThumbnailDataURL: png('#B7791F'), pinned: true, sources: ['recent', 'registry', 'pinned'], lastOpened: t(2026, 10, 28, 8, 0) }),
+                deck(BREAD, 'Menstrual Stigma, Hygiene, and Human Capital (BREAD/ITAM/CAF 2026)', 'Menstrual Stigma, Hygiene, and Human Capital', 'BREAD/ITAM/CAF 2026', 'Madagascar', t(2026, 10, 23, 7, 28),
+                     { pinned: true, sources: ['recent', 'registry', 'pinned'] }),
+                deck(NBER, 'Menstrual Stigma, Hygiene and Human Capital — NBER SI 2026', 'Menstrual Stigma, Hygiene and Human Capital', 'NBER SI 2026', 'Madagascar', t(2026, 7, 28), { thumbnailDataURL: null }),
+                deck(NOVA, 'Menstrual Stigma and Human Capital — NOVAFRICA, June 2026', 'Menstrual Stigma and Human Capital', 'NOVAFRICA, June 2026', 'Madagascar', t(2026, 6, 18), { thumbnailStale: true }),
+                deck(NORMS, 'Discussion: Norms Rewritten?', 'Discussion: Norms Rewritten?', null, 'Learner', t(2026, 6, 17)),
+                deck(EQ, 'Do Psychosocial Interventions Fade Out? - EqualNovaEra 2026', 'Do Psychosocial Interventions Fade Out?', 'EqualNovaEra 2026', 'Long-run', t(2026, 5, 26), { thumbnailDataURL: null }),
+                deck(LISBON, 'Do Psychosocial Interventions Fade Out? — Lisbon Micro 2026', 'Do Psychosocial Interventions Fade Out?', 'Lisbon Micro 2026', 'Long-run', t(2026, 5, 4)),
+                deck(PRINCETON, 'Menstrual Stigma and Human Capital — Princeton KT Center, April 2026', 'Menstrual Stigma and Human Capital', 'Princeton KT Center, April 2026', 'Madagascar', t(2026, 5, 3, 12, 30), { cloudOnly: true, thumbnailDataURL: null, slideCount: null }),
+                deck(CSAE, 'Menstrual Stigma and Human Capital — CSAE 2026', 'Menstrual Stigma and Human Capital', 'CSAE 2026', 'Madagascar', t(2026, 5, 3, 12, 29)),
+                deck(KITCHEN, 'WebSlides Kitchen Sink', 'WebSlides Kitchen Sink', null, 'Engine', t(2025, 12, 1), { inRecent: false, sources: ['engine'] })
+            ]
+        };
+    }
+    function withThumb(model, path, url, stale) {
+        model.decks.forEach(function (d) { if (d.path === path) { d.thumbnailDataURL = url; d.thumbnailStale = !!stale; } });
+        return model;
+    }
+
+    // ------------------------------------------------------------ load decks.html in a same-origin iframe
+    async function loadFrame() {
+        var presto = new URL('../presto/', location.href).href;
+        var html = await (await fetch(presto + 'decks.html', { cache: 'no-store' })).text();
+        var stub = '<script>window.__posted = []; window.webkit = { messageHandlers: { presto: { postMessage: function (m) {' +
+            ' window.__posted.push(JSON.parse(JSON.stringify(m))); } } } };<\/script>';
+        html = html.replace('<head>', '<head><base href="' + presto + '">')
+                   .replace('<script src="decks.js"><\/script>', stub + '<script src="decks.js?t=' + Date.now() + '"><\/script>');
+        await new Promise(function (resolve) { frame.onload = resolve; frame.srcdoc = html; });
+        W = frame.contentWindow; D = W.document; P = W.PrestoDecks;
+        P._setNow(function () { return NOW; });
+        await until(function () { return D.fonts ? D.fonts.status === 'loaded' : true; }, 2000);
+    }
+
+    // ------------------------------------------------------------ tests
+    async function run() {
+        await loadFrame();
+
+        section('Start and empty library');
+        assert('PrestoDecks API present', P && typeof P.render === 'function' && typeof P.filter === 'function' && typeof P.setDropActive === 'function');
+        eq('decksReady posted once at load', posted('decksReady').length, 1);
+        assert('first launch shows the empty state', visible($('#decks-empty')) && !visible($('#decks-continue')) && !visible($('#decks-results')));
+        eq('empty state heading', text('#decks-empty h2'), 'No decks yet');
+        clearPosted();
+        click($('#decks-empty [data-act="open-panel"]'));
+        click($('#decks-empty [data-act="add-folder"]'));
+        eq('empty state buttons post open panel and add folder', posted().map(function (m) { return m.type; }), ['decksOpenPanel', 'decksAddFolder']);
+        assert('sidebar offers Add folder… with no decks', /Add folder/.test(text('#decks-side')));
+        eq('the empty state says Add folder… like the sidebar (native menus keep title case)',
+            text('#decks-empty [data-act="add-folder"]').trim(), 'Add folder…');
+
+        section('Rendering a library');
+        clearPosted();
+        P.render(JSON.stringify(fixture()));
+        await frames(3);
+        assert('empty state hidden once decks exist', !visible($('#decks-empty')));
+        var side = $$('#decks-side .side-item').map(function (b) { return b.querySelector('.label').textContent + ':' + b.querySelector('em').textContent; });
+        eq('sidebar items and counts', side, ['Recent:9', 'Pinned:2', 'Long-run:3', 'Madagascar:5', 'Learner:1', 'Add folder…:', 'Kitchen sink:']);
+        eq('sidebar headings', $$('#decks-side h6').map(function (h) { return h.textContent; }), ['Projects', 'Engine']);
+        assert('Recent selected by default', $('#decks-side .side-item.on').dataset.view === 'recent');
+        assert('Continue hero shown', visible($('#decks-hero')));
+        eq('hero eyebrow', text('#decks-hero .eyebrow'), 'Long-run · edited today at 07:42');
+        eq('hero title is the headline', text('#decks-hero .hero-title'), 'Treatment-Effect Persistence and Policy Comparisons');
+        eq('hero facts', text('#decks-hero .hero-facts'), 'TCD 2026 · 36 slides and 23 in the appendix · 104 reveal steps');
+        eq('hero position line', text('#decks-hero .where-text'), 'You left off on slide 18, Summary: full estimation');
+        assert('hero position thumbnail shown', visible($('#decks-hero .where-thumb')) && /^data:image\/png/.test($('#decks-hero .where-thumb img').src));
+        eq('hero buttons', $$('#decks-hero .acts button').map(function (b) { return b.textContent.trim(); }), ['Continue editing', 'Present from start']);
+        eq('Recent grid sorted by last edited, Continue deck not repeated, engine left out', cardPaths(), [BREAD, NBER, NOVA, NORMS, EQ, LISBON, PRINCETON, CSAE]);
+        eq('grid header', headerText(), 'Recent Sorted by last edited');
+        eq('card is named by the occasion in its <title>', text('#decks-grid .card .card-title'), 'BREAD/ITAM/CAF 2026');
+        eq('card without an occasion uses the full <title>', text('[data-path="' + NORMS + '"] .card-title'), 'Discussion: Norms Rewritten?');
+        assert('card tooltip carries the full title and path',
+            card(BREAD).title === 'Menstrual Stigma, Hygiene, and Human Capital (BREAD/ITAM/CAF 2026)\n' + BREAD);
+        var twins = fixture();
+        twins.decks[2].occasion = 'BREAD/ITAM/CAF 2026';
+        P.render(twins);
+        eq('two decks sharing an occasion show full titles',
+            [text('[data-path="' + BREAD + '"] .card-title'), text('[data-path="' + NBER + '"] .card-title')],
+            ['Menstrual Stigma, Hygiene, and Human Capital (BREAD/ITAM/CAF 2026)', 'Menstrual Stigma, Hygiene and Human Capital — NBER SI 2026']);
+        P.render(fixture());
+        eq('card meta', text('#decks-grid .card .card-meta'), 'Madagascar · edited 23 Oct');
+        assert('pinned card shows the pin mark', !!card(BREAD).querySelector('.card-meta .pin') && !card(NBER).querySelector('.card-meta .pin'));
+        eq('cloud-only card says not downloaded', text('[data-path="' + PRINCETON + '"] .card-meta'), 'Madagascar · not downloaded · edited 3 May');
+        eq('grid has four columns at 1440 px', W.getComputedStyle($('#decks-grid')).gridTemplateColumns.split(' ').length, 4);
+        assert('no Open… or search drawn in the page (native toolbar owns them)', !$('input[type="search"]') && !/Search decks/.test(D.body.textContent));
+
+        section('Thumbnails and placeholders');
+        await until(function () { return card(BREAD).querySelector('.thumb').classList.contains('has-image'); });
+        assert('card with a thumbnail shows its image', card(BREAD).querySelector('.thumb').classList.contains('has-image'));
+        var phCard = card(NBER);
+        assert('card without a thumbnail shows its title on a white 16:9 card',
+            !phCard.querySelector('.thumb').classList.contains('has-image') &&
+            phCard.querySelector('.ph b').textContent === 'Menstrual Stigma, Hygiene and Human Capital' &&
+            phCard.querySelector('.ph small').textContent === 'NBER SI 2026' &&
+            W.getComputedStyle(phCard.querySelector('.thumb')).backgroundColor === 'rgb(255, 255, 255)');
+        var r1 = phCard.querySelector('.thumb').getBoundingClientRect();
+        assert('thumbnail box is 16:9', Math.abs(r1.width / r1.height - 16 / 9) < 0.02, r1.width + 'x' + r1.height);
+        var gridRect = $('#decks-grid').getBoundingClientRect();
+        var titleRect = phCard.querySelector('.card-title').getBoundingClientRect();
+
+        await until(function () { return posted('decksNeedThumbnail').length > 0; });
+        eq('one thumbnail request at a time, first missing visible deck', posted('decksNeedThumbnail').map(function (m) { return m.path; }), [NBER]);
+        await sleep(60);
+        eq('no second request while one is pending', posted('decksNeedThumbnail').length, 1);
+        var cardEl = card(NBER);
+        P.render(withThumb(fixture(), NBER, png('#D4462C')));
+        await until(function () { return posted('decksNeedThumbnail').length > 1; });
+        eq('arriving thumbnail releases the next request (missing before stale)', posted('decksNeedThumbnail').map(function (m) { return m.path; }), [NBER, EQ]);
+        assert('re-render reuses the card element', card(NBER) === cardEl);
+        await until(function () { return card(NBER).querySelector('.thumb').classList.contains('has-image'); });
+        var r2 = card(NBER).querySelector('.thumb').getBoundingClientRect();
+        var titleRect2 = card(NBER).querySelector('.card-title').getBoundingClientRect();
+        var gridRect2 = $('#decks-grid').getBoundingClientRect();
+        assert('no layout jump when a thumbnail arrives',
+            r1.left === r2.left && r1.top === r2.top && r1.width === r2.width && r1.height === r2.height &&
+            titleRect.top === titleRect2.top && gridRect.height === gridRect2.height);
+        var m3 = withThumb(withThumb(fixture(), NBER, png('#D4462C')), EQ, png('#2E8B57'));
+        P._setThumbnailTimeout(40); // the NOVA request below times out (the shell never answers)
+        P.render(m3);
+        await until(function () { return posted('decksNeedThumbnail').length > 2; });
+        eq('stale thumbnails are refreshed after missing ones', posted('decksNeedThumbnail').map(function (m) { return m.path; }), [NBER, EQ, NOVA]);
+        await sleep(150);
+        eq('a timed-out request frees the queue', P._thumbnailPending(), null);
+        P.render(m3);
+        await sleep(150);
+        assert('cloud-only decks are never requested (no hydration)', posted('decksNeedThumbnail').every(function (m) { return m.path !== PRINCETON; }));
+        eq('a request that timed out is not repeated', posted('decksNeedThumbnail').filter(function (m) { return m.path === NOVA; }).length, 1);
+        P._setThumbnailTimeout(20000);
+
+        section('Pointer actions');
+        clearPosted();
+        P.render(fixture());
+        await frames(2);
+        var c0 = card(BREAD);
+        mouse(c0, 'mouseover');
+        click(c0);
+        assert('clicking a card focuses it', c0.classList.contains('is-focus') && focusedKey() === BREAD);
+        click(c0.querySelector('[data-act="edit"]'));
+        click(c0.querySelector('[data-act="present"]'));
+        eq('card Edit and Present buttons', posted('decksOpen'), [{ type: 'decksOpen', path: BREAD, mode: 'edit' }, { type: 'decksOpen', path: BREAD, mode: 'present' }]);
+        clearPosted();
+        click($('#decks-hero [data-act="edit"]'));
+        click($('#decks-hero [data-act="present"]'));
+        eq('hero Continue editing and Present from start', posted('decksOpen'), [{ type: 'decksOpen', path: TCD, mode: 'edit' }, { type: 'decksOpen', path: TCD, mode: 'present' }]);
+        clearPosted();
+        mouse(card(CSAE).querySelector('.card-title'), 'dblclick');
+        eq('double-click opens in Edit', posted('decksOpen'), [{ type: 'decksOpen', path: CSAE, mode: 'edit' }]);
+
+        section('Keyboard');
+        clearPosted();
+        P.render(fixture());
+        W.PrestoDecks._state().focusKey = null;
+        P.render(fixture());
+        D.activeElement && D.activeElement.blur && D.activeElement.blur();
+        key('ArrowDown');
+        eq('first arrow focuses the Continue hero', focusedKey(), 'hero');
+        key('ArrowDown');
+        eq('Down from the hero goes to the first card', focusedKey(), BREAD);
+        key('ArrowRight');
+        eq('Right moves along the row', focusedKey(), NBER);
+        key('ArrowDown');
+        eq('Down moves one row (four columns)', focusedKey(), LISBON);
+        key('ArrowDown');
+        eq('Down on the last row stays', focusedKey(), LISBON);
+        key('ArrowUp');
+        eq('Up moves one row', focusedKey(), NBER);
+        key('ArrowUp');
+        eq('Up from the first row returns to the hero', focusedKey(), 'hero');
+        key('End');
+        eq('End goes to the last card', focusedKey(), CSAE);
+        key('Home');
+        eq('Home goes to the hero', focusedKey(), 'hero');
+        key('ArrowRight'); key('ArrowRight');
+        eq('Right from the hero continues into the grid', focusedKey(), NBER);
+        await sleep(220);
+        assert('focused card shows its actions and ring', card(NBER).classList.contains('is-focus') && W.getComputedStyle(card(NBER).querySelector('.qa')).opacity !== '0');
+        assert('roving tabindex: only the focused card is tabbable', $$('#decks-grid .card').filter(function (c) { return c.tabIndex === 0; }).length === 1 && card(NBER).tabIndex === 0);
+        clearPosted();
+        key('Enter');
+        key('Enter', { meta: true });
+        eq('Return edits, ⌘Return presents', posted('decksOpen'), [{ type: 'decksOpen', path: NBER, mode: 'edit' }, { type: 'decksOpen', path: NBER, mode: 'present' }]);
+        key('Home'); clearPosted();
+        key('Enter');
+        eq('Return on the hero continues editing', posted('decksOpen'), [{ type: 'decksOpen', path: TCD, mode: 'edit' }]);
+        key('ArrowLeft');
+        assert('Left from the first item moves into the sidebar', D.activeElement && D.activeElement.classList.contains('side-item'));
+        key('ArrowDown');
+        eq('Down in the sidebar moves between items', D.activeElement.querySelector('.label').textContent, 'Pinned');
+        P.render(fixture());
+        assert('sidebar focus survives a re-render', D.activeElement && D.activeElement.dataset.view === 'pinned');
+        key('ArrowRight');
+        eq('Right from the sidebar returns to the grid', focusedKey(), 'hero');
+        P.render(fixture());
+        eq('focus survives a re-render', focusedKey(), 'hero');
+
+        section('Context menu');
+        clearPosted();
+        P.render(fixture());
+        var ev = mouse(card(NBER), 'contextmenu');
+        assert('contextmenu default prevented (no WebKit menu)', ev.defaultPrevented);
+        assert('menu shown', visible($('#decks-menu')));
+        eq('deck menu items', $$('#decks-menu .mi span').map(function (s) { return s.textContent; }),
+            ['Edit', 'Present from Start', 'Reveal in Finder', 'Pin', 'Remove from Recent']);
+        click($$('#decks-menu .mi')[2]);
+        eq('Reveal in Finder', posted('decksReveal'), [{ type: 'decksReveal', path: NBER }]);
+        assert('menu closes after a choice', !visible($('#decks-menu')));
+        mouse(card(NBER), 'contextmenu');
+        click($$('#decks-menu .mi')[3]);
+        eq('Pin posts decksPin', posted('decksPin'), [{ type: 'decksPin', path: NBER, pinned: true }]);
+        eq('Pinned count updates at once', text('#decks-side [data-view="pinned"] em'), '3');
+        mouse(card(BREAD), 'contextmenu');
+        eq('pinned deck offers Unpin', $$('#decks-menu .mi span')[3].textContent, 'Unpin');
+        key('Escape');
+        assert('Escape closes the menu', !visible($('#decks-menu')));
+        mouse(card(NORMS), 'contextmenu');
+        click($$('#decks-menu .mi')[4]);
+        eq('Remove from Recent posts decksRemoveRecent', posted('decksRemoveRecent'), [{ type: 'decksRemoveRecent', path: NORMS }]);
+        assert('removed deck leaves the Recent grid', cardPaths().indexOf(NORMS) === -1);
+        eq('Recent count updates', text('#decks-side [data-view="recent"] em'), '8');
+        clearPosted();
+        mouse(card(CSAE), 'contextmenu');
+        key('ArrowDown'); key('ArrowDown'); key('Enter');
+        eq('menu keyboard: Down, Down, Return runs the second item', posted('decksOpen'), [{ type: 'decksOpen', path: CSAE, mode: 'present' }]);
+        mouse(card(CSAE), 'contextmenu');
+        mouse(D.body, 'mousedown');
+        assert('clicking outside closes the menu', !visible($('#decks-menu')));
+        var bare = mouse($('#decks-lib'), 'contextmenu');
+        assert('contextmenu on empty space is suppressed too', bare.defaultPrevented && !visible($('#decks-menu')));
+
+        section('Sidebar views');
+        P.render(fixture());
+        click($('#decks-side [data-view="project"][data-name="Madagascar"]'));
+        assert('project view selected', $('#decks-side .side-item.on').dataset.name === 'Madagascar');
+        assert('project view has no hero', !visible($('#decks-hero')));
+        eq('project view lists that project', cardPaths(), [BREAD, NBER, NOVA, PRINCETON, CSAE]);
+        eq('project view header', headerText(), 'Madagascar Sorted by last edited');
+        click($('#decks-side [data-view="pinned"]'));
+        eq('Pinned view', cardPaths(), [TCD, BREAD]);
+        click($('#decks-side [data-view="engine"]'));
+        eq('Engine view shows the kitchen sink', cardPaths(), [KITCHEN]);
+        mouse(card(KITCHEN), 'contextmenu');
+        assert('engine deck has no Remove from Recent', $$('#decks-menu .mi span').every(function (s) { return s.textContent !== 'Remove from Recent'; }));
+        key('Escape');
+        clearPosted();
+        click($('#decks-side [data-act="add-folder"]'));
+        eq('Add folder… posts decksAddFolder', posted().map(function (m) { return m.type; }), ['decksAddFolder']);
+        var withFolders = fixture();
+        withFolders.folders = [{ path: '/Users/me/Talks', name: 'Talks', count: 0, available: true },
+                               { path: '/Volumes/TOSHIBA/old', name: 'old', count: 0, available: false }];
+        P.render(withFolders);
+        eq('folders listed after projects, Add folder… last', $$('#decks-side h6').map(function (h) { return h.textContent; }), ['Projects', 'Folders', 'Engine']);
+        assert('missing folder dimmed', $('#decks-side [data-path="/Volumes/TOSHIBA/old"]').classList.contains('missing'));
+        click($('#decks-side [data-path="/Volumes/TOSHIBA/old"]'));
+        eq('unavailable folder explains itself', text('#decks-none'), 'This folder is not available. It may be on a drive that is not connected.');
+        clearPosted();
+        mouse($('#decks-side [data-path="/Users/me/Talks"]'), 'contextmenu');
+        eq('folder menu', $$('#decks-menu .mi span').map(function (s) { return s.textContent; }), ['Reveal in Finder', 'Remove Folder from Decks']);
+        click($$('#decks-menu .mi')[1]);
+        eq('Remove Folder posts decksRemoveFolder', posted('decksRemoveFolder'), [{ type: 'decksRemoveFolder', path: '/Users/me/Talks' }]);
+        assert('removed folder leaves the sidebar', !$('#decks-side [data-path="/Users/me/Talks"]'));
+        P.render(fixture());
+        assert('a view that disappears falls back to Recent', $('#decks-side .side-item.on').dataset.view === 'recent');
+        click($('#decks-side [data-view="recent"]'));
+
+        section('Search');
+        P.render(fixture());
+        P.filter('mada');
+        assert('search hides the hero', !visible($('#decks-hero')));
+        eq('search across titles, projects and paths', cardPaths(), [BREAD, NBER, NOVA, PRINCETON, CSAE]);
+        eq('results header', headerText(), 'Results 5 decks match “mada”');
+        P.filter('LONG RUN tcd');
+        eq('all words must match, case-insensitive, paths included', cardPaths(), [TCD]);
+        P.filter('Learner');
+        eq('project names match', cardPaths(), [NORMS]);
+        P.filter('kitchen');
+        eq('engine decks are searchable', cardPaths(), [KITCHEN]);
+        P.filter('zzz');
+        eq('no match message', text('#decks-none'), 'No decks match “zzz”.');
+        click($('#decks-side [data-view="project"][data-name="Long-run"]'));
+        P.filter('fade');
+        eq('search inside a project view is scoped to it', cardPaths(), [EQ, LISBON]);
+        eq('scoped results header', headerText(), 'Results in Long-run 2 decks match “fade”');
+        P.filter('');
+        eq('clearing the search restores the view', cardPaths(), [TCD, EQ, LISBON]);
+        click($('#decks-side [data-view="recent"]'));
+        assert('Recent view restores the hero', visible($('#decks-hero')));
+
+        section('Drag and drop');
+        clearPosted();
+        function dragEvent(type, uriList) {
+            var store = { 'text/uri-list': uriList || '' };
+            var dt = { types: ['Files', 'text/uri-list'], dropEffect: 'none', getData: function (k) { return store[k] || ''; } };
+            var e = new W.Event(type, { bubbles: true, cancelable: true });
+            Object.defineProperty(e, 'dataTransfer', { value: dt });
+            D.body.dispatchEvent(e);
+            return e;
+        }
+        var enter = dragEvent('dragenter');
+        assert('dragging files shows the drop target', enter.defaultPrevented && visible($('#decks-drop')));
+        assert('dragover accepts the drop', dragEvent('dragover').defaultPrevented);
+        var drop = dragEvent('drop', 'file:///Users/me/Talks/My%20Deck/index.html\r\n');
+        assert('drop never navigates the page', drop.defaultPrevented && !visible($('#decks-drop')));
+        eq('dropped index.html opens in Edit', posted('decksOpen'), [{ type: 'decksOpen', path: '/Users/me/Talks/My Deck/index.html', mode: 'edit' }]);
+        clearPosted();
+        dragEvent('drop', '# comment\nfile:///Users/me/Talks/deck-folder/');
+        eq('dropped folder opens in Edit', posted('decksOpen'), [{ type: 'decksOpen', path: '/Users/me/Talks/deck-folder', mode: 'edit' }]);
+        clearPosted();
+        dragEvent('drop', 'file:///Users/me/notes.pdf');
+        dragEvent('drop', '');
+        eq('other files and path-less drops post nothing', posted('decksOpen').length, 0);
+        P.setDropActive(true);
+        assert('setDropActive(true) shows the drop target', visible($('#decks-drop')));
+        P.setDropActive(false);
+        assert('setDropActive(false) hides it', !visible($('#decks-drop')));
+
+        section('Robustness');
+        var threw = null;
+        try {
+            P.render('{not json');
+            P.render(null);
+            P.render({ decks: [{ path: '/x/minimal/index.html', title: 'Only the contract fields', project: 'P', modified: NOW,
+                                 slideCount: 3, lastSlide: 0, lastStep: 0, lastSlideTitle: 'Title', pinned: false, sources: ['recent'], thumbnailDataURL: null }],
+                       continueDeck: '/x/minimal/index.html', projects: [{ name: 'P', count: 1 }], folders: ['/x'] });
+        } catch (err) { threw = err; }
+        assert('bad and minimal models render without throwing', threw === null, threw && threw.message);
+        assert('minimal model: hero without a position line at slide 1', visible($('#decks-hero')) && !visible($('#decks-hero .where')));
+        eq('minimal model: facts', text('#decks-hero .hero-facts'), '3 slides');
+        P.render({ decks: [Object.assign(fixture().decks[0], { lastSlide: 52, lastSlideLabel: 'A17', lastSlideTitle: 'Appendix: trimming' })], continueDeck: TCD, projects: [], folders: [] });
+        eq('appendix position wording', text('#decks-hero .where-text'), 'You left off on appendix slide A17, Appendix: trimming');
+        var html = '<img src=x onerror="window.__xss=1">';
+        P.render({ decks: [deck('/x/evil/index.html', html, html, html, html, NOW)], projects: [{ name: html, count: 1 }], folders: [], continueDeck: null });
+        await sleep(30);
+        assert('titles are text, never HTML', !W.__xss && text('#decks-grid .card-title') === html);
+
+        section('Dates');
+        var L = P._editedLabel;
+        eq('today', L(new Date(2026, 9, 28, 7, 42).getTime()), 'edited today at 07:42');
+        eq('yesterday', L(new Date(2026, 9, 27, 18, 5).getTime()), 'edited yesterday at 18:05');
+        eq('this year', L(new Date(2026, 4, 3).getTime()), 'edited 3 May');
+        eq('earlier year', L(new Date(2025, 11, 1).getTime()), 'edited 1 Dec 2025');
+
+        var summary = document.createElement('div');
+        summary.className = 'summary';
+        summary.textContent = passed + '/' + total + ' passed' + (failed ? ', ' + failed + ' failed' : '');
+        resultsEl.appendChild(summary);
+        window.DECKS_TEST_RESULTS = { passed: passed, failed: failed, total: total };
+    }
+
+    run().catch(function (err) {
+        failed++; total++;
+        log('fail', '✗ test run crashed — ' + (err && err.stack || err));
+        window.DECKS_TEST_RESULTS = { passed: passed, failed: failed, total: total };
+    });
+})();
+</script>
+</body>
+</html>

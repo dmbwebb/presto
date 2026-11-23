@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=1280">
+    <title>WebSlides Engine Layout Tests</title>
+    <link rel="stylesheet" href="../engine/webslides.css">
+    <link rel="stylesheet" href="../engine/themes/academic.css">
+    <!-- A KaTeX-looking script whose renderer only appears later (see the stub
+         installed below), so the engine has to wait for it before WS.ready. -->
+    <script src="data:text/javascript,/*katex-auto-render-stub*/"></script>
+    <script defer src="../engine/webslides.js"></script>
+    <style>
+        /* Fixed table metrics so the geometry checks do not depend on theme font sizes.
+           The 24px margins (which the theme removes inside .table-container) are
+           deliberate: decks can restore them, and the fitter must cope. The
+           "Theme layouts" slides use plain tables under the real theme rules. */
+        .slide .fixture-table { font-size: 16px; line-height: 1.4; margin: 24px 0; }
+        .slide .fixture-table th,
+        .slide .fixture-table td { font-size: 16px; padding: 6px 12px; }
+        .slide .fixture-note { font-size: 20px; line-height: 1.3; margin-top: 12px; }
+        #test-results {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            z-index: 9999;
+            background: rgba(0,0,0,0.9);
+            color: #fff;
+            padding: 16px;
+            border-radius: 8px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            max-height: 90vh;
+            overflow-y: auto;
+            min-width: 400px;
+        }
+        #test-results .pass { color: #4ade80; }
+        #test-results .fail { color: #f87171; }
+        #test-results .section { color: #60a5fa; font-weight: bold; margin-top: 8px; }
+        #test-results .summary { margin-top: 12px; padding-top: 8px; border-top: 1px solid #555; font-weight: bold; }
+    </style>
+</head>
+<body>
+<div class="ws-deck">
+    <section class="slide title">
+        <h1>Layout Test Deck</h1>
+    </section>
+
+    <section class="slide content" id="t-scaled">
+        <h2>Scaled table followed by a note</h2>
+        <div class="table-container" id="scaled-container" data-fixture-table="tall"></div>
+        <p class="fixture-note" id="scaled-note">Note under the table: every row above must stay visible.</p>
+    </section>
+
+    <section class="slide content" id="t-math">
+        <h2>Math inside a loaded table</h2>
+        <div class="table-container" id="math-container" data-fixture-table="math"></div>
+    </section>
+
+    <section class="slide content" id="t-grow">
+        <h2>Small table grows</h2>
+        <div class="table-container" id="grow-container" data-fixture-table="small"></div>
+        <p class="fixture-note" id="grow-note">Text under a grown table stays on the slide.</p>
+    </section>
+
+    <section class="slide content" id="t-nogrow">
+        <h2>Small table with growth disabled</h2>
+        <div class="table-container" id="nogrow-container" data-no-grow data-fixture-table="small"></div>
+    </section>
+
+    <section class="slide content" id="t-grow-height">
+        <h2>Growth limited by height</h2>
+        <div class="table-container" id="grow-height-container" data-fixture-table="medium"></div>
+        <p class="fixture-note" id="grow-height-note">First note line under the table.</p>
+        <p class="fixture-note" id="grow-height-note-2">Second note line, which must not be pushed off the slide.</p>
+    </section>
+
+    <section class="slide content" id="t-inline-overlay">
+        <h2>Inline table with overlays</h2>
+        <div class="table-container" id="inline-overlay-container"
+             data-overlays='[{"cols":[1],"step":"1"},{"rows":[0],"step":"2","class":"blue"}]'>
+            <table class="fixture-table">
+                <thead><tr><th>Outcome</th><th>Effect</th><th>SE</th></tr></thead>
+                <tbody>
+                    <tr><td>Learning</td><td>0.21</td><td>(0.05)</td></tr>
+                    <tr><td>Attendance</td><td>0.04</td><td>(0.02)</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="slide content" id="t-inline-big">
+        <h2>Inline table that must shrink</h2>
+        <div class="table-container" id="inline-big-container"></div>
+        <p class="fixture-note" id="inline-big-note">Note under an inline table.</p>
+    </section>
+
+    <!-- Theme layouts: these tables carry no fixture class, so the theme's own
+         table rules (font, padding, zero margins in .table-container) apply. -->
+    <section class="slide content" id="t-fig-below">
+        <h2>Table above a figure</h2>
+        <div class="table-container" id="fig-below-container" data-theme-table="small"></div>
+        <div class="fig-plot"><img id="fig-below-img" data-fixture-figure alt="figure"></div>
+    </section>
+
+    <section class="slide content" id="t-fig-below-nogrow">
+        <h2>Table above a figure</h2>
+        <div class="table-container" data-no-grow data-theme-table="small"></div>
+        <div class="fig-plot"><img id="fig-below-nogrow-img" data-fixture-figure alt="figure"></div>
+    </section>
+
+    <section class="slide content" id="t-fig-notes">
+        <h2>Tall table in a figure-with-notes layout</h2>
+        <div class="fig-notes">
+            <div class="fig-plot"><div class="table-container" id="fig-notes-container" data-theme-table="tall"></div></div>
+            <div class="side-notes"><div class="side-note">A side note</div></div>
+        </div>
+    </section>
+
+    <section class="slide content" id="t-footnote">
+        <h2>Small table with a footnote</h2>
+        <div class="table-container" id="footnote-container" data-theme-table="tiny"></div>
+        <div class="footnote" id="footnote-note">Notes: standard errors clustered by village.</div>
+    </section>
+
+    <section class="slide content" id="t-header-links">
+        <h2>Wide table with an appendix button</h2>
+        <div class="table-container" id="header-links-container" data-theme-table="wide"></div>
+        <div class="header-links"><a class="ws-appendix-link" id="header-links-button" href="#t-grow">Robustness checks</a></div>
+    </section>
+
+    <section class="slide content" id="t-header-links-footnote">
+        <h2>Footnote with an appendix button</h2>
+        <p>Body text.</p>
+        <div class="footnote" id="header-links-footnote">Notes: standard errors clustered by village; N counts households surveyed at endline in all three districts, and every specification includes strata fixed effects and the baseline value of the outcome where available.</div>
+        <div class="header-links"><a class="ws-appendix-link" id="header-links-footnote-button" href="#t-grow">Robustness checks</a></div>
+    </section>
+</div>
+<div id="ws-footer">
+    <span id="ws-footer-left">Layout Tests</span>
+    <span id="ws-footer-right"></span>
+</div>
+
+<div id="test-results"></div>
+
+<script>
+// Runs before the deferred engine: build the fixture tables.
+(function () {
+    var inlineOnly = new URLSearchParams(window.location.search).has('inline-only');
+
+    function rows(count, cols) {
+        var html = '';
+        for (var r = 0; r < count; r++) {
+            html += '<tr>';
+            for (var c = 0; c < cols; c++) html += '<td>' + (c === 0 ? 'Row ' + (r + 1) : (0.1 * (r + c)).toFixed(2)) + '</td>';
+            html += '</tr>';
+        }
+        return html;
+    }
+
+    function tableHtml(kind) {
+        if (kind === 'tall') {
+            return '<table class="fixture-table"><thead><tr><th>Outcome</th><th>(1)</th><th>(2)</th><th>(3)</th></tr></thead>' +
+                '<tbody>' + rows(24, 4).replace('<td>Row 24</td>', '<td id="scaled-last-cell">Row 24</td>') + '</tbody></table>';
+        }
+        if (kind === 'math') {
+            return '<table class="fixture-table"><thead><tr><th>Coefficient</th><th>Estimate</th></tr></thead>' +
+                '<tbody><tr><td id="math-cell">$\\beta_1$</td><td>0.21</td></tr></tbody></table>';
+        }
+        if (kind === 'small') {
+            return '<table class="fixture-table"><thead><tr><th>A</th><th>B</th></tr></thead>' +
+                '<tbody><tr><td>1</td><td>2</td></tr><tr><td>3</td><td>4</td></tr></tbody></table>';
+        }
+        if (kind === 'medium') {
+            return '<table class="fixture-table"><thead><tr><th>Outcome</th><th>Effect</th></tr></thead>' +
+                '<tbody>' + rows(9, 2) + '</tbody></table>';
+        }
+        return '';
+    }
+
+    document.querySelectorAll('[data-fixture-table]').forEach(function (el) {
+        el.setAttribute('data-table-src',
+            'data:text/html;charset=utf-8,' + encodeURIComponent(tableHtml(el.getAttribute('data-fixture-table'))));
+    });
+    document.getElementById('inline-big-container').innerHTML = tableHtml('tall')
+        .replace('id="scaled-last-cell"', 'id="inline-big-last-cell"');
+
+    // Theme-styled inline tables (no fixture class) and a fixed-size figure.
+    function themeTableHtml(kind) {
+        // wide: grows until its height fills the slide, by then reaching under the bottom-right button
+        var shape = { tiny: [2, 2], small: [4, 3], tall: [16, 3], wide: [10, 11] }[kind];
+        var head = ['Outcome', 'ITT', 'SE', '(3)', '(4)', '(5)', '(6)', '(7)', '(8)', '(9)', '(10)'].slice(0, shape[1]);
+        var body = '';
+        for (var r = 0; r < shape[0]; r++) {
+            body += '<tr><td>' + (kind === 'wide' ? 'Outcome variable number ' : 'Outcome ') + (r + 1) + '</td>';
+            for (var c = 1; c < shape[1]; c++) body += '<td>' + (0.01 * (r + c)).toFixed(2) + '</td>';
+            body += '</tr>';
+        }
+        return '<table><thead><tr><th>' + head.join('</th><th>') + '</th></tr></thead><tbody>' + body + '</tbody></table>';
+    }
+    document.querySelectorAll('[data-theme-table]').forEach(function (el) {
+        el.innerHTML = themeTableHtml(el.getAttribute('data-theme-table'));
+    });
+    document.querySelectorAll('[data-fixture-figure]').forEach(function (img) {
+        img.src = 'data:image/svg+xml,' + encodeURIComponent(
+            '<svg xmlns="http://www.w3.org/2000/svg" width="800" height="300"><rect width="800" height="300" fill="#ccc"/></svg>');
+    });
+
+    if (inlineOnly) {
+        // A deck with no data-table-src containers at all.
+        document.querySelectorAll('[data-table-src]').forEach(function (el) {
+            el.closest('section.slide').remove();
+        });
+    }
+
+    // KaTeX stand-in: appears only after the tables have loaded, like a slow CDN.
+    window.__mathCalls = [];
+    function renderStub(root, options) {
+        window.__mathCalls.push({
+            root: root && root.id ? root.id : (root && root.tagName),
+            delimiters: options && options.delimiters
+        });
+        var walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+        var nodes = [];
+        while (walker.nextNode()) nodes.push(walker.currentNode);
+        nodes.forEach(function (node) {
+            var match = /\$([^$]+)\$/.exec(node.nodeValue);
+            if (!match) return;
+            var span = document.createElement('span');
+            span.className = 'katex';
+            span.textContent = match[1].replace('\\beta_1', 'β1');
+            var after = node.splitText(match.index);
+            after.nodeValue = after.nodeValue.slice(match[0].length);
+            node.parentNode.insertBefore(span, after);
+        });
+    }
+    // Late enough that WS.ready would already have resolved without waiting.
+    window.setTimeout(function () { window.renderMathInElement = renderStub; }, 1200);
+})();
+</script>
+
+<script>
+window.addEventListener('load', function () {
+    var ready = window.WS && window.WS.ready && typeof window.WS.ready.then === 'function'
+        ? window.WS.ready
+        : new Promise(function (resolve) { setTimeout(resolve, 2500); });
+    ready.then(runTests);
+});
+
+function runTests() {
+    var inlineOnly = new URLSearchParams(window.location.search).has('inline-only');
+    var results = document.getElementById('test-results');
+    var passed = 0;
+    var failed = 0;
+    var EPS = 0.75;
+
+    function log(html) { results.innerHTML += html + '<br>'; }
+    function section(name) { log('<span class="section">— ' + name + ' —</span>'); }
+    function assert(name, condition, detail) {
+        if (condition) {
+            log('<span class="pass">✓ ' + name + '</span>');
+            passed++;
+        } else {
+            log('<span class="fail">✗ ' + name + (detail ? ' — ' + detail : '') + '</span>');
+            failed++;
+        }
+    }
+
+    function slideOf(id) { return document.getElementById(id); }
+    function slideIndex(id) { return WS.slides.indexOf(slideOf(id)); }
+    function ratio(slide) { return slide.getBoundingClientRect().height / 720; }
+    function contentBottom(slide) {
+        var rect = slide.getBoundingClientRect();
+        return rect.bottom - (parseFloat(getComputedStyle(slide).paddingBottom) || 0) * ratio(slide);
+    }
+    function tableScale(container) {
+        var table = container.querySelector('table');
+        var transform = table ? table.style.transform : '';
+        var match = /scale\(([\d.]+)\)/.exec(transform || '');
+        return match ? Number(match[1]) : 1;
+    }
+    function fmt(n) { return Math.round(n * 100) / 100; }
+
+    function checkNoClipping(label, containerId, lastCellId, noteId) {
+        var container = document.getElementById(containerId);
+        var slide = container.closest('section.slide');
+        WS.goToSlide(WS.slides.indexOf(slide), 0);
+        var r = ratio(slide);
+        var scale = tableScale(container);
+        var cRect = container.getBoundingClientRect();
+        var lastRow = document.getElementById(lastCellId).closest('tr').getBoundingClientRect();
+        var note = document.getElementById(noteId).getBoundingClientRect();
+        var bottom = contentBottom(slide);
+        assert(label + ': table is scaled down', scale < 1, 'scale ' + scale);
+        assert(label + ': last row is inside the clipping container',
+            lastRow.bottom <= cRect.bottom + EPS,
+            'row bottom ' + fmt(lastRow.bottom) + ' > container bottom ' + fmt(cRect.bottom));
+        assert(label + ': container is not squeezed below its fitted height',
+            Math.abs(cRect.height / r - parseFloat(container.style.height || '0')) < 1,
+            'rendered ' + fmt(cRect.height / r) + ' vs style ' + container.style.height);
+        assert(label + ': note starts below the table',
+            note.top + EPS >= lastRow.bottom,
+            'note top ' + fmt(note.top) + ' < row bottom ' + fmt(lastRow.bottom));
+        assert(label + ': note stays inside the slide content area',
+            note.bottom <= bottom + EPS,
+            'note bottom ' + fmt(note.bottom) + ' > content bottom ' + fmt(bottom));
+    }
+
+    function checkInlineOverlays() {
+        var container = document.getElementById('inline-overlay-container');
+        var slide = container.closest('section.slide');
+        var index = WS.slides.indexOf(slide);
+        var overlays = container.querySelectorAll('.column-overlay');
+        assert('inline data-overlays are built', overlays.length === 2, overlays.length + ' overlays');
+        assert('inline overlay steps count toward the slide', WS.slideSteps.get(slide) === 2,
+            'maxStep ' + WS.slideSteps.get(slide));
+        WS.goToSlide(index, 1);
+        var colOverlay = overlays[0];
+        var rowOverlay = overlays[1];
+        assert('column overlay is revealed at its step', !!colOverlay && colOverlay.classList.contains('ws-visible'));
+        assert('row overlay is hidden before its step', !!rowOverlay && !rowOverlay.classList.contains('ws-visible'));
+        WS.goToSlide(index, 2);
+        assert('row overlay is revealed at its step', !!rowOverlay && rowOverlay.classList.contains('ws-visible'));
+        if (colOverlay) {
+            var header = container.querySelectorAll('thead th')[1].getBoundingClientRect();
+            var box = colOverlay.getBoundingClientRect();
+            assert('column overlay covers its header cell',
+                box.left <= header.left + 2 && box.right >= header.right - 2 && box.top <= header.top + 2,
+                'overlay ' + fmt(box.left) + '-' + fmt(box.right) + ' header ' + fmt(header.left) + '-' + fmt(header.right));
+        }
+    }
+
+    section('Readiness');
+    assert('WS.ready is a promise', !!(WS.ready && typeof WS.ready.then === 'function'));
+    assert('documentElement carries data-ws-ready="1"', document.documentElement.dataset.wsReady === '1');
+    assert('WS.ready waits for a KaTeX renderer that loads late', typeof window.renderMathInElement === 'function');
+
+    if (!inlineOnly) {
+        section('Scaled table with a following note');
+        checkNoClipping('external table', 'scaled-container', 'scaled-last-cell', 'scaled-note');
+
+        section('Math inside a loaded table');
+        var mathCell = document.getElementById('math-cell');
+        assert('math in a loaded table is rendered', !!mathCell && !!mathCell.querySelector('.katex'),
+            mathCell ? JSON.stringify(mathCell.textContent) : 'missing cell');
+        assert('no literal dollar delimiters remain', !!mathCell && mathCell.textContent.indexOf('$') === -1);
+        var tableCall = window.__mathCalls.filter(function (call) { return call.root === 'math-container'; })[0];
+        assert('table math uses the $$ and $ delimiters',
+            !!tableCall && JSON.stringify((tableCall.delimiters || []).map(function (d) { return d.left; })) === '["$$","$"]',
+            JSON.stringify(window.__mathCalls));
+
+        section('Bounded growth');
+        var grow = document.getElementById('grow-container');
+        var growSlide = grow.closest('section.slide');
+        WS.goToSlide(WS.slides.indexOf(growSlide), 0);
+        var growScale = tableScale(grow);
+        assert('small table grows', growScale > 1.01, 'scale ' + growScale);
+        assert('growth respects the 1.3 cap', growScale <= 1.3 + 1e-9, 'scale ' + growScale);
+        var growTable = grow.querySelector('table').getBoundingClientRect();
+        var growBox = grow.getBoundingClientRect();
+        assert('grown table stays inside its container',
+            growTable.right <= growBox.right + EPS && growTable.bottom <= growBox.bottom + EPS,
+            'table ' + fmt(growTable.right) + ',' + fmt(growTable.bottom) + ' container ' + fmt(growBox.right) + ',' + fmt(growBox.bottom));
+        assert('text under the grown table stays on the slide',
+            document.getElementById('grow-note').getBoundingClientRect().bottom <= contentBottom(growSlide) + EPS);
+
+        assert('data-no-grow keeps the base size', tableScale(document.getElementById('nogrow-container')) === 1,
+            'scale ' + tableScale(document.getElementById('nogrow-container')));
+
+        var growHeight = document.getElementById('grow-height-container');
+        var growHeightSlide = growHeight.closest('section.slide');
+        WS.goToSlide(WS.slides.indexOf(growHeightSlide), 0);
+        var growHeightScale = tableScale(growHeight);
+        assert('height-limited table never shrinks below base when it fits', growHeightScale >= 1, 'scale ' + growHeightScale);
+        var secondNote = document.getElementById('grow-height-note-2').getBoundingClientRect();
+        assert('growth never pushes later content off the slide',
+            secondNote.bottom <= contentBottom(growHeightSlide) + EPS,
+            'note bottom ' + fmt(secondNote.bottom) + ' > ' + fmt(contentBottom(growHeightSlide)) + ' (scale ' + growHeightScale + ')');
+    }
+
+    section('Inline tables');
+    checkInlineOverlays();
+    checkNoClipping('inline table', 'inline-big-container', 'inline-big-last-cell', 'inline-big-note');
+
+    function show(id) {
+        var slide = slideOf(id);
+        WS.goToSlide(WS.slides.indexOf(slide), 0);
+        return slide;
+    }
+    function box(id) { return document.getElementById(id).getBoundingClientRect(); }
+    function tableBox(containerId) { return document.getElementById(containerId).querySelector('table').getBoundingClientRect(); }
+    function overlaps(a, b) {
+        return a.left < b.right - EPS && b.left < a.right - EPS && a.top < b.bottom - EPS && b.top < a.bottom - EPS;
+    }
+    function fmtBox(b) { return '[' + fmt(b.left) + ',' + fmt(b.top) + ' ' + fmt(b.right) + ',' + fmt(b.bottom) + ']'; }
+
+    section('Theme layouts');
+    show('t-fig-below-nogrow');
+    var naturalFigure = box('fig-below-nogrow-img').height;
+    var figureSlide = show('t-fig-below');
+    var figure = box('fig-below-img');
+    assert('a table above a .fig-plot does not squeeze the figure',
+        naturalFigure > 100 && figure.height >= naturalFigure - EPS,
+        'figure ' + fmt(figure.height) + ' vs ' + fmt(naturalFigure) + ' without growth (table scale ' +
+        tableScale(document.getElementById('fig-below-container')) + ')');
+    assert('the figure under the table stays inside the content area', figure.bottom <= contentBottom(figureSlide) + EPS,
+        'figure bottom ' + fmt(figure.bottom) + ' > ' + fmt(contentBottom(figureSlide)));
+    assert('a table that fits above a .fig-plot keeps its natural size',
+        tableScale(document.getElementById('fig-below-container')) === 1,
+        'scale ' + tableScale(document.getElementById('fig-below-container')));
+
+    var figNotesSlide = show('t-fig-notes');
+    var figNotes = document.getElementById('fig-notes-container');
+    var figNotesRow = figNotes.querySelector('tbody tr:last-child').getBoundingClientRect();
+    assert('a tall table inside .fig-notes > .fig-plot is scaled down', tableScale(figNotes) < 1, 'scale ' + tableScale(figNotes));
+    assert('its last row stays inside the content area', figNotesRow.bottom <= contentBottom(figNotesSlide) + EPS,
+        'row bottom ' + fmt(figNotesRow.bottom) + ' > ' + fmt(contentBottom(figNotesSlide)));
+    assert('its last row stays inside the clipping container', figNotesRow.bottom <= figNotes.getBoundingClientRect().bottom + EPS,
+        'row bottom ' + fmt(figNotesRow.bottom) + ' > container bottom ' + fmt(figNotes.getBoundingClientRect().bottom));
+
+    var footnoteSlide = show('t-footnote');
+    var footnoteScale = tableScale(document.getElementById('footnote-container'));
+    var footnoteTable = tableBox('footnote-container');
+    var footnote = box('footnote-note');
+    assert('a pinned .footnote does not stop a small table growing', footnoteScale > 1.01, 'scale ' + footnoteScale);
+    assert('the footnote stays below the grown table and inside the content area',
+        footnote.top + EPS >= footnoteTable.bottom && footnote.bottom <= contentBottom(footnoteSlide) + EPS,
+        'table bottom ' + fmt(footnoteTable.bottom) + ', footnote ' + fmt(footnote.top) + '-' + fmt(footnote.bottom));
+
+    show('t-header-links');
+    var linkedTable = tableBox('header-links-container');
+    var linkButton = box('header-links-button');
+    assert('a grown table stays clear of the pinned appendix button', !overlaps(linkedTable, linkButton),
+        'table ' + fmtBox(linkedTable) + ' button ' + fmtBox(linkButton) + ' (scale ' +
+        tableScale(document.getElementById('header-links-container')) + ')');
+    show('t-header-links-footnote');
+    var linkedFootnote = box('header-links-footnote');
+    var footnoteButton = box('header-links-footnote-button');
+    assert('a footnote stays clear of the pinned appendix button', !overlaps(linkedFootnote, footnoteButton),
+        'footnote ' + fmtBox(linkedFootnote) + ' button ' + fmtBox(footnoteButton));
+
+    var total = passed + failed;
+    var color = failed === 0 ? 'pass' : 'fail';
+    log('<span class="summary ' + color + '">' + passed + '/' + total + ' passed</span>');
+    window.LAYOUT_TEST_RESULTS = { variant: inlineOnly ? 'inline-only' : 'default', passed: passed, failed: failed, total: total };
+    console.log('LAYOUT_TESTS: ' + passed + '/' + total + ' passed, ' + failed + ' failed');
+    WS.goToSlide(0, 0);
+}
+</script>
+</body>
+</html>

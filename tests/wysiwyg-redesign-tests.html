@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=1280">
+    <title>Presto visual editor: redesign features</title>
+    <link rel="stylesheet" href="../engine/webslides.css">
+    <link rel="stylesheet" href="../engine/themes/academic.css">
+    <link rel="stylesheet" href="../presto/ui-tokens.css">
+    <script>
+    // Deterministic KaTeX stand-in: renders the markup shape the serializer
+    // reads (annotation + katex/katex-display) and throws on unbalanced braces
+    // when asked to, like KaTeX's ParseError.
+    (function () {
+        function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
+        function markup(tex, display) {
+            var inner = '<span class="katex"><span class="katex-mathml"><math><semantics><mrow></mrow>' +
+                '<annotation encoding="application/x-tex">' + esc(tex) + '</annotation></semantics></math></span>' +
+                '<span class="katex-html" aria-hidden="true">' + esc(tex) + '</span></span>';
+            return display ? '<span class="katex-display">' + inner + '</span>' : inner;
+        }
+        function balanced(tex) {
+            var depth = 0;
+            for (var i = 0; i < tex.length; i++) {
+                if (tex[i] === '{') depth++;
+                if (tex[i] === '}') depth--;
+                if (depth < 0) return false;
+            }
+            return depth === 0;
+        }
+        window.katex = {
+            calls: 0,
+            render: function (tex, el, opts) {
+                window.katex.calls++;
+                if (opts && opts.throwOnError && !balanced(tex)) {
+                    throw new Error("KaTeX parse error: Expected '}', got 'EOF' at end of input: " + tex);
+                }
+                el.innerHTML = markup(tex, opts && opts.displayMode);
+            },
+            markup: markup
+        };
+    })();
+    </script>
+    <script defer src="../engine/webslides.js"></script>
+    <script defer src="../presto/wysiwyg.js"></script>
+    <style>
+        .eqbox { background: var(--color-card); padding: 12px 24px; }
+        #test-results {
+            position: fixed; top: 10px; right: 10px; z-index: 2147483200;
+            background: rgba(0,0,0,0.9); color: #fff; padding: 16px; border-radius: 8px;
+            font-family: monospace; font-size: 11px; max-height: 90vh; overflow-y: auto; min-width: 420px;
+        }
+        #test-results .pass { color: #4ade80; }
+        #test-results .fail { color: #f87171; }
+        #test-results .section { color: #60a5fa; font-weight: bold; margin-top: 8px; }
+        #test-results .summary { margin-top: 12px; padding-top: 8px; border-top: 1px solid #555; font-weight: bold; }
+    </style>
+</head>
+<body>
+<div class="ws-deck">
+    <section class="slide title" id="r-title"><h1>Redesign Deck</h1></section>
+    <section class="slide content" id="r-content">
+        <h2>Content</h2>
+        <p id="p1">First paragraph</p>
+        <p id="p2">Second paragraph</p>
+        <div class="box" id="box1"><p id="box1-p">Box body</p></div>
+        <ul id="plain">
+            <li id="pl1" data-step="1">Stepped one</li>
+            <li id="pl2" data-step="2">Stepped two</li>
+        </ul>
+        <p id="bad" data-step="3.5">Malformed step</p>
+        <div class="header-links bl"><a class="ws-appendix-link" id="lk" href="#appx-target">Spec</a> <a class="ws-appendix-link" id="lk2" href="#nowhere">Lost</a></div>
+    </section>
+    <section class="slide content" id="r-math">
+        <h2>Maths</h2>
+        <div class="eqbox" id="eqb"><span class="katex-display" id="eqd"><span class="katex"><span class="katex-mathml"><math><semantics><mrow></mrow><annotation encoding="application/x-tex">Y = \alpha + \beta t</annotation></semantics></math></span><span class="katex-html" aria-hidden="true">Y</span></span></span></div>
+        <p id="inl">Inline <span class="katex" id="eqi"><span class="katex-mathml"><math><semantics><mrow></mrow><annotation encoding="application/x-tex">x^2</annotation></semantics></math></span><span class="katex-html" aria-hidden="true">x2</span></span> here.</p>
+    </section>
+    <section class="slide content" id="r-reveal">
+        <h2>Reveal list</h2>
+        <ul id="rl" data-reveal="each" data-reveal-start="1"><li id="rl1">Alpha</li><li id="rl2">Beta</li></ul>
+    </section>
+    <section class="slide content" id="r-ext">
+        <h2>Outside changes</h2>
+        <p id="ext-p">Original body</p>
+    </section>
+    <section class="slide appendix content" id="appx-target">
+        <h2>Appendix: target</h2>
+        <p>Target body</p>
+    </section>
+    <section class="slide appendix content">
+        <h2>No id here</h2>
+        <p>Body</p>
+    </section>
+</div>
+<div id="ws-footer"><span id="ws-footer-left">Redesign</span><span id="ws-footer-right"></span></div>
+<div id="test-results"></div>
+
+<script>
+window.addEventListener('load', function () { runAllTests(); });
+
+var passed = 0, failed = 0, total = 0;
+var resultsEl = null;
+function log(cls, text) {
+    var div = document.createElement('div');
+    div.className = cls;
+    div.textContent = text;
+    resultsEl.appendChild(div);
+}
+function section(name) { log('section', name); }
+function assert(name, condition, detail) {
+    total++;
+    if (condition) { passed++; log('pass', '✓ ' + name); }
+    else {
+        failed++;
+        log('fail', '✗ ' + name + (detail !== undefined ? ' — ' + JSON.stringify(detail) : ''));
+        console.error('FAIL: ' + name, detail);
+    }
+}
+function assertEqual(name, actual, expected) {
+    assert(name, actual === expected, 'got ' + JSON.stringify(actual) + ', expected ' + JSON.stringify(expected));
+}
+function tick(ms) { return new Promise(function (r) { setTimeout(r, ms || 0); }); }
+function waitFor(cond, timeoutMs) {
+    var deadline = Date.now() + (timeoutMs || 5000);
+    return new Promise(function (resolve, reject) {
+        (function poll() {
+            if (cond()) return resolve();
+            if (Date.now() > deadline) return reject(new Error('waitFor timeout'));
+            setTimeout(poll, 40);
+        })();
+    });
+}
+function mouse(type, target, x, y, opts) {
+    target.dispatchEvent(new MouseEvent(type, Object.assign({
+        bubbles: true, cancelable: true, view: window, clientX: x || 0, clientY: y || 0, button: 0
+    }, opts || {})));
+}
+function keydown(target, key, opts) {
+    target.dispatchEvent(new KeyboardEvent('keydown', Object.assign({ bubbles: true, cancelable: true, key: key }, opts || {})));
+}
+function center(el) {
+    var r = el.getBoundingClientRect();
+    return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+}
+function visible(el) { return !!el && !el.hidden && el.offsetParent !== null; }
+function group(cls) { return document.querySelector('#presto-wysiwyg-toolbar .' + cls); }
+function groupShown(cls) { var g = group(cls); return !!g && !g.hidden; }
+
+var messages = [];
+function messagesOfType(type) { return messages.filter(function (m) { return m.type === type; }); }
+function lastMessage(type) { var l = messagesOfType(type); return l.length ? l[l.length - 1] : null; }
+function sectionHTML(slide, body) {
+    return '<section class="' + slide.className.replace(/\s*ws-active\s*/, ' ').trim() + '"' +
+        (slide.id ? ' id="' + slide.id + '"' : '') + '>' + body + '</section>';
+}
+function dividersTidy() {
+    var kids = Array.prototype.slice.call(document.getElementById('presto-wysiwyg-toolbar').children)
+        .filter(function (c) { return !c.hidden && (c.classList.contains('pw-group') || c.classList.contains('pw-divider')); });
+    for (var i = 0; i < kids.length; i++) {
+        var isDiv = kids[i].classList.contains('pw-divider');
+        if (isDiv && (i === 0 || i === kids.length - 1)) return false;
+        if (isDiv && kids[i + 1] && kids[i + 1].classList.contains('pw-divider')) return false;
+    }
+    return true;
+}
+
+async function runAllTests() {
+    resultsEl = document.getElementById('test-results');
+    var W = window.__prestoWysiwyg;
+    try {
+        await waitFor(function () { return window.WS && WS.slides && WS.slides.length === 7; });
+    } catch (e) {
+        assert('deck initialized', false, String(e));
+        return finish();
+    }
+    W.onMessage = function (msg) { messages.push(msg); };
+    localStorage.setItem('presto-hidden-step-opacity', '0.33');
+    W.enable();
+    await waitFor(function () { return W.state().enabled; });
+
+    section('API surface');
+    assert('window.PrestoEdit is defined', !!window.PrestoEdit);
+    ['addTextBox', 'undo', 'redo', 'historyState', 'recordExternalChange', 'refineHistory', 'editEquation', 'handleEscape']
+        .forEach(function (name) { assert('PrestoEdit.' + name + ' is a function', typeof PrestoEdit[name] === 'function'); });
+    var hs = PrestoEdit.historyState();
+    assert('historyState() shape', 'canUndo' in hs && 'canRedo' in hs && 'undoLabel' in hs && 'redoLabel' in hs);
+    assertEqual('empty history: plain Undo title', hs.undoLabel, 'Undo');
+
+    // ===== Contextual format bar =====
+    section('Contextual format bar by kind');
+    WS.goToSlide(1, 2);
+    await tick(30);
+    messages.length = 0;
+    W.select('#p1');
+    assertEqual('paragraph is kind text', W.state().selectionKind, 'text');
+    var es = lastMessage('wysiwygEditingState');
+    assert('wysiwygEditingState carries selectionKind', !!es && es.selectionKind === 'text', es);
+    assert('text: font, style, align groups shown', groupShown('pw-g-font') && groupShown('pw-g-style') && groupShown('pw-g-align'));
+    assert('text: Edit TeX and Box row hidden', !groupShown('pw-g-tex') && !groupShown('pw-g-box'));
+    assert('text: Appears chip and ⋯ shown', groupShown('pw-g-appears') && groupShown('pw-g-more'));
+    assert('text: no kind label', !groupShown('pw-g-kind'));
+    assert('text: Bulleted list offered', !document.querySelector('.pw-bullets').hidden);
+    assert('text: dividers never double up or dangle', dividersTidy());
+    W.select('#pl1');
+    assertEqual('bullet is kind list', W.state().selectionKind, 'list');
+    assert('list: Add bullet shown, Bulleted list hidden',
+        !document.querySelector('.pw-add-bullet').hidden && document.querySelector('.pw-bullets').hidden);
+    W.select('#box1');
+    assertEqual('.box is kind box', W.state().selectionKind, 'box');
+    assert('box: Box row shown with theme swatches', groupShown('pw-g-box') &&
+        document.querySelectorAll('.pw-g-box .pw-swatch').length >= 1);
+    assertEqual('box: labelled Box', document.querySelector('.pw-kind-label').textContent, 'Box');
+    assert('box: dividers tidy', dividersTidy());
+    WS.goToSlide(2, 0);
+    await tick(30);
+    W.select('#eqd');
+    assertEqual('display maths is kind equation', W.state().selectionKind, 'equation');
+    assert('equation: text controls hidden (font, style, align, lists)',
+        !groupShown('pw-g-font') && !groupShown('pw-g-style') && !groupShown('pw-g-align') && !groupShown('pw-g-list'));
+    assert('equation: Edit TeX shown', groupShown('pw-g-tex'));
+    assert('equation in an .eqbox: Box row shown', groupShown('pw-g-box'));
+    assertEqual('equation: labelled Equation', document.querySelector('.pw-kind-label').textContent, 'Equation');
+    assert('equation: dividers tidy', dividersTidy());
+    W.select('#eqi');
+    assertEqual('inline maths is kind equation', W.state().selectionKind, 'equation');
+    assert('inline equation outside a box: no Box row', !groupShown('pw-g-box'));
+    WS.goToSlide(1, 0);
+    await tick(30);
+    var selEvents = [];
+    var onSel = function (e) { selEvents.push(e.detail); };
+    document.addEventListener('presto:selection', onSel);
+    W.select('#lk');
+    assertEqual('link is kind link', W.state().selectionKind, 'link');
+    assert('link: the format bar gives way to the link card', !document.getElementById('presto-wysiwyg-toolbar').classList.contains('visible'));
+    var linkEvent = selEvents[selEvents.length - 1];
+    assert('presto:selection announces the link for the card', !!linkEvent && linkEvent.kind === 'link' &&
+        linkEvent.element === document.getElementById('lk') && linkEvent.editing === false);
+    var lk = document.getElementById('lk');
+    assert('a click on a link inside a header-links row selects the link itself',
+        W.pickSelectable(lk) === lk);
+    W.deselect();
+    var last = selEvents[selEvents.length - 1];
+    assert('deselect announces an empty selection', !!last && last.kind === null && last.element === null);
+    document.removeEventListener('presto:selection', onSel);
+
+    // ===== Equation editing in place =====
+    section('Equation editing (BACKLOG 5)');
+    WS.goToSlide(1, 0);
+    await tick(20);
+    W.select('#p1');
+    assert('editEquation() refuses a non-equation', PrestoEdit.editEquation() === false);
+    WS.goToSlide(2, 0);
+    await tick(20);
+    W.select('#eqd');
+    messages.length = 0;
+    assert('editEquation() opens the editor', PrestoEdit.editEquation() === true);
+    var pop = document.getElementById('presto-wysiwyg-equation');
+    var ta = pop && pop.querySelector('textarea');
+    assert('the popover shows the TeX source', !!ta && ta.value === 'Y = \\alpha + \\beta t', ta && ta.value);
+    assertEqual('the popover says Display', pop.querySelector('.pw-eq-head span').textContent, 'Display');
+    assert('the popover never covers the equation', (function () {
+        var a = pop.getBoundingClientRect(), b = document.getElementById('eqd').getBoundingClientRect();
+        return a.bottom <= b.top || a.top >= b.bottom || a.right <= b.left || a.left >= b.right;
+    })());
+    assert('the live preview renders the TeX', !!pop.querySelector('.pw-eq-preview annotation') &&
+        pop.querySelector('.pw-eq-preview annotation').textContent === 'Y = \\alpha + \\beta t');
+    var es2 = lastMessage('wysiwygEditingState');
+    assert('a focused TeX field reports textEditing to Swift', !!es2 && es2.textEditing === true && es2.selectionKind === 'equation', es2);
+    ta.value = '\\frac{a';
+    ta.dispatchEvent(new Event('input'));
+    assert('a parse error shows inline', pop.querySelector('.pw-eq-error').textContent.indexOf("Expected '}'") >= 0,
+        pop.querySelector('.pw-eq-error').textContent);
+    assert('Apply is disabled while the TeX does not parse', pop.querySelector('.pw-eq-apply').disabled);
+    keydown(ta, 'Enter', { metaKey: true });
+    assert('⌘↩ with an error keeps the editor open', !!document.getElementById('presto-wysiwyg-equation'));
+    assertEqual('nothing was saved for an invalid equation', messagesOfType('wysiwygChanged').length, 0);
+    ta.value = '\\beta + 1';
+    ta.dispatchEvent(new Event('input'));
+    assertEqual('the error clears once it parses', pop.querySelector('.pw-eq-error').textContent, '');
+    keydown(ta, 'Enter');
+    assert('plain Return in display maths does not apply (newline allowed)', !!document.getElementById('presto-wysiwyg-equation'));
+    keydown(ta, 'Enter', { metaKey: true });
+    assert('⌘↩ applies and closes the editor', !document.getElementById('presto-wysiwyg-equation'));
+    var eqSave = lastMessage('wysiwygChanged');
+    assert('the save carries the authored $$…$$ form', !!eqSave && eqSave.html.indexOf('$$\\beta + 1$$') >= 0, eqSave && eqSave.html);
+    assert('the saved equation stays inside its box', !!eqSave && /class="eqbox"[^>]*>\s*\$\$\\beta \+ 1\$\$/.test(eqSave.html), eqSave && eqSave.html);
+    assert('the saved source has no KaTeX markup', eqSave.html.indexOf('katex') < 0);
+    assertEqual('undo names the step', PrestoEdit.historyState().undoLabel, 'Undo Edit Equation');
+    assert('the new equation stays selected', W.state().selectionKind === 'equation');
+    PrestoEdit.undo();
+    assert('undo restores the previous TeX', W.serializeCurrentSlide().indexOf('$$Y = \\alpha + \\beta t$$') >= 0);
+    PrestoEdit.redo();
+    assert('redo reapplies the edit', W.serializeCurrentSlide().indexOf('$$\\beta + 1$$') >= 0);
+    // Escape cancels without a save.
+    W.select(document.querySelector('#eqb .katex-display'));
+    PrestoEdit.editEquation();
+    ta = document.querySelector('#presto-wysiwyg-equation textarea');
+    ta.value = '\\gamma';
+    ta.dispatchEvent(new Event('input'));
+    messages.length = 0;
+    keydown(ta, 'Escape');
+    assert('Escape closes the editor', !document.getElementById('presto-wysiwyg-equation'));
+    assertEqual('Escape saves nothing', messagesOfType('wysiwygChanged').length, 0);
+    assert('Escape leaves the equation as it was', W.serializeCurrentSlide().indexOf('$$\\beta + 1$$') >= 0);
+    assert('the equation is still selected after cancelling', W.state().selectionKind === 'equation');
+    // Inline maths: Return applies.
+    W.select('#eqi');
+    PrestoEdit.editEquation();
+    ta = document.querySelector('#presto-wysiwyg-equation textarea');
+    assertEqual('inline maths says Inline', document.querySelector('#presto-wysiwyg-equation .pw-eq-head span').textContent, 'Inline');
+    ta.value = 'y^3';
+    ta.dispatchEvent(new Event('input'));
+    keydown(ta, 'Enter');
+    assert('Return applies inline maths', !document.getElementById('presto-wysiwyg-equation'));
+    assert('inline maths saves as $…$', W.serializeCurrentSlide().indexOf('Inline $y^3$ here.') >= 0, W.serializeCurrentSlide());
+    // A moved equation keeps its move through the edit.
+    var disp = document.querySelector('#eqb .katex-display');
+    disp.style.translate = '0px 12px';
+    W.select(disp);
+    PrestoEdit.editEquation();
+    ta = document.querySelector('#presto-wysiwyg-equation textarea');
+    ta.value = 'z';
+    ta.dispatchEvent(new Event('input'));
+    keydown(ta, 'Enter', { metaKey: true });
+    // (A lone equation's style merges into its single-child wrapper, here the
+    // .eqbox: serializer behaviour that predates in-place editing.)
+    assert('a moved equation keeps its translate through an edit',
+        /translate: 0px 12px;?">\$\$z\$\$<\/div>/.test(W.serializeCurrentSlide()), W.serializeCurrentSlide());
+    // Double-click opens the editor too.
+    W.deselect();
+    var eqNow = document.querySelector('#eqb .katex-display');
+    mouse('mousedown', eqNow, center(eqNow).x, center(eqNow).y);
+    mouse('mouseup', eqNow, center(eqNow).x, center(eqNow).y);
+    mouse('dblclick', eqNow, center(eqNow).x, center(eqNow).y);
+    assert('double-clicking an equation opens Edit TeX', !!document.getElementById('presto-wysiwyg-equation'));
+    W.closePopover();
+    W.deselect();
+
+    // ===== Theme colours and box backgrounds =====
+    section('Colours (BACKLOG 6)');
+    var theme = W.themeColors();
+    var names = theme.text.map(function (s) { return s.name; });
+    assert('text swatches start with the theme roles', names.slice(0, 5).join(',') === 'Text,Heading,Accent,Accent 2,Muted', names);
+    var accent = theme.text.filter(function (s) { return s.name === 'Accent'; })[0];
+    assertEqual('a theme swatch writes the variable, not a literal', accent.value, 'var(--color-accent)');
+    assert('the named palette is included (--color-red)', theme.text.some(function (s) { return s.variable === '--color-red'; }));
+    assert('backgrounds and borders are not offered as text colours', !theme.text.some(function (s) {
+        return /bg|border|card|box/.test(s.variable || '');
+    }));
+    assertEqual('box swatches come from the theme box colours', theme.box[0].value, 'var(--color-box-bg)');
+    assert('at most three box swatches, as in the mockup', theme.box.length <= 3);
+    WS.goToSlide(1, 2);
+    await tick(20);
+    W.select('#p1');
+    document.querySelector('#presto-wysiwyg-toolbar .pw-color').click();
+    var colorPop = document.getElementById('presto-wysiwyg-colors');
+    assert('the colour button opens the colour popover', !!colorPop);
+    assert('the popover holds a native colour input', !!colorPop.querySelector('input[type="color"]'));
+    messages.length = 0;
+    colorPop.querySelector('.pw-swatch[title="Accent"]').click();
+    assertEqual('picking Accent sets the theme variable', document.getElementById('p1').style.color, 'var(--color-accent)');
+    assert('the saved source keeps the variable', lastMessage('wysiwygChanged').html.indexOf('color: var(--color-accent)') >= 0);
+    assertEqual('colour changes are labelled', PrestoEdit.historyState().undoLabel, 'Undo Colour');
+    document.querySelector('#presto-wysiwyg-toolbar .pw-color').click();
+    document.querySelector('#presto-wysiwyg-colors .pw-swatch[title="Theme default"]').click();
+    assertEqual('Theme default removes the inline colour', document.getElementById('p1').style.color, '');
+    document.querySelector('#presto-wysiwyg-toolbar .pw-color').click();
+    var colorInput = document.querySelector('#presto-wysiwyg-colors input[type="color"]');
+    var depthC = W.state().undoDepth;
+    messages.length = 0;
+    colorInput.value = '#123456';
+    colorInput.dispatchEvent(new Event('input'));
+    colorInput.value = '#654321';
+    colorInput.dispatchEvent(new Event('input'));
+    assertEqual('dragging in the colour panel previews live', getComputedStyle(document.getElementById('p1')).color, 'rgb(101, 67, 33)');
+    assertEqual('the live preview is not yet an undo step', W.state().undoDepth, depthC);
+    colorInput.dispatchEvent(new Event('change'));
+    assertEqual('the change commits one undo step', W.state().undoDepth, depthC + 1);
+    assertEqual('one save for the whole drag', messagesOfType('wysiwygChanged').length, 1);
+    W.closePopover();
+    W.select('#box1');
+    var boxSw = document.querySelector('.pw-g-box .pw-swatch[data-value="var(--color-result-bg)"]') ||
+        document.querySelectorAll('.pw-g-box .pw-swatch')[1];
+    boxSw.click();
+    assertEqual('a box swatch sets the box background', document.getElementById('box1').style.backgroundColor, boxSw.dataset.value);
+    assertEqual('box colour is labelled', PrestoEdit.historyState().undoLabel, 'Undo Box Colour');
+    assert('the chosen box swatch is ringed', boxSw.classList.contains('on'));
+    WS.goToSlide(2, 0);
+    await tick(20);
+    W.select(document.querySelector('#eqb .katex-display'));
+    assert('setBoxColor on a selected equation colours its .eqbox', W.setBoxColor('#FFFFFF') &&
+        document.getElementById('eqb').style.backgroundColor !== '');
+    W.deselect();
+
+    // ===== Appears at step =====
+    section('Appears at step');
+    WS.goToSlide(1, 0);
+    await tick(20);
+    var contentSlide = WS.slides[1];
+    W.select('#p2');
+    assertEqual('chip reads always for an unstepped element', document.querySelector('.pw-appears .pw-chip').textContent, 'always');
+    assertEqual('the malformed data-step="3.5" never counts as a step (BACKLOG 3)', WS.slideSteps.get(contentSlide), 2);
+    var stepsEvents = 0;
+    var onSteps = function () { stepsEvents++; };
+    document.addEventListener('presto:steps', onSteps);
+    messages.length = 0;
+    document.querySelector('#presto-wysiwyg-toolbar .pw-appears').click();
+    var stepPop = document.getElementById('presto-wysiwyg-steps');
+    var items = Array.prototype.map.call(stepPop.querySelectorAll('.pw-item'), function (b) { return b.textContent.trim(); });
+    assert('the step menu offers Always, each step and a new one', items.join('|') === 'Always|At step 1|At step 2|At a new step (3)', items);
+    stepPop.querySelectorAll('.pw-item')[3].click();
+    assertEqual('choosing a new step writes data-step', document.getElementById('p2').getAttribute('data-step'), '3');
+    assertEqual('the slide gains the step', WS.slideSteps.get(contentSlide), 3);
+    assert('the step strip and rail hear presto:steps', stepsEvents >= 1);
+    assertEqual('chip follows', document.querySelector('.pw-appears .pw-chip').textContent, 'step 3');
+    assertEqual('the step change is labelled', PrestoEdit.historyState().undoLabel, 'Undo Reveal Step');
+    assert('the step change was saved', lastMessage('wysiwygChanged').html.indexOf('data-step="3"') >= 0);
+    PrestoEdit.undo();
+    assert('undo removes the step again', !document.getElementById('p2').hasAttribute('data-step'));
+    assertEqual('undo recounts the slide', WS.slideSteps.get(contentSlide), 2);
+    W.select('#pl2');
+    assert('setAppearsAt(1) moves a bullet to step 1', W.setAppearsAt(1) && document.getElementById('pl2').getAttribute('data-step') === '1');
+    assertEqual('the slide now has one step', WS.slideSteps.get(contentSlide), 1);
+    W.select('#pl2');
+    assert('setAppearsAt(null) makes it always visible', W.setAppearsAt(null) && !document.getElementById('pl2').hasAttribute('data-step'));
+    assert('an invalid step is refused', W.setAppearsAt(2.5) === false);
+    W.select('#bad');
+    assertEqual('a malformed step reads never', document.querySelector('.pw-appears .pw-chip').textContent, 'never');
+    WS.goToSlide(3, 0);
+    await tick(20);
+    W.select('#rl2');
+    assertEqual('a generated reveal-list step reads as its step', document.querySelector('.pw-appears .pw-chip').textContent, 'step 2');
+    assert('Always on a reveal-list item writes an explicit 0', W.setAppearsAt(null) &&
+        document.getElementById('rl2').getAttribute('data-step') === '0' && !document.getElementById('rl2').hasAttribute('data-ws-auto-step'));
+    assert('the explicit 0 survives saving', W.serializeCurrentSlide().indexOf('<li id="rl2" data-step="0">') >= 0, W.serializeCurrentSlide());
+    PrestoEdit.undo();
+    document.removeEventListener('presto:steps', onSteps);
+    W.deselect();
+
+    // ===== Reveal-each lists (BACKLOG 16) =====
+    section('Reveal-each lists (BACKLOG 16)');
+    WS.goToSlide(3, 1);
+    await tick(20);
+    var rl1 = document.getElementById('rl1');
+    W.beginTextEdit(rl1);
+    var caret = document.createRange();
+    caret.selectNodeContents(rl1);
+    caret.collapse(false);
+    getSelection().removeAllRanges();
+    getSelection().addRange(caret);
+    keydown(rl1, 'Enter');
+    var lis = document.querySelectorAll('#rl li');
+    assertEqual('Enter adds a bullet', lis.length, 3);
+    var steps = Array.prototype.map.call(lis, function (li) { return li.getAttribute('data-step'); });
+    assertEqual('the list is renumbered: every bullet has its own step', steps.join(','), '1,2,3');
+    assert('the new bullet is a generated step, not a copy', lis[1].hasAttribute('data-ws-auto-step') && lis[1].id === '');
+    assert('the session moved to the new bullet', W.state().textEditing);
+    assert('the new bullet is revealed while typing', lis[1].classList.contains('ws-visible'));
+    assertEqual('the slide counts three steps', WS.slideSteps.get(WS.slides[3]), 3);
+    keydown(lis[1], 'Escape');
+    var rlSaved = lastMessage('wysiwygChanged').html;
+    assert('the saved list carries no generated steps', rlSaved.indexOf('data-step') < 0 && rlSaved.indexOf('data-ws-auto-step') < 0, rlSaved);
+    keydown(document.body, 'Escape');
+    W.select('#rl2');
+    W.deleteSelected();
+    steps = Array.prototype.map.call(document.querySelectorAll('#rl li'), function (li) { return li.getAttribute('data-step'); });
+    assertEqual('deleting a bullet renumbers the rest', steps.join(','), '1,2');
+    W.deselect();
+
+    // ===== Unified undo =====
+    section('Unified undo: visual entries and labels');
+    WS.goToSlide(4, 0);
+    await tick(20);
+    var extIndex = 4;
+    var extSlide = WS.slides[extIndex];
+    messages.length = 0;
+    W.select('#ext-p');
+    W.setFontSize(30);
+    var us = lastMessage('undoState');
+    assert('a visual edit posts undoState', !!us && us.canUndo === true && us.undoLabel === 'Undo Font Size', us);
+    var usCount = messagesOfType('undoState').length;
+    W.select('#ext-p');
+    assertEqual('undoState is not re-posted when nothing changed', messagesOfType('undoState').length, usCount);
+    W.deselect();
+
+    section('Unified undo: outside changes (contract v1.2 item 4)');
+    var beforeHTML = sectionHTML(extSlide, W.serializeSection(extSlide));
+    var afterHTML = sectionHTML(extSlide, '<h2>Outside changes</h2><p id="ext-p">Rewritten by source</p>');
+    var depthBefore = W.state().undoDepth;
+    assert('shell patches the slide (origin source)', window.replacePrestoEditSlideHTML(extIndex, afterHTML) === true);
+    messages.length = 0;
+    assert('recordExternalChange returns true', PrestoEdit.recordExternalChange({
+        index: extIndex, beforeHTML: beforeHTML, afterHTML: afterHTML, origin: 'source'
+    }) === true);
+    assertEqual('earlier history is kept and the change added', W.state().undoDepth, depthBefore + 1);
+    assertEqual('the outside change is labelled', PrestoEdit.historyState().undoLabel, 'Undo Source Edit');
+    assert('recording posts undoState', !!lastMessage('undoState'));
+    messages.length = 0;
+    assert('⌘Z undoes the outside change', PrestoEdit.undo() === true);
+    var undoSave = lastMessage('wysiwygChanged');
+    assert('the undo save carries the full section to install', !!undoSave && undoSave.sectionHTML === beforeHTML, undoSave);
+    assert('…and what Swift must currently have', !!undoSave && undoSave.expectSectionHTML === afterHTML);
+    assert('…with the body as html', !!undoSave && undoSave.html.indexOf('Original body') >= 0 && undoSave.html.indexOf('<section') < 0);
+    assert('the slide shows the earlier version', document.getElementById('ext-p').textContent === 'Original body');
+    assertEqual('redo is now the outside change', PrestoEdit.historyState().redoLabel, 'Redo Source Edit');
+    messages.length = 0;
+    PrestoEdit.redo();
+    var redoSave = lastMessage('wysiwygChanged');
+    assert('redo installs the later version', !!redoSave && redoSave.sectionHTML === afterHTML && redoSave.expectSectionHTML === beforeHTML);
+    assertEqual('the slide shows the later version', document.getElementById('ext-p').textContent, 'Rewritten by source');
+    // Swift refuses: its copy moved on. Everything goes back.
+    PrestoEdit.undo();
+    var refused = lastMessage('wysiwygChanged');
+    W.saveFailed(refused.saveId, 'This slide changed since; nothing was undone');
+    assertEqual('a refused undo puts the slide back', document.getElementById('ext-p').textContent, 'Rewritten by source');
+    var hsR = PrestoEdit.historyState();
+    assert('…and the stacks', hsR.canUndo && hsR.undoLabel === 'Undo Source Edit' && !hsR.canRedo, hsR);
+    assertEqual('…and says why', document.getElementById('presto-wysiwyg-status').textContent, 'This slide changed since; nothing was undone');
+    // Visual undo past the outside change still works.
+    PrestoEdit.undo();
+    var bodyNow = W.serializeCurrentSlide();
+    PrestoEdit.undo();
+    assert('a visual entry before the outside change still undoes', W.serializeCurrentSlide() !== bodyNow &&
+        document.getElementById('ext-p').style.fontSize === '');
+    assert('visual undo saves body-only (no sectionHTML)', !('sectionHTML' in lastMessage('wysiwygChanged')));
+    PrestoEdit.redo();
+    PrestoEdit.redo();
+    assertEqual('redo twice returns to the outside change', document.getElementById('ext-p').textContent, 'Rewritten by source');
+
+    section('Unified undo: Refine and live sessions');
+    var refBefore = sectionHTML(WS.slides[extIndex], W.serializeSection(WS.slides[extIndex]));
+    var refAfter = sectionHTML(WS.slides[extIndex], '<h2>Outside changes</h2><p id="ext-p">Refined text</p>');
+    W.beginTextEdit('#ext-p');
+    document.getElementById('ext-p').appendChild(document.createTextNode(' typing'));
+    window.replacePrestoEditSlideHTML(extIndex, refAfter);
+    messages.length = 0;
+    PrestoEdit.recordExternalChange({ index: extIndex, beforeHTML: refBefore, afterHTML: refAfter, origin: 'refine', prompt: 'Tighten the wording' });
+    assert('recording ends a live session on that slide', !W.state().textEditing);
+    assertEqual('…without saving its stale typing', messagesOfType('wysiwygChanged').length, 0);
+    assertEqual('Refine entries are labelled Refine', PrestoEdit.historyState().undoLabel, 'Undo Refine');
+    var rh = PrestoEdit.refineHistory(extIndex);
+    assert('refineHistory lists the Refine change', rh.length === 1 && rh[0].prompt === 'Tighten the wording' &&
+        typeof rh[0].id === 'string' && typeof rh[0].at === 'number', rh);
+    assertEqual('refineHistory for another slide is empty', PrestoEdit.refineHistory(0).length, 0);
+    PrestoEdit.undo();
+    assertEqual('undoing a Refine takes it off refineHistory', PrestoEdit.refineHistory(extIndex).length, 0);
+    PrestoEdit.redo();
+    assert('identical before/after records nothing', PrestoEdit.recordExternalChange({ index: extIndex, beforeHTML: refAfter, afterHTML: refAfter, origin: 'source' }) === false);
+    assert('a bad index records nothing', PrestoEdit.recordExternalChange({ index: 99, beforeHTML: 'a', afterHTML: 'b' }) === false);
+    W.notifyExternalReplace(extIndex);
+    assert('an unrecorded outside change still clears that slide', !PrestoEdit.historyState().canUndo);
+
+    section('Unified undo: a visual edit on top of an outside change');
+    var authBefore = sectionHTML(WS.slides[extIndex], W.serializeSection(WS.slides[extIndex]));
+    // Authored bytes that a re-serialised body would not reproduce.
+    var authAfter = authBefore.replace(/<\/section>$/, "<p id='ext-q' class=refined>Refined<br/>text</p></section>");
+    window.replacePrestoEditSlideHTML(extIndex, authAfter);
+    PrestoEdit.recordExternalChange({ index: extIndex, beforeHTML: authBefore, afterHTML: authAfter, origin: 'refine', prompt: 'Add a line' });
+    W.select('#ext-q');
+    W.nudge(4, 0);
+    W.deselect();
+    messages.length = 0;
+    PrestoEdit.undo();
+    var visualUndo = lastMessage('wysiwygChanged');
+    assert('undoing the visual edit saves the outside change\'s own section, byte for byte',
+        !!visualUndo && visualUndo.sectionHTML === authAfter && !('expectSectionHTML' in visualUndo), visualUndo);
+    messages.length = 0;
+    PrestoEdit.undo();
+    var outsideUndo = lastMessage('wysiwygChanged');
+    assert('…so undoing the outside change expects exactly what Swift now has',
+        !!outsideUndo && outsideUndo.sectionHTML === authBefore && outsideUndo.expectSectionHTML === authAfter, outsideUndo);
+    assert('the slide is back before the Refine', !document.getElementById('ext-q'));
+    PrestoEdit.redo();
+    messages.length = 0;
+    PrestoEdit.redo();
+    assert('redoing the visual edit saves the moved body', !('sectionHTML' in lastMessage('wysiwygChanged')));
+    messages.length = 0;
+    PrestoEdit.undo();
+    assert('undoing it again after a redo still saves the outside change\'s section',
+        lastMessage('wysiwygChanged').sectionHTML === authAfter);
+    W.notifyExternalReplace(extIndex);
+
+    section('Unified undo: the Refine count keeps the inspector current');
+    var rc = [sectionHTML(WS.slides[extIndex], W.serializeSection(WS.slides[extIndex]))];
+    for (var r = 1; r <= 3; r++) {
+        rc.push(rc[r - 1].replace(/<\/section>$/, '<p>Refine ' + r + '</p></section>'));
+        window.replacePrestoEditSlideHTML(extIndex, rc[r]);
+        if (r === 2) messages.length = 0;
+        PrestoEdit.recordExternalChange({ index: extIndex, beforeHTML: rc[r - 1], afterHTML: rc[r], origin: 'refine', prompt: 'Refine ' + r });
+        if (r === 2) assertEqual('a second Refine in a row posts undoState though its labels are unchanged',
+            messagesOfType('undoState').length, 1);
+    }
+    PrestoEdit.undo();
+    messages.length = 0;
+    PrestoEdit.undo();
+    assert('undoing one Refine of several posts undoState too (one fewer earlier change)',
+        messagesOfType('undoState').length === 1 && PrestoEdit.refineHistory(extIndex).length === 1);
+    W.notifyExternalReplace(extIndex);
+
+    section('Unified undo: cap');
+    W.select('#ext-p');
+    for (var c = 0; c < 105; c++) W.setFontSize(10 + (c % 50));
+    assertEqual('history stays capped at 100 entries per slide', W.state().undoDepth, 100);
+    W.deselect();
+
+    // ===== Escape order =====
+    section('Escape order (BACKLOG 1)');
+    WS.goToSlide(1, 0);
+    await tick(20);
+    W.select('#p1');
+    document.querySelector('#presto-wysiwyg-toolbar .pw-more').click();
+    assert('a popover is open', W.state().popover === 'more');
+    assertEqual('Escape closes the popover first', PrestoEdit.handleEscape(), 'popover');
+    assert('…keeping the selection', W.state().hasSelection);
+    W.beginTextEdit('#p1');
+    assertEqual('then ends the text session', PrestoEdit.handleEscape(), 'text');
+    assert('…keeping the selection', W.state().hasSelection && !W.state().textEditing);
+    assertEqual('then deselects', PrestoEdit.handleEscape(), 'deselect');
+    WS.toggleOverview();
+    assert('overview is open', document.body.classList.contains('ws-overview-active'));
+    assertEqual('then leaves the overview', PrestoEdit.handleEscape(), 'overview');
+    assert('the overview closed', !document.body.classList.contains('ws-overview-active'));
+    assertEqual('then does nothing (never leaves the editor)', PrestoEdit.handleEscape(), 'none');
+    WS.toggleOverview();
+    keydown(document.body, 'Escape');
+    assert('a real Escape keypress in the overview closes it', !document.body.classList.contains('ws-overview-active'));
+
+    // ===== Links =====
+    section('Links (decision 7)');
+    WS.goToSlide(1, 0);
+    await tick(20);
+    var link = document.getElementById('lk');
+    var noIdIndex = 6;
+    messages.length = 0;
+    assert('setLinkTarget points a link at a slide without an id', W.setLinkTarget(link, noIdIndex) === true);
+    var heading = WS.slides[noIdIndex].querySelector('h2');
+    assertEqual('the target slide gets an id on its heading', heading.id, 'appendix-no-id-here');
+    assertEqual('the link points at it', link.getAttribute('href'), '#appendix-no-id-here');
+    var saves = messagesOfType('wysiwygChanged');
+    assert('both slides are saved (target anchor, then the link)', saves.length === 2 && saves[0].index === noIdIndex && saves[1].index === 1,
+        saves.map(function (s) { return s.index; }));
+    assertEqual('the link change is labelled', PrestoEdit.historyState().undoLabel, 'Undo Link Target');
+    PrestoEdit.undo();
+    assertEqual('undo restores the old target', document.getElementById('lk').getAttribute('href'), '#appx-target');
+    link = document.getElementById('lk');
+    messages.length = 0;
+    W.setLinkTarget(link, 5);
+    assertEqual('a slide with its own id is used as is', link.getAttribute('href'), '#appx-target');
+    assertEqual('…with no extra save', messagesOfType('wysiwygChanged').length, 0);
+    // Edit label: a text session on the link; Return finishes it.
+    assert('editLinkLabel starts typing into the link', W.editLinkLabel(link) && W.state().textEditing);
+    document.execCommand('insertText', false, 'Specification');
+    keydown(link, 'Enter');
+    assert('Return finishes a link label', !W.state().textEditing);
+    assertEqual('the new label is kept', document.getElementById('lk').textContent, 'Specification');
+    assert('…and saved', lastMessage('wysiwygChanged').html.indexOf('>Specification</a>') >= 0);
+    W.deselect();
+
+    // ===== In-page fields report textEditing =====
+    section('Text fields report textEditing');
+    W.select('#p1');
+    messages.length = 0;
+    var font = document.getElementById('presto-wysiwyg-font-size');
+    font.focus();
+    await tick(10);
+    assert('a focused font field reports textEditing', lastMessage('wysiwygEditingState') && lastMessage('wysiwygEditingState').textEditing === true);
+    font.blur();
+    await tick(10);
+    assert('blurring it clears textEditing', lastMessage('wysiwygEditingState').textEditing === false);
+    W.deselect();
+
+    finish();
+}
+
+function finish() {
+    var summary = document.createElement('div');
+    summary.className = 'summary ' + (failed === 0 ? 'pass' : 'fail');
+    summary.textContent = passed + '/' + total + ' passed';
+    resultsEl.appendChild(summary);
+    window.WYSIWYG_REDESIGN_RESULTS = { passed: passed, failed: failed, total: total };
+    console.log('WYSIWYG_REDESIGN_TESTS: ' + passed + '/' + total + ' passed');
+}
+</script>
+</body>
+</html>

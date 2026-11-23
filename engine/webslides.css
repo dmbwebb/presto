@@ -1,0 +1,316 @@
+/* ============================================
+   WEBSLIDES — Core Layout Engine
+   ============================================
+   Theme-agnostic mechanics: 16:9 container,
+   slide show/hide, scaling, reveal classes,
+   overview grid, print stylesheet.
+   ============================================ */
+
+/* ===== Reset & Base ===== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+    overflow: hidden;
+    height: 100vh;
+    width: 100vw;
+    background: #111;
+}
+
+/* ===== Slide Dimensions ===== */
+:root {
+    --ws-slide-width: 1280;
+    --ws-slide-height: 720;
+}
+
+/* ===== Deck Container ===== */
+.ws-deck {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+}
+
+/* ===== Individual Slide ===== */
+.slide {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: calc(var(--ws-slide-width) * 1px);
+    height: calc(var(--ws-slide-height) * 1px);
+    overflow: hidden;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    z-index: 0;
+    transform-origin: center center;
+    /* JS sets transform: translate(-50%, -50%) scale(S) */
+}
+
+.slide.ws-active {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    z-index: 1;
+}
+
+/* Slide transition */
+.slide {
+    transition: opacity 0.25s ease, visibility 0.25s;
+}
+
+/* ===== Progressive Reveal ===== */
+[data-step] {
+    opacity: 0;
+    transition: opacity 0.35s ease;
+    pointer-events: none;
+}
+
+[data-step].ws-visible {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* Highlight: applied to table cells or any element */
+.ws-highlighted {
+    background-color: var(--ws-highlight-color, rgba(255, 220, 100, 0.35)) !important;
+    transition: background-color 0.3s ease;
+}
+
+/* Dim: fade out non-highlighted elements */
+.ws-dimmed {
+    opacity: 0.2 !important;
+    transition: opacity 0.3s ease;
+}
+
+/* Fade and focus (data-fade-after, data-focus): the engine adds ws-faded.
+   Zero-specificity transition so any authored transition still wins. */
+:where([data-fade-after], [data-focus] *) {
+    transition: opacity var(--ws-fade-duration, 0.35s) ease;
+}
+
+.ws-faded:not([data-step]),
+[data-step].ws-visible.ws-faded {
+    opacity: var(--ws-fade-opacity, 0.25) !important;
+}
+
+/* ===== Table Fitting ===== */
+/* Set by the engine only while it measures a slide's free space for table
+   fitting (added and removed in the same task, never painted; see
+   markTableMeasurement). Items that fill leftover space stop growing and the
+   ::after spacer takes the leftover, so auto margins resolve to zero instead of
+   hiding it. Zero-basis fill items keep their own height (growth must not take
+   their share); the child holding the table takes its content height. */
+.slide.ws-measuring-tables > * {
+    flex-grow: 0 !important;
+}
+.slide.ws-measuring-tables > [data-ws-measure="fill"] {
+    flex-basis: auto !important;
+    flex-shrink: 1 !important;
+}
+.slide.ws-measuring-tables > [data-ws-measure="holder"] {
+    flex: 0 0 auto !important;
+    height: auto !important;
+}
+.slide.ws-measuring-tables::after {
+    content: '' !important;
+    display: block !important;
+    position: static !important;
+    flex: 1 0 0 !important;
+    order: 2147483647 !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+}
+
+/* ===== Speaker Notes ===== */
+aside.notes {
+    display: none !important;
+}
+
+/* ===== Mode: Preview (no chrome) ===== */
+body.ws-mode-preview #ws-footer,
+body.ws-mode-preview #ws-progress {
+    display: none !important;
+}
+
+/* ===== Bare slides (full-bleed .photo slides, or any slide with data-no-chrome) ===== */
+body.ws-bare-slide #ws-footer,
+body.ws-bare-slide #ws-progress,
+body.ws-bare-slide #ws-section-nav {
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
+/* ===== Footer ===== */
+#ws-footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    pointer-events: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 40px;
+    font-size: 13px;
+    color: #999;
+    font-family: system-ui, sans-serif;
+    /* Scale with slides */
+    transform-origin: bottom center;
+}
+
+#ws-footer-left, #ws-footer-right {
+    white-space: nowrap;
+}
+
+/* ===== Overview Mode ===== */
+body.ws-overview-active {
+    overflow: auto;
+    background: #1a1a1a;
+}
+
+body.ws-overview-active .ws-deck {
+    display: none;
+}
+
+body.ws-overview-active #ws-footer {
+    display: none;
+}
+
+body.ws-overview-active #ws-section-nav {
+    display: none;
+}
+
+#ws-overview {
+    display: none;
+    padding: 40px;
+    gap: 24px;
+}
+
+body.ws-overview-active #ws-overview {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+}
+
+.ws-overview-item {
+    position: relative;
+    cursor: pointer;
+    border: 3px solid transparent;
+    border-radius: 6px;
+    overflow: hidden;
+    transition: border-color 0.2s, transform 0.2s;
+    aspect-ratio: 16 / 9;
+    background: #fff;
+}
+
+.ws-overview-item:hover {
+    border-color: var(--color-accent, #C0582B);
+    transform: scale(1.03);
+}
+
+.ws-overview-item.ws-overview-current {
+    border-color: var(--color-accent, #C0582B);
+    box-shadow: 0 0 0 2px var(--color-accent, #C0582B);
+}
+
+.ws-overview-item .ws-overview-label {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(0,0,0,0.7);
+    color: #fff;
+    font-size: 12px;
+    padding: 4px 8px;
+    font-family: system-ui, sans-serif;
+}
+
+.ws-overview-item .ws-overview-slide {
+    width: 100%;
+    height: 100%;
+    transform-origin: top left;
+    pointer-events: none;
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+/* ===== Progress Bar ===== */
+#ws-progress {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 3px;
+    background: var(--color-accent, #B8612A);
+    z-index: 200;
+    transition: width 0.3s ease;
+    pointer-events: none;
+}
+
+/* ===== Section Navigation Bar ===== */
+#ws-section-nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 150;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 40px;
+    pointer-events: auto;
+    transition: opacity 0.3s ease;
+    font-family: system-ui, sans-serif;
+    font-size: 12px;
+}
+
+.ws-section-nav-item {
+    cursor: pointer;
+    padding: 2px 8px;
+    border-radius: 3px;
+    transition: color 0.2s, background 0.2s;
+    white-space: nowrap;
+}
+
+.ws-section-nav-sep {
+    color: #ccc;
+    user-select: none;
+}
+
+/* ===== Print Stylesheet ===== */
+@media print {
+    html, body {
+        overflow: visible;
+        height: auto;
+        width: auto;
+        background: #fff;
+    }
+
+    .ws-deck { display: block; position: static; width: auto; height: auto; }
+
+    .slide {
+        position: relative !important;
+        top: auto !important;
+        left: auto !important;
+        transform: none !important;
+        opacity: 1 !important;
+        pointer-events: auto !important;
+        page-break-after: always;
+        width: 100% !important;
+        height: auto !important;
+        aspect-ratio: 16 / 9;
+        page-break-inside: avoid;
+    }
+
+    [data-step] { opacity: 1 !important; pointer-events: auto !important; }
+    .ws-dimmed { opacity: 1 !important; }
+    .ws-highlighted { background-color: transparent !important; }
+
+    #ws-footer, #ws-progress, #ws-overview { display: none !important; }
+    #ws-section-nav { display: none !important; }
+}

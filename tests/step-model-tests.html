@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=1280">
+    <title>WebSlides step model tests (relative steps, fades, focus, morphs)</title>
+    <link rel="stylesheet" href="../engine/webslides.css">
+    <script defer src="../engine/webslides.js"></script>
+    <style>
+        .slide { background: #fff; }
+        #test-results {
+            position: fixed; top: 10px; right: 10px; z-index: 9999; background: rgba(0,0,0,0.9); color: #fff;
+            padding: 16px; border-radius: 8px; font: 12px monospace; max-height: 90vh; overflow-y: auto; min-width: 400px;
+        }
+        #test-results .pass { color: #4ade80; }
+        #test-results .fail { color: #f87171; }
+    </style>
+</head>
+<body>
+<div class="ws-deck">
+    <!-- Slide 0: relative steps in document order, inlined SVG and reveal lists included -->
+    <section class="slide" id="rel-slide">
+        <p id="r1" data-step="+">one</p>
+        <p id="r2" data-step="+">two</p>
+        <p id="r3" data-step="=">two again</p>
+        <p id="r4" data-step="5">five</p>
+        <p id="r5" data-step="+:2">six and seven</p>
+        <p id="r6" data-step="=">six on</p>
+        <img data-inline src="fixtures/step-model/relative.svg" alt="" style="width: 200px; height: 100px;">
+        <p id="r7" data-step="+" data-fade-after="+">nine, faded at ten</p>
+        <ul data-reveal="each"><li id="l1">ten</li><li id="l2">eleven</li></ul>
+        <p id="r8" data-step="+">twelve</p>
+        <p id="r9" data-step="+:0">malformed</p>
+    </section>
+
+    <!-- Slide 1: data-fade-after and data-focus, in HTML and in an inlined SVG -->
+    <section class="slide" id="fade-slide">
+        <p id="f1" data-step="1" data-fade-after="2">shown at 1, faded from 2</p>
+        <p id="f2" data-fade-after="3">always shown, faded from 3</p>
+        <div id="fc" data-focus="4:.key; 5-6:#k2" style="--ws-fade-opacity: 0.4;">
+            <div id="fa"><span class="key" id="k1">K1</span> <span id="o1">other</span></div>
+            <div id="fb">B</div>
+            <p id="k2">K2</p>
+        </div>
+        <img data-inline src="fixtures/step-model/focus.svg" alt="" data-focus="7:#dot-b" style="width: 200px; height: 100px;">
+        <p id="f3" data-step="8" data-fade-after="1">late</p>
+    </section>
+
+    <!-- Slide 2: a relative focus resolves after its container's own steps -->
+    <section class="slide" id="relfocus-slide">
+        <div id="d0" data-focus="+:.x">
+            <p id="dx1" class="x" data-step="+">x</p>
+            <p id="dx2" data-step="+">not x</p>
+        </div>
+        <p id="dx3" data-step="+">after the focus</p>
+    </section>
+
+    <!-- Slide 3: describeSteps, warnings and an HTML morph -->
+    <section class="slide" id="describe-slide">
+        <div id="m1" data-step="0-1" data-morph="box" style="position: absolute; left: 100px; top: 300px; width: 100px; height: 50px; background: #c96;"></div>
+        <div id="m2" data-step="2" data-morph="box" style="position: absolute; left: 700px; top: 400px; width: 200px; height: 50px; background: #c96;"></div>
+        <span data-morph="lonely">x</span>
+        <div data-focus="1:.nothing"><p>t</p></div>
+        <p data-label="Key point" data-step="1">labelled</p>
+        <p data-step="1-x">bad</p>
+    </section>
+
+    <!-- Slide 4: WS.refreshSlideSteps after editors change the DOM in place -->
+    <section class="slide" id="refresh-slide">
+        <p id="q1" data-step="+">one</p>
+        <p id="q2" data-step="+">two</p>
+        <ul id="qlist" data-reveal="each"><li id="qa">a</li><li id="qb">b</li></ul>
+        <p id="q3" data-step="+" data-dim="2">after the list</p>
+    </section>
+</div>
+<div id="test-results"></div>
+<script>
+(function () {
+    var results = [];
+    function check(name, ok, detail) {
+        results.push({ name: name, ok: !!ok, detail: detail });
+    }
+    function eq(name, got, want) {
+        var g = JSON.stringify(got), w = JSON.stringify(want);
+        check(name, g === w, 'got ' + g + ', want ' + w);
+    }
+    function svgEl(id) { return document.querySelector('[id$="-' + id + '"]'); }
+    function faded(el) { return el.classList.contains('ws-faded'); }
+    function opacity(el) { return getComputedStyle(el).opacity; }
+    function morphAnims(el) {
+        return el.getAnimations().filter(function (a) {
+            return a.effect.getKeyframes().some(function (k) { return k.transform; });
+        });
+    }
+    function report() {
+        var failed = results.filter(function (r) { return !r.ok; }).length;
+        var box = document.getElementById('test-results');
+        box.innerHTML = results.map(function (r) {
+            return '<div class="' + (r.ok ? 'pass' : 'fail') + '">' + (r.ok ? '✓ ' : '✗ ') + r.name +
+                (r.ok ? '' : ' (' + r.detail + ')') + '</div>';
+        }).join('') + '<div>' + (results.length - failed) + '/' + results.length + ' passed</div>';
+        window.STEP_MODEL_TEST_RESULTS = { passed: results.length - failed, failed: failed, total: results.length };
+    }
+
+    window.addEventListener('load', function () {
+        WS.ready.then(function () {
+            var noTransitions = document.createElement('style');
+            noTransitions.textContent = '* { transition: none !important; }';
+            document.head.appendChild(noTransitions);
+
+            /* Relative steps */
+            var rel = document.getElementById('rel-slide');
+            var range = function (id, attr) { return WS.getRevealRange(document.getElementById(id) || svgEl(id), attr); };
+            eq('relative: slideSteps counts resolved steps', WS.slideSteps.get(rel), 12);
+            eq('relative: "+" starts at 1', range('r1'), { start: 1, end: Infinity });
+            eq('relative: "+" follows', range('r2'), { start: 2, end: Infinity });
+            eq('relative: "=" repeats the previous start', range('r3'), { start: 2, end: Infinity });
+            eq('relative: absolute values unchanged', range('r4'), { start: 5, end: Infinity });
+            eq('relative: "+:2" lasts two steps', range('r5'), { start: 6, end: 7 });
+            eq('relative: "=" after a ranged step', range('r6'), { start: 6, end: Infinity });
+            eq('relative: inside an inlined SVG, in document order', [range('s1'), range('s2')],
+                [{ start: 7, end: Infinity }, { start: 8, end: Infinity }]);
+            eq('relative: after the SVG', range('r7'), { start: 9, end: Infinity });
+            eq('relative: data-fade-after="+" is the next step', range('r7', 'fade-after'), { start: 10, end: Infinity });
+            eq('relative: reveal lists continue after relative steps', [range('l1'), range('l2')],
+                [{ start: 10, end: Infinity }, { start: 11, end: Infinity }]);
+            eq('relative: "+" after a reveal list', range('r8'), { start: 12, end: Infinity });
+            eq('relative: "+:0" is malformed', range('r9'), null);
+            eq('relative: authored attributes are untouched',
+                [document.getElementById('r1').getAttribute('data-step'), svgEl('s1').getAttribute('data-step'),
+                 document.getElementById('r5').getAttribute('data-step')], ['+', '+', '+:2']);
+            eq('relative: parseRevealRange stays context-free', WS.parseRevealRange('+'), null);
+            WS.goToSlide(0, 6);
+            eq('relative: step 6 shows the ranged and "=" items',
+                [document.getElementById('r5').classList.contains('ws-visible'), document.getElementById('r6').classList.contains('ws-visible')], [true, true]);
+            eq('relative: getState reports the resolved max step', WS.getState().maxSteps, 12);
+            WS.goToSlide(0, 8);
+            eq('relative: "+:2" ends after two steps; SVG group shown',
+                [document.getElementById('r5').classList.contains('ws-visible'), svgEl('s2').classList.contains('ws-visible')], [false, true]);
+            WS.goToSlide(0, 10);
+            var r7 = document.getElementById('r7');
+            eq('relative: fade-after applies at its step', [r7.classList.contains('ws-visible'), faded(r7), opacity(r7)], [true, true, '0.25']);
+            WS.goToSlide(0, 'end');
+            eq('relative: "end" is the resolved last step', WS.currentStep, 12);
+
+            /* Fade and focus */
+            var fadeSlide = document.getElementById('fade-slide');
+            var $ = function (id) { return document.getElementById(id); };
+            eq('fade: slideSteps', WS.slideSteps.get(fadeSlide), 8);
+            WS.goToSlide(1, 1);
+            eq('fade: not yet faded', [faded($('f1')), faded($('f2')), opacity($('f1'))], [false, false, '1']);
+            WS.goToSlide(1, 2);
+            eq('fade: data-fade-after on a stepped element', [faded($('f1')), opacity($('f1')), faded($('f2'))], [true, '0.25', false]);
+            WS.goToSlide(1, 3);
+            eq('fade: data-fade-after on a plain element', [faded($('f2')), opacity($('f2'))], [true, '0.25']);
+            eq('fade: a hidden stepped element stays hidden when faded', [faded($('f3')), opacity($('f3'))], [true, '0']);
+            WS.goToSlide(1, 4);
+            eq('focus: dims the largest non-matching subtrees',
+                ['fa', 'k1', 'o1', 'fb', 'k2'].map(function (id) { return faded($(id)); }), [false, false, true, true, true]);
+            eq('focus: --ws-fade-opacity on the container', opacity($('fb')), '0.4');
+            WS.goToSlide(1, 5);
+            eq('focus: second part with an id selector',
+                ['fa', 'k1', 'fb', 'k2'].map(function (id) { return faded($(id)); }), [true, false, true, false]);
+            WS.goToSlide(1, 7);
+            eq('focus: on an inlined SVG via the img attribute, authored id',
+                [faded(svgEl('dot-a')), faded(svgEl('dot-b')), faded(svgEl('grp'))], [true, false, true]);
+            var svg = svgEl('dot-b').ownerSVGElement;
+            eq('focus: never dims style or defs',
+                [faded(svg.querySelector('style')), faded(svg.querySelector('defs'))], [false, false]);
+            eq('focus: an open earlier part resumes when a later range ends', [faded($('fa')), faded($('k1')), faded($('fb'))], [false, false, true]);
+            eq('focus: img attribute is adopted, authored img untouched',
+                [svg.getAttribute('data-focus'), svg.getAttribute('data-ws-original-img').indexOf('data-focus="7:#dot-b"') !== -1], ['7:#dot-b', true]);
+            WS.goToSlide(1, 0);
+            eq('fade: stepping back clears every fade', fadeSlide.querySelectorAll('.ws-faded').length, 0);
+
+            /* Relative focus */
+            var d0 = $('d0');
+            eq('focus: "+" resolves after the container', WS.getRevealRange(d0, 'focus'), [{ start: 3, end: Infinity, selector: '.x' }]);
+            eq('focus: a relative focus takes a step', WS.getRevealRange($('dx3')), { start: 4, end: Infinity });
+            WS.goToSlide(2, 3);
+            eq('focus: relative focus applies', [faded($('dx1')), faded($('dx2'))], [false, true]);
+
+            /* Presto's own slide patcher counts steps with its own parser; the engine recounts on first show */
+            var current = WS.slides[2];
+            var template = document.createElement('template');
+            template.innerHTML = current.outerHTML.replace('id="relfocus-slide"', 'id="relfocus-replaced"');
+            var replacement = template.content.firstElementChild;
+            current.replaceWith(replacement);
+            WS.slides[2] = replacement;
+            WS.applyRevealShortcuts(replacement);
+            WS.slideSteps.set(replacement, 0);
+            WS.goToSlide(2, 4);
+            eq('replacement: engine recounts relative steps', [WS.getState().maxSteps, WS.currentStep,
+                replacement.querySelector('#dx3').classList.contains('ws-visible')], [4, 4, true]);
+            var html = WS.slides[0].outerHTML;
+            eq('replacement: engine patcher keeps relative steps', [WS.replacePrestoEditSlideHTML(0, html), WS.slideSteps.get(WS.slides[0])], [true, 12]);
+
+            /* describeSteps */
+            var d = WS.describeSteps(3);
+            eq('describe: shape', [d.index, d.maxStep, d.steps.length, Object.keys(d.steps[0]).join(',')],
+                [3, 2, 3, 'step,appear,disappear,fade,unfade,focus,unfocus,morph,classes,highlight,dim']);
+            eq('describe: labels by data-label', d.steps[1].appear, ['Key point']);
+            eq('describe: focus entry', d.steps[1].focus, [{ on: 'div "t"', selector: '.nothing', matched: 0 }]);
+            eq('describe: morph entry, morphing elements not listed as appear/disappear',
+                [d.steps[2].morph, d.steps[2].appear, d.steps[2].disappear], [[{ key: 'box', from: '#m1', to: '#m2' }], [], []]);
+            var warnings = d.warnings.join(' | ');
+            check('describe: warnings', /only one element/.test(warnings) && /inline element/.test(warnings) &&
+                /matches nothing/.test(warnings) && /malformed/.test(warnings), warnings);
+            eq('describe: unknown slide', WS.describeSteps(99), null);
+            var d1 = WS.describeSteps(1);
+            eq('describe: fade and focus steps', [d1.steps[2].fade, d1.steps[4].focus, d1.steps[5].focus[0].selector,
+                d1.steps[7].focus.map(function (f) { return f.on + ' ' + f.selector; }), d1.steps[7].unfocus],
+                [['#f1'], [{ on: '#fc', selector: '.key', matched: 1 }], '#k2', ['#fc .key', 'svg(focus.svg) #dot-b'], []]);
+            WS.goToSlide(3, 0);
+            eq('describe: defaults to the current slide', WS.describeSteps().index, 3);
+
+            /* WS.refreshSlideSteps: in-place edits (editor undo/redo, the step chip) */
+            var refresh = $('refresh-slide');
+            var qRanges = function () {
+                return ['q1', 'q2', 'qa', 'qb', 'q3'].concat($('qc') ? ['qc'] : []).map(function (id) {
+                    var r = WS.getRevealRange($(id)); return r ? r.start + '-' + (r.end === Infinity ? '' : r.end) : null;
+                });
+            };
+            eq('refresh: initial resolution', [WS.slideSteps.get(refresh), qRanges()], [5, ['1-', '2-', '3-', '4-', '5-']]);
+            $('q2').setAttribute('data-step', '=');
+            eq('refresh: first edit ("+" to "=") renumbers the list and later "+"',
+                [WS.refreshSlideSteps(refresh), qRanges()], [4, ['1-', '1-', '2-', '3-', '4-']]);
+            $('q1').setAttribute('data-step', '+:2');
+            var qc = document.createElement('li');
+            qc.id = 'qc';
+            qc.textContent = 'c';
+            $('qlist').insertBefore(qc, $('qb'));
+            eq('refresh: second edit (ranged step, new list item) by index',
+                [WS.refreshSlideSteps(4), qRanges()], [6, ['1-2', '1-', '3-', '5-', '6-', '4-']]);
+            eq('refresh: idempotent, generated steps not duplicated',
+                [WS.refreshSlideSteps(refresh), WS.refreshSlideSteps(refresh), refresh.querySelectorAll('[data-ws-auto-step]').length,
+                 qRanges()], [6, 6, 3, ['1-2', '1-', '3-', '5-', '6-', '4-']]);
+            eq('refresh: authored attributes kept', [$('q1').getAttribute('data-step'), $('q2').getAttribute('data-step'),
+                $('qlist').getAttribute('data-reveal')], ['+:2', '=', 'each']);
+            eq('refresh: describeSteps agrees', [WS.describeSteps(4).maxStep, WS.describeSteps(4).steps.length,
+                WS.describeSteps(4).steps[4].appear], [6, 7, ['#qc']]);
+            var navigated = [];
+            WS.on('navigate', function (state) { if (state.index === 4) navigated.push([state.step, state.maxSteps]); });
+            WS.goToSlide(4, 2);
+            eq('refresh: data-dim applies at its step', $('q3').classList.contains('ws-dimmed'), true);
+            $('q3').removeAttribute('data-dim');
+            navigated.length = 0;
+            WS.refreshSlideSteps(refresh);
+            eq('refresh: a removed data-dim no longer dims; unchanged count fires no navigate',
+                [$('q3').classList.contains('ws-dimmed'), navigated.length], [false, 0]);
+            WS.goToSlide(4, 'end');
+            navigated.length = 0;
+            qc.remove();
+            $('q3').setAttribute('data-step', '2');
+            eq('refresh: current slide clamps to the new last step and reports it',
+                [WS.refreshSlideSteps(refresh), WS.currentStep, WS.getState().maxSteps, navigated, qRanges()],
+                [4, 4, 4, [[4, 4]], ['1-2', '1-', '3-', '4-', '2-']]);
+            eq('refresh: reveal state follows the new steps',
+                ['q1', 'qb', 'q3'].map(function (id) { return $(id).classList.contains('ws-visible'); }), [false, true, true]);
+            WS.goToSlide(4, 2);
+            eq('refresh: navigation uses the refreshed ranges',
+                ['q1', 'q2', 'qa', 'q3'].map(function (id) { return $(id).classList.contains('ws-visible'); }), [true, true, false, true]);
+            eq('refresh: unknown slide', [WS.refreshSlideSteps(99), WS.refreshSlideSteps(null), WS.refreshSlideSteps(document.body)],
+                [null, null, null]);
+
+            /* Morph basics (geometry across browsers is in tests/step_morph_check.py) */
+            var m1 = $('m1'), m2 = $('m2');
+            WS.goToSlide(3, 1);
+            var restA = m1.getBoundingClientRect();
+            WS.nextStep();
+            var anims = morphAnims(m2);
+            eq('morph: nextStep animates the new element', anims.length, 1);
+            document.getAnimations().forEach(function (a) { a.pause(); a.currentTime = 0; });
+            var startB = m2.getBoundingClientRect();
+            check('morph: starts on the old box', Math.abs(startB.left - restA.left) < 0.5 && Math.abs(startB.width - restA.width) < 0.5,
+                JSON.stringify([startB.left, startB.width, restA.left, restA.width]));
+            eq('morph: old element hidden at once', opacity(m1), '0');
+            WS.goToSlide(3, 2);
+            eq('morph: goToSlide cancels it and lands at rest', [morphAnims(m2).length, Math.round(m2.getBoundingClientRect().left)],
+                [0, Math.round(WS.slides[3].getBoundingClientRect().left + 700 * WS.slides[3].getBoundingClientRect().width / 1280)]);
+            WS.prevStep();
+            eq('morph: prevStep animates back', morphAnims(m1).length, 1);
+            WS.goToSlide(3, 1);
+            WS.prepareForExport();
+            WS.nextStep();
+            eq('morph: never animates after prepareForExport', morphAnims(m2).length, 0);
+            eq('morph: no DOM writes', [m2.getAttribute('style').indexOf('transform'), m1.getAttribute('style').indexOf('opacity')], [-1, -1]);
+
+            report();
+        }).catch(function (err) {
+            check('test harness', false, String(err && err.stack || err));
+            report();
+        });
+    });
+})();
+</script>
+</body>
+</html>

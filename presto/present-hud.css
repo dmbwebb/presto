@@ -1,0 +1,222 @@
+/* Presto one-screen show controls (present-hud.js). Injected into Duncan's
+   real decks: every selector is under #presto-hud-root, every colour uses a
+   ui-tokens variable with a literal fallback, and the root first reverts any
+   deck styles that could reach its elements. Approved mockup:
+   design/mockups-2026-10-28/show.png. */
+
+/* SVG internals are left out of the reset: `all` would also revert their
+   geometry (rect width/height are CSS properties in WebKit). Deck rules for
+   svg children are overridden explicitly below. */
+#presto-hud-root,
+#presto-hud-root *:not(svg *) {
+    all: revert;
+    box-sizing: border-box;
+}
+
+#presto-hud-root {
+    --presto-hud-css: 1;
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 0;
+    height: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    overflow: visible;
+    /* Above Presto's black screen (2147483646): the Escape hint must show
+       over it. The bar still appears only when the pointer moves. */
+    z-index: 2147483647;
+    pointer-events: none;
+    font-family: var(--p-font-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif);
+    font-size: 13px;
+    line-height: normal;
+    color: var(--p-ink, #1C2532);
+    -webkit-font-smoothing: antialiased;
+    -webkit-user-select: none;
+    user-select: none;
+    text-align: left;
+    letter-spacing: normal;
+}
+
+/* ===== Control bar ===== */
+
+#presto-hud-root #presto-hud-bar {
+    position: fixed;
+    left: 50%;
+    bottom: 26px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 5px;
+    margin: 0;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, .88);
+    -webkit-backdrop-filter: blur(18px) saturate(1.6);
+    backdrop-filter: blur(18px) saturate(1.6);
+    box-shadow: 0 0 0 .5px rgba(0, 0, 0, .12), 0 8px 28px rgba(16, 24, 40, .18);
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transform: translate(-50%, 8px);
+    transition: opacity 180ms var(--p-ease, cubic-bezier(.2, .7, .2, 1)),
+                transform 180ms var(--p-ease, cubic-bezier(.2, .7, .2, 1)),
+                visibility 0s linear 180ms;
+    pointer-events: none;
+}
+
+#presto-hud-root #presto-hud-bar.presto-hud-visible {
+    opacity: 1;
+    visibility: visible;
+    transform: translate(-50%, 0);
+    transition: opacity 140ms var(--p-ease, cubic-bezier(.2, .7, .2, 1)),
+                transform 140ms var(--p-ease, cubic-bezier(.2, .7, .2, 1)),
+                visibility 0s;
+    pointer-events: auto;
+}
+
+#presto-hud-root .presto-hud-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    height: 32px;
+    min-width: 32px;
+    padding: 0 10px;
+    margin: 0;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--p-ink, #1C2532);
+    font: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: default;
+    outline: none;
+    box-shadow: none;
+    transition: background 120ms ease;
+}
+#presto-hud-root .presto-hud-btn:hover { background: rgba(0, 0, 0, .06); }
+#presto-hud-root .presto-hud-btn:active { background: rgba(0, 0, 0, .10); }
+#presto-hud-root .presto-hud-prev,
+#presto-hud-root .presto-hud-next { padding: 0 8px; }
+#presto-hud-root .presto-hud-end { color: var(--p-live, #D4462C); }
+
+#presto-hud-root .presto-hud-btn svg {
+    display: block;
+    width: 16px;
+    height: 16px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    overflow: visible;
+}
+#presto-hud-root .presto-hud-btn svg * {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    opacity: 1;
+    transform: none;
+    filter: none;
+}
+
+#presto-hud-root .presto-hud-count,
+#presto-hud-root .presto-hud-time {
+    display: inline-flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 5px;
+    height: auto;
+    padding: 0 8px;
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+    color: var(--p-ink, #1C2532);
+}
+#presto-hud-root .presto-hud-count b { display: inline; font-weight: 600; }
+#presto-hud-root .presto-hud-total { display: inline; color: var(--p-dim, #7B8390); font-size: 12.5px; }
+#presto-hud-root .presto-hud-time { min-width: 54px; }
+
+#presto-hud-root .presto-hud-div {
+    display: block;
+    width: 1px;
+    height: 18px;
+    margin: 0 2px;
+    background: var(--p-hair, #DDE0E5);
+}
+
+/* ===== Corner timer (the shell toggles it with T) ===== */
+
+#presto-hud-root #presto-hud-timer {
+    position: fixed;
+    top: 14px;
+    right: 16px;
+    display: block;
+    padding: 4px 10px;
+    margin: 0;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, .86);
+    -webkit-backdrop-filter: blur(14px) saturate(1.5);
+    backdrop-filter: blur(14px) saturate(1.5);
+    box-shadow: 0 0 0 .5px rgba(0, 0, 0, .1), 0 2px 8px rgba(16, 24, 40, .10);
+    font-size: 14px;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+    color: var(--p-ink-2, #485263);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 160ms ease, visibility 0s linear 160ms;
+}
+#presto-hud-root #presto-hud-timer.presto-hud-visible {
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 160ms ease, visibility 0s;
+}
+
+/* ===== Hint toast =====
+   Bottom centre, just above where the control bar sits (bar: 26px from the
+   bottom, 42px tall), so it never covers the deck's section bar or the
+   slide title at the top. */
+
+#presto-hud-root #presto-hud-hint {
+    position: fixed;
+    bottom: 80px;
+    left: 50%;
+    display: block;
+    max-width: calc(100vw - 48px);
+    padding: 6px 12px;
+    margin: 0;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, .92);
+    -webkit-backdrop-filter: blur(14px) saturate(1.5);
+    backdrop-filter: blur(14px) saturate(1.5);
+    box-shadow: 0 0 0 .5px rgba(0, 0, 0, .1), 0 4px 14px rgba(16, 24, 40, .12);
+    font-size: 12.5px;
+    color: var(--p-ink-2, #485263);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    opacity: 0;
+    visibility: hidden;
+    transform: translate(-50%, 4px);
+    transition: opacity 200ms ease, transform 200ms ease, visibility 0s linear 200ms;
+}
+#presto-hud-root #presto-hud-hint.presto-hud-visible {
+    opacity: 1;
+    visibility: visible;
+    transform: translate(-50%, 0);
+    transition: opacity 160ms ease, transform 160ms ease, visibility 0s;
+}
+
+@media print {
+    #presto-hud-root { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    #presto-hud-root #presto-hud-bar,
+    #presto-hud-root #presto-hud-timer,
+    #presto-hud-root #presto-hud-hint { transition: none; }
+}

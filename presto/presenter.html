@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Presto — Presenter</title>
+    <link rel="stylesheet" href="ui-tokens.css">
+    <link rel="stylesheet" href="presenter.css">
+</head>
+<body class="phase-ready awaiting-state">
+    <div id="console">
+        <main id="stage">
+            <div id="slide-frame" class="iframe-wrapper">
+                <iframe id="current-slide" title="Current slide"></iframe>
+                <div id="blackout-veil" hidden>
+                    <div class="veil-pill">
+                        <span>Audience screen is black</span>
+                        <button type="button" id="blackout-off" class="btn">Show slide<span class="kbd">B</span></button>
+                    </div>
+                </div>
+            </div>
+            <div id="stagebar">
+                <span id="slide-counter"><b id="slide-counter-num">&#8212;</b> <span id="slide-counter-total"></span></span>
+                <span id="slide-title"></span>
+                <span id="step-dots" class="dots" hidden></span>
+                <span id="next-hint"></span>
+            </div>
+        </main>
+
+        <aside id="side">
+            <section id="ready-card" class="card">
+                <div class="eyebrow">Ready to present</div>
+                <div id="ready-deck-title"></div>
+                <button type="button" id="start-btn" class="btn primary big">
+                    <svg viewBox="0 0 16 16" aria-hidden="true"><path class="fill" d="M5 3.2v9.6l7.4-4.8z"/></svg><span id="start-btn-label">Start</span>
+                </button>
+                <div class="ready-rows">
+                    <label class="ready-row" for="talk-minutes">
+                        <span class="row-label">Talk length</span>
+                        <span class="row-value">
+                            <input id="talk-minutes" class="talk-input" type="text" inputmode="numeric"
+                                   autocomplete="off" spellcheck="false" maxlength="3" placeholder="none"
+                                   aria-label="Talk length in minutes">
+                            <span class="unit">min</span>
+                        </span>
+                    </label>
+                    <div class="ready-row" id="audience-row" hidden>
+                        <span class="row-label">Audience screen</span>
+                        <span class="row-value">
+                            <select id="audience-select" aria-label="Audience screen" hidden></select>
+                            <span id="audience-name"></span>
+                            <button type="button" id="swap-btn" class="btn quiet small" title="Swap screens">
+                                <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 5.5h10l-2.5-2.5M13 10.5H3l2.5 2.5"/></svg>Swap
+                            </button>
+                        </span>
+                    </div>
+                    <p id="one-screen-note" hidden>Start fills this screen with the slide.</p>
+                </div>
+            </section>
+
+            <section id="clock-card" class="card" hidden>
+                <div class="card-head">
+                    <h5 id="clock-label">Elapsed</h5>
+                    <span class="card-actions">
+                        <button type="button" id="timer-btn" class="btn quiet small" title="Start timer">Start</button>
+                        <button type="button" id="timer-reset" class="btn quiet small" title="Reset timer to 00:00">Reset</button>
+                    </span>
+                </div>
+                <div id="clock">
+                    <span id="timer" class="paused">00:00</span>
+                    <button type="button" id="talk-of" class="talk-of" title="Change talk length"></button>
+                    <span id="talk-edit" hidden>
+                        <span class="of">of</span>
+                        <input id="talk-minutes-live" class="talk-input" type="text" inputmode="numeric"
+                               autocomplete="off" spellcheck="false" maxlength="3" placeholder="none"
+                               aria-label="Talk length in minutes">
+                        <span class="unit">min</span>
+                    </span>
+                </div>
+                <div id="pace-bar" hidden><i id="pace-fill"></i><b id="pace-marker" title="Where you are in the deck"></b></div>
+                <div id="clock-row" hidden><span id="ends-at"></span><span id="pace-text"></span></div>
+            </section>
+
+            <section id="sections-card" class="card" hidden>
+                <h5>Sections</h5>
+                <ul id="sections-list"></ul>
+            </section>
+        </aside>
+    </div>
+    <div id="console-hint" role="status" aria-live="polite"></div>
+    <script src="presenter.js"></script>
+</body>
+</html>

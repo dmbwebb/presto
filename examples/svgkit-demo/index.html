@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=1280">
+    <title>svgkit demo</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/contrib/auto-render.min.js"
+        onload="renderMathInElement(document.body, {
+            delimiters: [{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}]
+        });"></script>
+    <link rel="stylesheet" href="../../engine/webslides.css">
+    <link rel="stylesheet" href="../../engine/themes/academic.css">
+    <script defer src="../../engine/webslides.js"></script>
+</head>
+<body>
+<!-- Figures come from make_figures.py (tools/svgkit.py): python3 make_figures.py --only fit -->
+<div class="ws-deck" data-section-nav>
+
+<section class="slide title">
+    <h1>svgkit demo</h1>
+    <div class="subtitle">Figures from tools/svgkit.py, callouts, signposts and a results list</div>
+    <div class="author"><b>Duncan Webb</b></div>
+</section>
+
+<section class="slide content v-center">
+    <h2>Results preview</h2>
+    <ol class="results-list">
+        <li data-step="1"><b>Effects fade</b>
+            <span class="detail">About half of an initial effect is gone after two years</span></li>
+        <li data-step="2"><b>Larger effects fade faster</b>
+            <span class="detail">Each extra standard deviation (SD) of initial effect adds a quarter SD of decline a year</span></li>
+        <li data-step="3"><b>Rankings rarely flip</b></li>
+    </ol>
+</section>
+
+<section class="slide section-header">
+    <h1>Figures</h1>
+</section>
+
+<section class="slide content">
+    <h2>A fitted line, step by step</h2>
+    <div class="fig-notes wide">
+        <div class="fig-plot"><img src="figures/fit.svg" data-inline alt="Estimates and a fitted line"></div>
+        <div class="side-notes">
+            <div class="callout" data-step="1">The line summarises <b>all ten</b> estimates</div>
+            <div class="callout callout-lg" data-step="2"><span class="callout-title">Intercept</span> the effect when treatment ends</div>
+        </div>
+    </div>
+</section>
+
+<section class="slide subsection-header signpost">
+    <h1>Nesting</h1>
+</section>
+
+<section class="slide content v-center">
+    <h2>Estimates within studies within a review</h2>
+    <img src="figures/nesting.svg" data-inline alt="Nested estimates, studies and a review" style="width:870px">
+</section>
+
+<section class="slide signpost">
+    <h1>Every mark, at scale 1</h1>
+    <div class="section-subtitle">A standalone signpost: not in the section nav</div>
+</section>
+
+<section class="slide content">
+    <h2>Arrows, brackets and callouts</h2>
+    <img src="figures/gallery.svg" data-inline alt="Arrow, bracket and callout variants" style="width:1136px">
+</section>
+
+<section class="slide thanks">
+    <h1>Thank you!</h1>
+    <div class="email">you@university.edu</div>
+</section>
+
+</div>
+<div id="ws-footer">
+    <span id="ws-footer-left">svgkit demo</span>
+    <span id="ws-footer-right"></span>
+</div>
+</body>
+</html>

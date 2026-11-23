@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=1280">
+    <title>KaTeX under zoom fixture</title>
+    <!-- Fixture for tests/test_engine_redesign_katex_zoom.py: maths that the
+         system WebKit used to misplace when a slide is shrunk with CSS zoom.
+         Every probe has an id; KaTeX is the engine's vendored copy, so the
+         test needs no network. -->
+    <link rel="stylesheet" href="../../../engine/vendor/katex/katex.min.css">
+    <script defer src="../../../engine/vendor/katex/katex.min.js"></script>
+    <script defer src="../../../engine/vendor/katex/contrib/auto-render.min.js"
+        onload="renderMathInElement(document.body, {
+            delimiters: [{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}]
+        });"></script>
+    <link rel="stylesheet" href="../../../engine/webslides.css">
+    <link rel="stylesheet" href="../../../engine/themes/academic.css">
+    <script defer src="../../../engine/webslides.js"></script>
+</head>
+<body>
+<div class="ws-deck" data-section-nav>
+
+    <section class="slide content" id="maths">
+        <h2>What we estimate</h2>
+        <div class="box" id="m-display">
+            $$Y_{ijt} = \alpha_j + \beta_j\, t_{ijt} + \theta_{ij} + \varepsilon_{ijt}$$
+            $$\alpha_j \sim N(\mu_\alpha, \tau_\alpha^2), \qquad \beta_j = \mu_\beta + \gamma_j\,(\alpha_j - \mu_\alpha) + b_j$$
+        </div>
+        <ul>
+            <li>Variance <span id="m-tau">$\tau_\alpha^2$</span> and slope <span id="m-expect">$\mathbb{E}[\gamma_j]$</span></li>
+            <li>Ratio <span id="m-frac">$\frac{a_i}{b^2}$</span>, root <span id="m-root">$\sqrt{x_j^2 + 1}$</span>, hat <span id="m-hat">$\hat\beta_j$</span></li>
+            <li data-step="1">Later step <span id="m-step">$x_{i}^{2}$</span></li>
+        </ul>
+        <div id="m-display-frac">$$\frac{\partial y}{\partial x} = \sqrt{\frac{a^2 + b^2}{c_k}}$$</div>
+        <div class="table-container">
+            <table>
+                <thead><tr><th>Term</th><th>Estimate</th></tr></thead>
+                <tbody><tr><td id="m-table">$\hat\gamma_{j}^{2}$</td><td>0.26</td></tr></tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="slide section-header">
+        <h1>Second section</h1>
+    </section>
+
+    <section class="slide content" id="patched">
+        <h2>Patched later</h2>
+        <p id="m-patch">$\tau_\alpha^2$</p>
+    </section>
+
+</div>
+</body>
+</html>

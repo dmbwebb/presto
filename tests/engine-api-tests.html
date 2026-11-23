@@ -1,0 +1,1067 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=1280">
+    <title>WebSlides Engine API Tests</title>
+    <link rel="stylesheet" href="../engine/webslides.css">
+    <link rel="stylesheet" href="../engine/themes/academic.css">
+    <script defer src="../engine/webslides.js"></script>
+    <style>
+        #test-results {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            z-index: 9999;
+            background: rgba(0,0,0,0.9);
+            color: #fff;
+            padding: 16px;
+            border-radius: 8px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            max-height: 90vh;
+            overflow-y: auto;
+            min-width: 400px;
+        }
+        #test-results .pass { color: #4ade80; }
+        #test-results .fail { color: #f87171; }
+        #test-results .section { color: #60a5fa; font-weight: bold; margin-top: 8px; }
+        #test-results .summary { margin-top: 12px; padding-top: 8px; border-top: 1px solid #555; font-weight: bold; }
+    </style>
+</head>
+<body>
+<nav>
+    <a class="ws-appendix-link" href="#appendix-test">Chrome appendix link</a>
+</nav>
+<div class="ws-deck">
+
+    <!-- Slide 0: Title -->
+    <section class="slide title" id="test-title">
+        <h1>Test Deck</h1>
+        <img data-inline alt="single quoted svg one"
+             src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2010%2010'%3E%3Cdefs%3E%3Ccircle%20id='single-dot'%20cx='5'%20cy='5'%20r='4'/%3E%3C/defs%3E%3Cuse%20href='%23single-dot'/%3E%3C/svg%3E">
+        <img data-inline alt="single quoted svg two"
+             src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2010%2010'%3E%3Cdefs%3E%3Ccircle%20id='single-dot'%20cx='5'%20cy='5'%20r='4'/%3E%3C/defs%3E%3Cuse%20href='%23single-dot'/%3E%3C/svg%3E">
+        <img data-inline alt="quoted url svg"
+             src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2010%2010'%3E%3Cdefs%3E%3ClinearGradient%20id='quoted-grad'%3E%3Cstop%20offset='100%25'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect%20width='10'%20height='10'%20fill=%22url('%23quoted-grad')%22/%3E%3C/svg%3E">
+        <img data-inline alt="root id svg one"
+             src="data:image/svg+xml,%3Csvg%20id='root-svg-id'%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2010%2010'%3E%3Crect%20width='10'%20height='10'/%3E%3C/svg%3E">
+        <img data-inline alt="root id svg two"
+             src="data:image/svg+xml,%3Csvg%20id='root-svg-id'%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2010%2010'%3E%3Crect%20width='10'%20height='10'/%3E%3C/svg%3E">
+        <img data-inline alt="style selector svg"
+             src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2010%2010'%3E%3Cstyle%3E%23styled-dot%20%7B%20fill%3A%20red%3B%20%7D%3C/style%3E%3Ccircle%20id='styled-dot'%20cx='5'%20cy='5'%20r='4'/%3E%3C/svg%3E">
+        <img data-inline alt="style color svg"
+             src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2010%2010'%3E%3Cstyle%3E.paint%20%7B%20fill%3A%20%23abc%3B%20%7D%20%23abc%20%7B%20stroke%3A%20blue%3B%20%7D%3C/style%3E%3Ccircle%20class='paint'%20id='abc'%20cx='5'%20cy='5'%20r='4'/%3E%3C/svg%3E">
+        <img data-inline id="invalid-inline-svg" alt="invalid inline svg"
+             src="data:image/svg+xml,not%20an%20svg">
+        <img data-inline id="missing-inline-svg" class="missing-svg-class" alt="missing inline svg"
+             src="missing-inline-fixture.svg">
+        <aside class="notes">These are speaker notes for the title slide. They should be hidden from view.</aside>
+    </section>
+
+    <!-- Slide 1: With steps -->
+    <section class="slide content" id="test-steps">
+        <h2>Step Test</h2>
+        <p>Always visible</p>
+        <p data-step="1">Step 1 item</p>
+        <p id="step-two-target" data-step="2">Step 2 item</p>
+        <p data-step="3">Step 3 item</p>
+        <aside class="notes">Notes for the steps slide. <strong>Has HTML</strong> formatting.</aside>
+    </section>
+
+    <!-- Slide 2: No steps, no notes -->
+    <section class="slide content" id="test-plain">
+        <h2>Plain Slide</h2>
+        <p>No reveal steps, no notes.</p>
+        <p data-step="not-a-number">Malformed reveal metadata should be ignored.</p>
+        <p id="bad-partial-step" data-step="2abc">Partially numeric metadata should be ignored.</p>
+        <p id="bad-extra-range" data-step="1-2-3">Malformed range metadata should be ignored.</p>
+        <p id="empty-step" data-step="">Empty data-step should reveal at step 1.</p>
+        <p id="blank-step" data-step="   ">Whitespace-only data-step should reveal at step 1.</p>
+        <p><a id="plain-appendix-anchor" href="#appendix-test">Plain anchor into the appendix</a>
+           <a id="plain-slide-anchor" href="#test-steps">Plain anchor to a main slide</a></p>
+        <div id="missing-table"class="table-container" data-table-src="missing-table-fixture.html"></div>
+        <div id="empty-table-src" class="table-container" data-table-src=""></div>
+        <div id="bad-overlay-table" class="table-container" data-overlays="{not valid json">
+            <table>
+                <thead><tr><th>A</th><th>B</th></tr></thead>
+                <tbody><tr><td>1</td><td>2</td></tr></tbody>
+            </table>
+        </div>
+        <div id="bad-overlay-entry-table" class="table-container" data-overlays="[null]">
+            <table>
+                <thead><tr><th>A</th><th>B</th></tr></thead>
+                <tbody><tr><td>1</td><td>2</td></tr></tbody>
+            </table>
+        </div>
+        <div id="bad-overlay-col-index-table" class="table-container" data-overlays='[{"cols":["x"]}]'>
+            <table>
+                <thead><tr><th>A</th><th>B</th></tr></thead>
+                <tbody><tr><td>1</td><td>2</td></tr></tbody>
+            </table>
+        </div>
+        <div id="bad-overlay-row-index-table" class="table-container" data-overlays='[{"rows":[99]}]'>
+            <table>
+                <thead><tr><th>A</th><th>B</th></tr></thead>
+                <tbody><tr><td>1</td><td>2</td></tr></tbody>
+            </table>
+        </div>
+        <div id="bad-overlay-descending-col-table" class="table-container" data-overlays='[{"cols":[1,0]}]'>
+            <table>
+                <thead><tr><th>A</th><th>B</th></tr></thead>
+                <tbody><tr><td>1</td><td>2</td></tr></tbody>
+            </table>
+        </div>
+    </section>
+
+    <div class="wrapper">
+        <section class="slide content" id="nested-fake-slide">
+            <h2>Nested fake slide</h2>
+            <div id="nested-fake-table" class="table-container" data-table-src="missing-nested-table.html"></div>
+        </section>
+    </div>
+
+    <!-- Slide 3: With highlights and dims -->
+    <section class="slide content" id="test-highlight">
+        <h2>Highlight & Dim</h2>
+        <p id="overview-highlight" data-highlight="1">Highlighted at step 1</p>
+        <p data-dim="2">Dimmed at step 2</p>
+        <p id="overview-class" data-class="flagged:1">Classed at step 1</p>
+        <p id="colon-class" data-class="md:block:2">Colon class at step 2</p>
+        <p data-class=":1" id="bad-class">Malformed data-class should be ignored</p>
+        <p data-class="bad token:1" id="bad-spaced-class">Whitespace class tokens should be ignored</p>
+    </section>
+
+    <!-- Slide 4: Range steps -->
+    <section class="slide content" id="test-range">
+        <h2>Range Steps</h2>
+        <p data-step="1-2">Visible steps 1-2 only</p>
+        <p data-step="3">Visible from step 3</p>
+        <p data-step="4-2" id="bad-range">Reversed range should be ignored</p>
+    </section>
+
+    <!-- Appendix slides -->
+    <section class="slide appendix content" id="appendix-test">
+        <h2>Appendix Slide</h2>
+        <p>This is an appendix slide for testing.</p>
+        <p><a class="ws-back-link" href="#">Back to source</a></p>
+        <aside class="notes">Appendix notes.</aside>
+    </section>
+
+    <!-- Reveal shortcut (data-reveal="each") -->
+    <section class="slide appendix content" id="test-reveal-each">
+        <h2>Reveal Shortcut</h2>
+        <p id="each-earlier" data-step="2">Explicit step 2 earlier on the slide</p>
+        <ul id="each-default" data-reveal="each">
+            <li id="ed-a">A</li>
+            <li id="ed-b">B
+                <ul><li id="ed-b1">B1</li></ul>
+            </li>
+            <li id="ed-c" data-step="1">C keeps its explicit step</li>
+            <li id="ed-d">D</li>
+        </ul>
+        <ol id="each-start" data-reveal="each" data-reveal-start="7">
+            <li id="es-a">First from 7</li>
+            <li id="es-b">Second</li>
+        </ol>
+        <ul id="each-after" data-reveal="each"><li id="ea-a">After the earlier lists</li></ul>
+        <ul id="each-bad-start" data-reveal="each" data-reveal-start="soon"><li id="eb-a">Bad start falls back</li></ul>
+        <div id="each-not-list" data-reveal="each"><p id="enl-p">Not a list</p></div>
+    </section>
+
+</div>
+<div id="ws-footer">
+    <span id="ws-footer-left">Test Deck</span>
+    <span id="ws-footer-right"></span>
+</div>
+
+<div id="test-results"></div>
+
+<script>
+// Wait for the engine's readiness signal (fallback keeps the fixture reporting
+// failures instead of hanging when WS.ready is missing).
+var readyValue;
+window.addEventListener('load', function() {
+    if (window.WS && WS.ready && typeof WS.ready.then === 'function') {
+        WS.ready.then(function (value) { readyValue = value; runTests(); });
+    } else {
+        setTimeout(runTests, 1500);
+    }
+});
+
+function runTests() {
+    var results = document.getElementById('test-results');
+    var passed = 0;
+    var failed = 0;
+
+    function log(html) {
+        results.innerHTML += html + '<br>';
+    }
+
+    function section(name) {
+        log('<span class="section">— ' + name + ' —</span>');
+    }
+
+    function assert(name, condition) {
+        if (condition) {
+            log('<span class="pass">✓ ' + name + '</span>');
+            passed++;
+        } else {
+            log('<span class="fail">✗ ' + name + '</span>');
+            failed++;
+        }
+    }
+
+    function assertEqual(name, actual, expected) {
+        if (actual === expected) {
+            log('<span class="pass">✓ ' + name + '</span>');
+            passed++;
+        } else {
+            log('<span class="fail">✗ ' + name + ' — expected: ' + JSON.stringify(expected) + ', got: ' + JSON.stringify(actual) + '</span>');
+            failed++;
+        }
+    }
+
+    // ==========================================
+    section('WS Object Exposure');
+    // ==========================================
+
+    assert('WS exists on window', typeof window.WS === 'object');
+    assert('WS.slides is populated', WS.slides.length === 7);
+    assert('WS.mainSlides count', WS.mainSlides.length === 5);
+    assert('WS.appendixSlides count', WS.appendixSlides.length === 2);
+    assert('WS.totalMainSlides', WS.totalMainSlides === 5);
+
+    // ==========================================
+    section('Readiness and load errors');
+    // ==========================================
+
+    assert('WS.ready is a promise', !!(WS.ready && typeof WS.ready.then === 'function'));
+    assert('WS.ready resolves to WS', readyValue === WS);
+    assertEqual('documentElement data-ws-ready flag', document.documentElement.dataset.wsReady, '1');
+    assert('WS.loadErrors is an array', Array.isArray(WS.loadErrors));
+    var loadErrors = Array.isArray(WS.loadErrors) ? WS.loadErrors : [];
+    function findLoadError(type, src) {
+        return loadErrors.filter(function (e) { return e && e.type === type && e.src === src; })[0];
+    }
+    var missingTableError = findLoadError('table', 'missing-table-fixture.html');
+    assert('missing table is recorded in WS.loadErrors',
+        !!missingTableError && missingTableError.slideIndex === 2 && /404/.test(missingTableError.detail));
+    var emptyTableError = findLoadError('table', '');
+    assert('empty table source is recorded in WS.loadErrors',
+        !!emptyTableError && emptyTableError.slideIndex === 2 && emptyTableError.detail === 'Missing table source');
+    var missingSvgError = findLoadError('svg', 'missing-inline-fixture.svg');
+    assert('missing inline SVG is recorded in WS.loadErrors',
+        !!missingSvgError && missingSvgError.slideIndex === 0 && /404/.test(missingSvgError.detail));
+    var invalidSvgError = loadErrors.filter(function (e) {
+        return e && e.type === 'svg' && String(e.src).indexOf('data:image/svg+xml,not') === 0;
+    })[0];
+    assert('invalid inline SVG is recorded in WS.loadErrors',
+        !!invalidSvgError && invalidSvgError.slideIndex === 0 && /invalid SVG/.test(invalidSvgError.detail));
+    assert('tables outside engine slides are not recorded',
+        !findLoadError('table', 'missing-nested-table.html'));
+    var serializedErrors = null;
+    try { serializedErrors = JSON.parse(JSON.stringify(loadErrors)); } catch (err) { serializedErrors = null; }
+    assert('WS.loadErrors entries are plain data',
+        !!serializedErrors && serializedErrors.length === loadErrors.length && loadErrors.every(function (e) {
+            return Object.keys(e).sort().join(',') === 'detail,slideIndex,src,type';
+        }));
+
+    WS.goToSlide(0, 0);
+    var svgErrorBoxes = document.querySelectorAll('svg.ws-svg-load-error');
+    assertEqual('each SVG load error shows an error box', svgErrorBoxes.length, 2);
+    var missingSvgBox = Array.from(svgErrorBoxes).filter(function (box) {
+        return (box.getAttribute('data-ws-original-img') || '').indexOf('missing-inline-fixture.svg') !== -1;
+    })[0];
+    assert('SVG error box names the broken source',
+        !!missingSvgBox && missingSvgBox.textContent.indexOf('missing-inline-fixture.svg') !== -1
+        && missingSvgBox.textContent.indexOf('Could not load SVG') !== -1);
+    assert('SVG error box is visible on its slide',
+        !!missingSvgBox && missingSvgBox.getBoundingClientRect().width > 0 && missingSvgBox.getBoundingClientRect().height > 0);
+    assert('SVG error box keeps the authored img for round-tripping',
+        !!missingSvgBox && missingSvgBox.classList.contains('missing-svg-class')
+        && /^<img\b/.test(missingSvgBox.getAttribute('data-ws-original-img') || ''));
+
+    // ==========================================
+    section('Inline SVGs');
+    // ==========================================
+
+    assert('every inline SVG image is replaced (by its SVG or an error box)',
+        document.querySelectorAll('img[data-inline]').length === 0
+        && !document.getElementById('invalid-inline-svg'));
+    assert('invalid inline SVG does not become a parsererror element',
+        document.querySelectorAll('parsererror').length === 0);
+    assert('single-quoted SVG ids are prefixed',
+        document.querySelectorAll('[id="single-dot"]').length === 0);
+    var useHrefs = Array.from(document.querySelectorAll('use'))
+        .map(function (el) { return el.getAttribute('href') || el.getAttribute('xlink:href'); });
+    assert('single-quoted SVG hrefs are prefixed',
+        useHrefs.length === 2 && useHrefs.every(function (href) {
+            return href && href !== '#single-dot' && href.indexOf('#ws-svg') === 0;
+        }));
+    var quotedUrlFill = document.querySelector('rect[fill*="quoted-grad"]')?.getAttribute('fill') || '';
+    assert('quoted SVG url() references are prefixed',
+        quotedUrlFill.indexOf("url('#quoted-grad')") === -1
+        && quotedUrlFill.indexOf('#ws-svg') !== -1);
+    assert('root SVG ids are prefixed',
+        document.querySelectorAll('svg[id="root-svg-id"]').length === 0
+        && document.querySelectorAll('svg[id^="ws-svg"][id$="root-svg-id"]').length === 2);
+    var inlineStyleText = Array.from(document.querySelectorAll('svg style'))
+        .map(function (style) { return style.textContent || ''; })
+        .join('\n');
+    assert('SVG style id selectors are prefixed',
+        inlineStyleText.indexOf('#styled-dot') === -1
+        && inlineStyleText.indexOf('#ws-svg') !== -1
+        && inlineStyleText.indexOf('styled-dot') !== -1);
+    assert('SVG style hex colors are not mistaken for id selectors',
+        inlineStyleText.indexOf('fill: #abc') !== -1);
+
+    // ==========================================
+    section('Navigation Functions Exposed');
+    // ==========================================
+
+    assert('WS.goToSlide is function', typeof WS.goToSlide === 'function');
+    assert('WS.nextStep is function', typeof WS.nextStep === 'function');
+    assert('WS.prevStep is function', typeof WS.prevStep === 'function');
+    assert('WS.nextSlide is function', typeof WS.nextSlide === 'function');
+    assert('WS.prevSlide is function', typeof WS.prevSlide === 'function');
+    assert('WS.goToAppendix is function', typeof WS.goToAppendix === 'function');
+    assert('WS.returnFromAppendix is function', typeof WS.returnFromAppendix === 'function');
+    assert('WS.toggleOverview is function', typeof WS.toggleOverview === 'function');
+    assert('WS.goBack is function', typeof WS.goBack === 'function');
+    assert('WS.parseRevealRange is function', typeof WS.parseRevealRange === 'function');
+
+    // ==========================================
+    section('parseRevealRange()');
+    // ==========================================
+
+    function rangeJSON(raw) {
+        if (typeof WS.parseRevealRange !== 'function') return 'missing';
+        var range = WS.parseRevealRange(raw);
+        return range === null ? 'null' : range.start + '..' + (range.end === Infinity ? 'Infinity' : range.end);
+    }
+    assertEqual('parseRevealRange("3") is open-ended', rangeJSON('3'), '3..Infinity');
+    assertEqual('parseRevealRange("3+") is open-ended', rangeJSON('3+'), '3..Infinity');
+    assertEqual('parseRevealRange("2-4") is bounded', rangeJSON('2-4'), '2..4');
+    assertEqual('parseRevealRange(" 2 - 4 ") trims parts', rangeJSON(' 2 - 4 '), '2..4');
+    assertEqual('parseRevealRange("") defaults to step 1', rangeJSON(''), '1..Infinity');
+    assertEqual('parseRevealRange(undefined) defaults to step 1', rangeJSON(undefined), '1..Infinity');
+    assertEqual('parseRevealRange("4-2") rejects reversed ranges', rangeJSON('4-2'), 'null');
+    assertEqual('parseRevealRange("1-2-3") rejects extra parts', rangeJSON('1-2-3'), 'null');
+    assertEqual('parseRevealRange("2abc") rejects partial numbers', rangeJSON('2abc'), 'null');
+    assertEqual('parseRevealRange("3-") is not a range form', rangeJSON('3-'), 'null');
+
+    // ==========================================
+    section('Reveal shortcut (data-reveal="each")');
+    // ==========================================
+
+    var revealSlide = document.getElementById('test-reveal-each');
+    var revealIndex = WS.slides.indexOf(revealSlide);
+    function stepOf(id) { return document.getElementById(id).getAttribute('data-step'); }
+    function isAuto(id) { return document.getElementById(id).hasAttribute('data-ws-auto-step'); }
+    assertEqual('each-list starts one past the earlier explicit step', stepOf('ed-a'), '3');
+    assertEqual('each-list gives the next item the next step', stepOf('ed-b'), '4');
+    assertEqual('each-list gives nested sub-bullets their own step', stepOf('ed-b1'), '5');
+    assertEqual('each-list keeps an explicit item step', stepOf('ed-c'), '1');
+    assertEqual('explicit items do not consume a generated step', stepOf('ed-d'), '6');
+    assert('generated steps carry data-ws-auto-step',
+        isAuto('ed-a') && isAuto('ed-b') && isAuto('ed-b1') && isAuto('ed-d'));
+    assert('explicit steps are not marked as generated', !isAuto('ed-c') && !isAuto('each-earlier'));
+    assertEqual('data-reveal-start sets the first step', stepOf('es-a'), '7');
+    assertEqual('data-reveal-start continues from there', stepOf('es-b'), '8');
+    assertEqual('a later each-list follows generated steps', stepOf('ea-a'), '9');
+    assertEqual('invalid data-reveal-start falls back to the default', stepOf('eb-a'), '10');
+    assert('data-reveal on a non-list is ignored',
+        !document.getElementById('enl-p').hasAttribute('data-step')
+        && !document.getElementById('each-not-list').hasAttribute('data-step'));
+    assert('the list elements themselves get no step',
+        !document.getElementById('each-default').hasAttribute('data-step')
+        && !document.getElementById('each-start').hasAttribute('data-step'));
+    assertEqual('generated steps count toward slideSteps', WS.slideSteps.get(revealSlide), 10);
+    var revealExport = WS.getExportInfo().filter(function (info) { return info.index === revealIndex; })[0];
+    assertEqual('generated steps appear in getExportInfo', revealExport && revealExport.maxStep, 10);
+    WS.goToSlide(revealIndex, 3);
+    assert('generated step reveals its item', document.getElementById('ed-a').classList.contains('ws-visible'));
+    assert('later generated items stay hidden',
+        !document.getElementById('ed-b').classList.contains('ws-visible')
+        && !document.getElementById('ed-b1').classList.contains('ws-visible'));
+    var hiddenGenerated = document.getElementById('ed-d');
+    hiddenGenerated.style.transition = 'none'; // read the end state, not a running fade
+    assertEqual('generated reveal hides items with opacity', getComputedStyle(hiddenGenerated).opacity, '0');
+    hiddenGenerated.style.transition = '';
+    WS.goToSlide(revealIndex, 'end');
+    assertEqual('step counter reaches the last generated step', WS.getState().maxSteps, 10);
+    assert('every generated item is visible at the last step',
+        ['ed-a', 'ed-b', 'ed-b1', 'ed-d', 'es-a', 'es-b', 'ea-a', 'eb-a'].every(function (id) {
+            return document.getElementById(id).classList.contains('ws-visible');
+        }));
+
+    // ==========================================
+    section('getState() API');
+    // ==========================================
+
+    WS.goToSlide(0, 0);
+    var state = WS.getState();
+    assertEqual('getState().index at slide 0', state.index, 0);
+    assertEqual('getState().step at step 0', state.step, 0);
+    assertEqual('getState().maxSteps for title (0)', state.maxSteps, 0);
+    assertEqual('getState().totalSlides', state.totalSlides, 7);
+    assertEqual('getState().mainSlides', state.mainSlides, 5);
+    assertEqual('getState().isAppendix', state.isAppendix, false);
+    assertEqual('getState().slideNumber for slide 0', state.slideNumber, '1');
+    assertEqual('getState().returnStackDepth', state.returnStackDepth, 0);
+
+    // ==========================================
+    section('Navigation: goToSlide');
+    // ==========================================
+
+    WS.goToSlide(1, 0);
+    state = WS.getState();
+    assertEqual('goToSlide(1,0) index', state.index, 1);
+    assertEqual('goToSlide(1,0) step', state.step, 0);
+    assertEqual('slide 1 maxSteps', state.maxSteps, 3);
+
+    WS.goToSlide(2, 0);
+    state = WS.getState();
+    assertEqual('empty data-step contributes default maxSteps', state.maxSteps, 1);
+    assert('empty data-step hidden at step 0',
+        !document.getElementById('empty-step').classList.contains('ws-visible'));
+    WS.goToSlide(2, 1);
+    assert('empty data-step visible at step 1',
+        document.getElementById('empty-step').classList.contains('ws-visible'));
+    assert('whitespace-only data-step visible at step 1',
+        document.getElementById('blank-step').classList.contains('ws-visible'));
+    assert('missing external table renders visible error',
+        document.getElementById('missing-table').textContent.indexOf('Failed to load table') !== -1);
+    assert('empty external table src renders visible error',
+        document.getElementById('empty-table-src').textContent.indexOf('Missing table source') !== -1);
+    assert('invalid table overlay config renders visible error',
+        document.getElementById('bad-overlay-table').textContent.indexOf('Invalid table overlay config') !== -1);
+    assert('invalid table overlay entry renders visible error',
+        document.getElementById('bad-overlay-entry-table').textContent.indexOf('Invalid table overlay config') !== -1);
+    assert('invalid table overlay column index renders visible error',
+        document.getElementById('bad-overlay-col-index-table').textContent.indexOf('Invalid table overlay config') !== -1);
+    assert('invalid table overlay row index renders visible error',
+        document.getElementById('bad-overlay-row-index-table').textContent.indexOf('Invalid table overlay config') !== -1);
+    assert('descending table overlay column range renders visible error',
+        document.getElementById('bad-overlay-descending-col-table').textContent.indexOf('Invalid table overlay config') !== -1);
+    assert('nested fake slide external table is ignored',
+        document.getElementById('nested-fake-table').textContent.trim() === '');
+
+    WS.goToSlide(1, 2);
+    state = WS.getState();
+    assertEqual('goToSlide(1,2) step', state.step, 2);
+
+    WS.goToSlide(1, 'end');
+    state = WS.getState();
+    assertEqual('goToSlide(1,"end") step', state.step, 3);
+
+    var badClassCrashed = false;
+    try {
+        WS.goToSlide(3, 1);
+    } catch (err) {
+        badClassCrashed = true;
+    }
+    assert('malformed data-class does not throw', !badClassCrashed);
+    assert('malformed data-class does not add empty class',
+        !document.getElementById('bad-class').classList.contains(''));
+    var badSpacedClassCrashed = false;
+    try {
+        WS.goToSlide(3, 1);
+    } catch (err) {
+        badSpacedClassCrashed = true;
+    }
+    assert('whitespace data-class token does not throw', !badSpacedClassCrashed);
+    assert('colon-containing data-class is inactive before its step',
+        !document.getElementById('colon-class').classList.contains('md:block'));
+    WS.goToSlide(3, 2);
+    assert('colon-containing data-class is applied at its step',
+        document.getElementById('colon-class').classList.contains('md:block'));
+
+    WS.goToSlide(4, 'end');
+    state = WS.getState();
+    assertEqual('reversed data-step range ignored in maxSteps', state.maxSteps, 3);
+    assert('reversed data-step range never becomes visible',
+        !document.getElementById('bad-range').classList.contains('ws-visible'));
+
+    // ==========================================
+    section('Navigation: nextStep / prevStep');
+    // ==========================================
+
+    WS.goToSlide(1, 0);
+    WS.nextStep();
+    state = WS.getState();
+    assertEqual('nextStep from (1,0) → step 1', state.step, 1);
+
+    WS.nextStep();
+    WS.nextStep();
+    state = WS.getState();
+    assertEqual('two more nextSteps → step 3', state.step, 3);
+
+    // Next step on last step should advance to next slide
+    WS.nextStep();
+    state = WS.getState();
+    assertEqual('nextStep past maxSteps → slide 2', state.index, 2);
+    assertEqual('nextStep past maxSteps → step 0', state.step, 0);
+
+    WS.prevStep();
+    state = WS.getState();
+    assertEqual('prevStep from (2,0) → slide 1', state.index, 1);
+    assertEqual('prevStep from (2,0) → step end', state.step, 3);
+
+    // ==========================================
+    section('Navigation: nextSlide / prevSlide');
+    // ==========================================
+
+    WS.goToSlide(0, 0);
+    WS.nextSlide();
+    state = WS.getState();
+    assertEqual('nextSlide from 0 → slide 1', state.index, 1);
+
+    WS.prevSlide();
+    state = WS.getState();
+    assertEqual('prevSlide from 1 → slide 0', state.index, 0);
+
+    // ==========================================
+    section('Appendix Navigation');
+    // ==========================================
+
+    WS.goToSlide(2, 0);
+    WS.goToAppendix('appendix-test');
+    state = WS.getState();
+    assertEqual('goToAppendix index', state.index, 5);
+    assert('goToAppendix isAppendix', state.isAppendix);
+    assertEqual('goToAppendix returnStackDepth', state.returnStackDepth, 1);
+
+    WS.returnFromAppendix();
+    state = WS.getState();
+    assertEqual('returnFromAppendix index', state.index, 2);
+    assertEqual('returnFromAppendix step', state.step, 0);
+    assertEqual('returnFromAppendix stackDepth', state.returnStackDepth, 0);
+
+    var encodedAppendix = document.getElementById('appendix-test');
+    encodedAppendix.id = 'appendix encoded';
+    WS.goToSlide(2, 0);
+    WS.goToAppendix('appendix%20encoded');
+    state = WS.getState();
+    assertEqual('encoded appendix target navigates to decoded id', state.index, 5);
+    WS.returnFromAppendix();
+    encodedAppendix.id = 'appendix-test';
+
+    encodedAppendix.id = 'literal%20appendix';
+    WS.goToSlide(2, 0);
+    WS.goToAppendix('literal%20appendix');
+    state = WS.getState();
+    assertEqual('direct appendix API can target literal percent ids', state.index, 5);
+    WS.returnFromAppendix();
+    encodedAppendix.id = 'appendix-test';
+
+    var outsideDuplicateAppendix = document.createElement('p');
+    outsideDuplicateAppendix.id = 'appendix-test';
+    outsideDuplicateAppendix.textContent = 'Outside duplicate target';
+    document.body.insertBefore(outsideDuplicateAppendix, document.querySelector('.ws-deck'));
+    WS.goToSlide(2, 0);
+    WS.goToAppendix('appendix-test');
+    state = WS.getState();
+    assertEqual('appendix navigation ignores duplicate ids outside deck', state.index, 5);
+    WS.returnFromAppendix();
+    outsideDuplicateAppendix.remove();
+
+    WS.goToAppendix('missing-appendix');
+    state = WS.getState();
+    assertEqual('missing appendix target leaves slide unchanged', state.index, 2);
+    assertEqual('missing appendix target does not push return stack', state.returnStackDepth, 0);
+
+    var nonStringAppendixCrashed = false;
+    try {
+        WS.goToAppendix(Symbol('appendix-test'));
+    } catch (err) {
+        nonStringAppendixCrashed = true;
+    }
+    state = WS.getState();
+    assert('non-string appendix target does not throw', !nonStringAppendixCrashed);
+    assertEqual('non-string appendix target leaves slide unchanged', state.index, 2);
+    assertEqual('non-string appendix target does not push return stack', state.returnStackDepth, 0);
+
+    encodedAppendix.dataset.wsIndex = '5abc';
+    WS.goToAppendix('appendix-test');
+    state = WS.getState();
+    assertEqual('malformed appendix wsIndex leaves slide unchanged', state.index, 2);
+    assertEqual('malformed appendix wsIndex does not push return stack', state.returnStackDepth, 0);
+    encodedAppendix.dataset.wsIndex = '999';
+    WS.goToAppendix('appendix-test');
+    state = WS.getState();
+    assertEqual('out-of-range appendix wsIndex leaves slide unchanged', state.index, 2);
+    assertEqual('out-of-range appendix wsIndex does not push return stack', state.returnStackDepth, 0);
+    encodedAppendix.dataset.wsIndex = '5';
+
+    var encodedHashSlide = document.getElementById('test-plain');
+    encodedHashSlide.id = 'encoded hash slide';
+    WS.goToSlide(0, 0);
+    window.location.hash = '#encoded%20hash%20slide';
+    window.dispatchEvent(new HashChangeEvent('hashchange'));
+    state = WS.getState();
+    assertEqual('encoded URL hash navigates to decoded slide id', state.index, 2);
+    encodedHashSlide.id = 'test-plain';
+
+    encodedHashSlide.id = 'literal%20hash';
+    WS.goToSlide(0, 0);
+    window.location.hash = '#literal%2520hash';
+    window.dispatchEvent(new HashChangeEvent('hashchange'));
+    state = WS.getState();
+    assertEqual('URL hash navigation decodes fragments exactly once', state.index, 2);
+    encodedHashSlide.id = 'test-plain';
+
+    WS.goToSlide(0, 0);
+    window.location.hash = '#bad-partial-step';
+    window.dispatchEvent(new HashChangeEvent('hashchange'));
+    state = WS.getState();
+    assertEqual('URL hash navigates to nested ids inside slides', state.index, 2);
+
+    WS.goToSlide(0, 0);
+    window.location.hash = '#step-two-target';
+    window.dispatchEvent(new HashChangeEvent('hashchange'));
+    state = WS.getState();
+    assertEqual('URL hash to revealed element navigates to its first visible step', state.step, 2);
+    assert('URL hash to revealed element leaves target visible',
+        document.getElementById('step-two-target').classList.contains('ws-visible'));
+
+    WS.goToSlide(0, 0);
+    window.location.hash = '#overview-highlight';
+    window.dispatchEvent(new HashChangeEvent('hashchange'));
+    state = WS.getState();
+    assertEqual('URL hash to highlighted-but-visible element stays at step 0', state.step, 0);
+    assert('URL hash to highlighted-but-visible element leaves target unhighlighted at step 0',
+        !document.getElementById('overview-highlight').classList.contains('ws-highlighted'));
+
+    encodedHashSlide.dataset.wsIndex = '2abc';
+    WS.goToSlide(0, 0);
+    window.location.hash = '#test-plain';
+    window.dispatchEvent(new HashChangeEvent('hashchange'));
+    state = WS.getState();
+    assertEqual('malformed hash target wsIndex leaves slide unchanged', state.index, 0);
+    encodedHashSlide.dataset.wsIndex = '2';
+
+    encodedHashSlide.id = 'needs encoded hash';
+    WS.goToSlide(2, 0);
+    assert('updateHash encodes slide ids for URL fragments',
+        window.location.hash === '#needs%20encoded%20hash');
+    encodedHashSlide.id = 'test-plain';
+
+    encodedHashSlide.id = 'literal%20hash';
+    WS.goToSlide(2, 0);
+    assert('updateHash encodes literal percent signs in slide ids',
+        window.location.hash === '#literal%2520hash');
+    encodedHashSlide.id = 'test-plain';
+
+    // ==========================================
+    section('Appendix return stack (every route)');
+    // ==========================================
+
+    var appendixIndex = WS.slides.indexOf(document.getElementById('appendix-test'));
+    var clickDefaults = [];
+    function recordClickDefault(e) {
+        clickDefaults.push(e.defaultPrevented);
+        e.preventDefault(); // keep the fixture from following hash links for real
+    }
+    window.addEventListener('click', recordClickDefault);
+
+    WS.goToSlide(2, 1);
+    document.getElementById('plain-appendix-anchor').click();
+    state = WS.getState();
+    assertEqual('plain hash anchor click opens the appendix', state.index, appendixIndex);
+    assertEqual('plain appendix anchor pushes the return position', state.returnStackDepth, 1);
+    assertEqual('plain appendix anchor click is handled by the engine', clickDefaults[clickDefaults.length - 1], true);
+    document.querySelector('#appendix-test .ws-back-link').click();
+    state = WS.getState();
+    assertEqual('back link returns to the anchor slide', state.index, 2);
+    assertEqual('back link restores the anchor step', state.step, 1);
+    assertEqual('back link pops the return stack', state.returnStackDepth, 0);
+
+    WS.goToSlide(2, 0);
+    document.getElementById('plain-slide-anchor').click();
+    assertEqual('plain anchor to a main slide keeps default browser handling', clickDefaults[clickDefaults.length - 1], false);
+    assertEqual('plain anchor to a main slide does not push', WS.getState().returnStackDepth, 0);
+
+    WS.goToSlide(2, 0);
+    document.querySelector('nav .ws-appendix-link').click();
+    state = WS.getState();
+    assertEqual('appendix button click pushes the return position', state.returnStackDepth, 1);
+    WS.goBack();
+    state = WS.getState();
+    assertEqual('WS.goBack returns from an appendix button', state.index, 2);
+    assertEqual('WS.goBack pops the return stack', state.returnStackDepth, 0);
+    window.removeEventListener('click', recordClickDefault);
+
+    WS.goToSlide(1, 2);
+    history.replaceState(null, '', '#appendix-test');
+    window.dispatchEvent(new HashChangeEvent('hashchange'));
+    state = WS.getState();
+    assertEqual('hashchange into an appendix opens it', state.index, appendixIndex);
+    assertEqual('hashchange into an appendix pushes the return position', state.returnStackDepth, 1);
+    history.replaceState(null, '', '#appendix-test');
+    window.dispatchEvent(new HashChangeEvent('hashchange'));
+    assertEqual('hashchange to the current appendix does not push again', WS.getState().returnStackDepth, 1);
+    WS.goBack();
+    state = WS.getState();
+    assertEqual('WS.goBack after hashchange returns to the slide', state.index, 1);
+    assertEqual('WS.goBack after hashchange restores the step', state.step, 2);
+    assertEqual('WS.goBack after hashchange empties the stack', state.returnStackDepth, 0);
+
+    WS.goToSlide(3, 0);
+    WS.goBack();
+    state = WS.getState();
+    assertEqual('WS.goBack with an empty stack stays put', state.index, 3);
+
+    // ==========================================
+    section('Slide clicks');
+    // ==========================================
+
+    var clickSlide = document.getElementById('test-steps');
+    var clickWidgets = document.createElement('div');
+    clickWidgets.innerHTML =
+        '<div class="appendix-links"><span id="click-appendix-label">Appendix:</span></div>' +
+        '<div class="header-links"><span id="click-header-label">See:</span></div>' +
+        '<div id="click-ws-link" data-ws-link>Deck widget</div>';
+    var clickWidgetEls = Array.from(clickWidgets.children);
+    clickWidgetEls.forEach(function (el) { clickSlide.appendChild(el); });
+    var plainClickTarget = clickSlide.querySelector('p');
+
+    WS.goToSlide(1, 1);
+    plainClickTarget.click();
+    assertEqual('plain slide click advances in normal mode', WS.getState().step, 2);
+    WS.goToSlide(1, 1);
+    document.getElementById('click-appendix-label').click();
+    assertEqual('click on an .appendix-links label does not advance', WS.getState().step, 1);
+    document.getElementById('click-header-label').click();
+    assertEqual('click on a .header-links label does not advance', WS.getState().step, 1);
+    document.getElementById('click-ws-link').click();
+    assertEqual('click on a [data-ws-link] widget does not advance', WS.getState().step, 1);
+    WS.mode = 'audience';
+    WS.goToSlide(1, 1);
+    plainClickTarget.click();
+    assertEqual('slide click does not advance once WS.mode changes after load', WS.getState().step, 1);
+    WS.mode = 'normal';
+    clickWidgetEls.forEach(function (el) { el.remove(); });
+
+    // ==========================================
+    section('Speaker Notes');
+    // ==========================================
+
+    assert('WS.getNotes is function', typeof WS.getNotes === 'function');
+
+    var notes0 = WS.getNotes(0);
+    assert('Title slide has notes', notes0.length > 0);
+    assert('Title notes contain expected text', notes0.indexOf('speaker notes') > -1);
+
+    var notes1 = WS.getNotes(1);
+    assert('Slide 1 has notes', notes1.length > 0);
+    assert('Slide 1 notes contain HTML', notes1.indexOf('<strong>') > -1);
+
+    var notes2 = WS.getNotes(2);
+    assertEqual('Slide 2 (no notes) returns empty', notes2, '');
+
+    var notesAppendix = WS.getNotes(5);
+    assert('Appendix slide has notes', notesAppendix.indexOf('Appendix notes') > -1);
+
+    assert('Notes out of range returns empty', WS.getNotes(-1) === '');
+    assert('Notes out of range (high) returns empty', WS.getNotes(100) === '');
+    assertEqual('Notes string index returns empty', WS.getNotes('bad'), '');
+    assertEqual('Notes fractional index returns empty', WS.getNotes(1.5), '');
+    assertEqual('Notes boolean index returns empty', WS.getNotes(true), '');
+
+    // Verify notes are hidden from display
+    var aside = document.querySelector('aside.notes');
+    var display = window.getComputedStyle(aside).display;
+    assertEqual('aside.notes display: none', display, 'none');
+
+    // ==========================================
+    section('Event System');
+    // ==========================================
+
+    assert('WS.on is function', typeof WS.on === 'function');
+    assert('WS._emit is function', typeof WS._emit === 'function');
+
+    var navigateEvents = [];
+    WS.on('navigate', function(state) {
+        navigateEvents.push(state);
+    });
+
+    WS.goToSlide(3, 0);
+    assert('navigate event fired on goToSlide', navigateEvents.length >= 1);
+    var lastEvent = navigateEvents[navigateEvents.length - 1];
+    assertEqual('navigate event has correct index', lastEvent.index, 3);
+
+    var reservedEventCrashed = false;
+    try {
+        WS.on('__proto__', function () {});
+    } catch (err) {
+        reservedEventCrashed = true;
+    }
+    assert('WS.on("__proto__") does not throw', !reservedEventCrashed);
+
+    WS.on('navigate', 'not-a-function');
+    WS.goToSlide(4, 0);
+    assert('WS.on ignores non-function callbacks during emit', navigateEvents.length >= 2);
+
+    WS.goToSlide(1, 0);
+    var beforeStepEventCount = navigateEvents.length;
+    WS.nextStep();
+    lastEvent = navigateEvents[navigateEvents.length - 1];
+    assert('navigate event fired on nextStep reveal change', navigateEvents.length > beforeStepEventCount);
+    assertEqual('nextStep navigate event has updated step', lastEvent.step, 1);
+
+    beforeStepEventCount = navigateEvents.length;
+    WS.prevStep();
+    lastEvent = navigateEvents[navigateEvents.length - 1];
+    assert('navigate event fired on prevStep reveal change', navigateEvents.length > beforeStepEventCount);
+    assertEqual('prevStep navigate event has updated step', lastEvent.step, 0);
+
+    // ==========================================
+    section('Mode System');
+    // ==========================================
+
+    assertEqual('Default mode is normal', WS.mode, 'normal');
+    assert('No ws-mode-preview class on body', !document.body.classList.contains('ws-mode-preview'));
+    assert('No ws-mode-audience class on body', !document.body.classList.contains('ws-mode-audience'));
+
+    // ==========================================
+    section('Export Preparation');
+    // ==========================================
+
+    assert('WS.prepareForExport is function', typeof WS.prepareForExport === 'function');
+    WS.prepareForExport();
+    var footer = document.getElementById('ws-footer');
+    var footerDisplay = window.getComputedStyle(footer).display;
+    assert('prepareForExport keeps footer visible', footerDisplay !== 'none');
+    var progress = document.getElementById('ws-progress');
+    var progressDisplay = window.getComputedStyle(progress).display;
+    assertEqual('prepareForExport hides progress', progressDisplay, 'none');
+
+    WS.goToSlide(5, 0);
+    var exportLinksCrashed = false;
+    try {
+        WS.getExportLinks();
+    } catch (err) {
+        exportLinksCrashed = true;
+    }
+    assert('getExportLinks ignores appendix links outside slides', !exportLinksCrashed);
+
+    var encodedSourceLink = document.createElement('a');
+    encodedSourceLink.className = 'ws-appendix-link';
+    encodedSourceLink.href = '#appendix%20encoded';
+    encodedSourceLink.textContent = 'Encoded appendix';
+    document.getElementById('test-steps').appendChild(encodedSourceLink);
+    encodedAppendix.id = 'appendix encoded';
+    WS.goToSlide(1, 0);
+    var encodedExportLink = WS.getExportLinks().find(function (link) {
+        return link.targetSlideIndex === 5;
+    });
+    assert('getExportLinks decodes encoded appendix hrefs', !!encodedExportLink);
+    encodedSourceLink.remove();
+    encodedAppendix.id = 'appendix-test';
+
+    var malformedIndexLink = document.createElement('a');
+    malformedIndexLink.className = 'ws-appendix-link';
+    malformedIndexLink.href = '#appendix-test';
+    malformedIndexLink.textContent = 'Malformed index appendix';
+    document.getElementById('test-steps').appendChild(malformedIndexLink);
+    encodedAppendix.dataset.wsIndex = '5abc';
+    WS.goToSlide(1, 0);
+    var malformedExportLink = WS.getExportLinks().find(function (link) {
+        return link.targetSlideIndex === 5;
+    });
+    assert('getExportLinks ignores malformed appendix wsIndex', !malformedExportLink);
+    malformedIndexLink.remove();
+    encodedAppendix.dataset.wsIndex = '5';
+
+    // ==========================================
+    section('Boundary Conditions');
+    // ==========================================
+
+    // Can't go before first slide
+    WS.goToSlide(0, 0);
+    WS.prevStep();
+    state = WS.getState();
+    assertEqual('prevStep at (0,0) stays at 0', state.index, 0);
+
+    // Can't go past last slide
+    var lastIndex = WS.slides.length - 1;
+    WS.goToSlide(lastIndex, 'end');
+    WS.nextStep();
+    state = WS.getState();
+    assertEqual('nextStep at last slide stays', state.index, lastIndex);
+
+    // goToSlide with out-of-range index
+    WS.goToSlide(-1, 0);
+    state = WS.getState();
+    assertEqual('goToSlide(-1) is no-op', state.index, lastIndex);
+
+    WS.goToSlide(100, 0);
+    state = WS.getState();
+    assertEqual('goToSlide(100) is no-op', state.index, lastIndex);
+
+    var invalidIndexCrashed = false;
+    try {
+        WS.goToSlide(NaN, 0);
+    } catch (err) {
+        invalidIndexCrashed = true;
+    }
+    state = WS.getState();
+    assert('goToSlide(NaN) does not throw', !invalidIndexCrashed);
+    assertEqual('goToSlide(NaN) is no-op', state.index, lastIndex);
+
+    WS.goToSlide(true, 0);
+    state = WS.getState();
+    assertEqual('goToSlide(boolean) is no-op', state.index, lastIndex);
+
+    var nonStringableIndexCrashed = false;
+    try {
+        WS.goToSlide(Object.create(null), 0);
+    } catch (err) {
+        nonStringableIndexCrashed = true;
+    }
+    state = WS.getState();
+    assert('goToSlide(non-stringable index) does not throw', !nonStringableIndexCrashed);
+    assertEqual('goToSlide(non-stringable index) is no-op', state.index, lastIndex);
+
+    // Step clamping
+    WS.goToSlide(1, 99);
+    state = WS.getState();
+    assertEqual('step clamped to maxSteps', state.step, 3);
+
+    WS.goToSlide(1, 'bad-step');
+    state = WS.getState();
+    assertEqual('invalid step falls back to 0', state.step, 0);
+
+    WS.goToSlide(1, 1.5);
+    state = WS.getState();
+    assertEqual('fractional step falls back to 0', state.step, 0);
+
+    var nonStringableStepCrashed = false;
+    try {
+        WS.goToSlide(1, Object.create(null));
+    } catch (err) {
+        nonStringableStepCrashed = true;
+    }
+    state = WS.getState();
+    assert('goToSlide(non-stringable step) does not throw', !nonStringableStepCrashed);
+    assertEqual('goToSlide(non-stringable step) falls back to 0', state.step, 0);
+
+    var originalSlideZeroMaxStep = WS.slideSteps.get(WS.slides[0]);
+    WS.slideSteps.delete(WS.slides[0]);
+    WS.goToSlide(0, 1);
+    state = WS.getState();
+    assertEqual('missing slide step metadata falls back to step 0', state.step, 0);
+    assert('missing slide step metadata does not produce NaN', !Number.isNaN(state.step));
+    WS.slideSteps.set(WS.slides[0], originalSlideZeroMaxStep);
+
+    // ==========================================
+    section('Overview');
+    // ==========================================
+
+    WS.goToSlide(0, 0);
+    assert('Overview starts inactive', !WS.overviewActive);
+
+    WS.toggleOverview();
+    assert('toggleOverview activates', WS.overviewActive);
+    assert('body has ws-overview-active', document.body.classList.contains('ws-overview-active'));
+    var overview = document.getElementById('ws-overview');
+    assert('overview thumbnails show highlighted reveal state',
+        overview.querySelector('#overview-highlight')?.classList.contains('ws-highlighted') || false);
+    assert('overview thumbnails apply data-class reveal state',
+        overview.querySelector('#overview-class')?.classList.contains('flagged') || false);
+    assert('overview thumbnails apply colon-containing data-class reveal state',
+        overview.querySelector('#colon-class')?.classList.contains('md:block') || false);
+
+    var overviewThumb = overview.querySelector('.ws-overview-item');
+    overviewThumb.dataset.wsIndex = '1abc';
+    overviewThumb.click();
+    state = WS.getState();
+    assertEqual('malformed overview wsIndex does not navigate', state.index, 0);
+    assert('malformed overview wsIndex leaves overview open', WS.overviewActive);
+    overviewThumb.dataset.wsIndex = '0';
+
+    WS.toggleOverview();
+    assert('toggleOverview deactivates', !WS.overviewActive);
+
+    // The engine no longer draws Presto's slide rail (presto/edit-chrome.js does)
+    window.installPrestoEditSidebar();
+    assert('retired rail: installPrestoEditSidebar draws nothing',
+        !document.getElementById('presto-slide-rail') && !document.querySelector('.presto-slide-thumb') &&
+        !document.body.classList.contains('presto-edit-sidebar-active'));
+    assert('retired rail: no WS sidebar helpers',
+        WS.rebuildPrestoEditSidebar === undefined && WS.updatePrestoEditSidebarThumbnail === undefined &&
+        WS.updatePrestoEditSidebar === undefined);
+    var chromeCalls = [];
+    window.PrestoEditChrome = {
+        install: function () { chromeCalls.push('install'); },
+        refreshThumbnail: function (i) { chromeCalls.push('thumb ' + i); }
+    };
+    window.installPrestoEditSidebar();
+    WS.replacePrestoEditSlideHTML(4, WS.slides[4].outerHTML);
+    assertEqual('retired rail: shim installs PrestoEditChrome; a slide patch refreshes its thumbnail',
+        chromeCalls.join(', '), 'install, thumb 4');
+    delete window.PrestoEditChrome;
+
+    // applyPrestoEditViewport delegates to PrestoLayout when Presto injected it
+    var layoutCalls = [];
+    window.PrestoLayout = {
+        apply: function (o) {
+            layoutCalls.push(o === undefined ? 'none' : JSON.stringify(o));
+            return { scale: 0.5, slideLeft: 200, slideTop: 50, slideW: 640, slideH: 360, viewportW: 1000,
+                viewportH: 600, mode: 'edit', insetLeft: 180, insetRight: 40, insetTop: 0, insetBottom: 0, padding: 0 };
+        },
+        current: function () { return null; }
+    };
+    var delegated = window.applyPrestoEditViewport({ viewportWidth: 1000, viewportHeight: 600, railWidth: 180 });
+    window.applyPrestoEditViewport();
+    assertEqual('viewport delegation: railWidth becomes insetLeft; no options re-applies',
+        layoutCalls.join(' | '), '{"insetLeft":180,"viewportWidth":1000,"viewportHeight":600} | none');
+    assertEqual('viewport delegation: legacy railW and availableW kept',
+        delegated && [delegated.railW, delegated.availableW, delegated.slideTop].join(','), '180,780,50');
+    delete window.PrestoLayout;
+
+    // Enter / Backspace in Presto's edit preview never step the slide
+    WS.goToSlide(1, 1);
+    document.documentElement.classList.add('presto-layout-edit');
+    document.dispatchEvent(new KeyboardEvent('keydown', { code: 'Enter', key: 'Enter', bubbles: true }));
+    document.dispatchEvent(new KeyboardEvent('keydown', { code: 'Backspace', key: 'Backspace', bubbles: true }));
+    state = WS.getState();
+    assertEqual('edit preview: Enter and Backspace leave the step alone', state.index + ':' + state.step, '1:1');
+    document.dispatchEvent(new KeyboardEvent('keydown', { code: 'ArrowRight', key: 'ArrowRight', bubbles: true }));
+    assertEqual('edit preview: arrows still step', WS.getState().step, 2);
+    document.documentElement.classList.remove('presto-layout-edit');
+    document.dispatchEvent(new KeyboardEvent('keydown', { code: 'Backspace', key: 'Backspace', bubbles: true }));
+    assertEqual('presenting: Backspace steps back', WS.getState().step, 1);
+    WS.goToSlide(0, 0);
+
+    var zeroViewportMetrics = window.applyPrestoEditViewport({
+        viewportWidth: 900,
+        viewportHeight: 0,
+        railWidth: 180
+    });
+    var activeSlide = WS.slides[WS.currentIndex];
+    var activeOffsets = activeSlide.style.left + ' ' + activeSlide.style.top + ' ' + activeSlide.style.zoom;
+    assert('Presto viewport rejects zero-height layout metrics', zeroViewportMetrics === null);
+    assert('Presto viewport does not write non-finite slide offsets',
+        activeOffsets.indexOf('Infinity') === -1 && activeOffsets.indexOf('NaN') === -1);
+
+    // ==========================================
+    // Summary
+    // ==========================================
+
+    var total = passed + failed;
+    var color = failed === 0 ? 'pass' : 'fail';
+    log('<span class="summary ' + color + '">' + passed + '/' + total + ' tests passed' + (failed > 0 ? ' (' + failed + ' failed)' : '') + '</span>');
+
+    // Also log to console for automated checking
+    window.PRESTO_TEST_RESULTS = { passed: passed, failed: failed, total: total };
+    console.log('PRESTO_TESTS: ' + passed + '/' + total + ' passed, ' + failed + ' failed');
+
+    // Return to slide 0
+    WS.goToSlide(0, 0);
+}
+</script>
+</body>
+</html>

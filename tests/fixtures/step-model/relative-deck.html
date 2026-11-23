@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Relative steps fixture deck</title>
+    <link rel="stylesheet" href="../../../engine/webslides.css">
+    <link rel="stylesheet" href="../../../engine/themes/academic.css">
+    <script defer src="../../../engine/webslides.js"></script>
+</head>
+<body>
+<div class="ws-deck">
+    <section class="slide content" id="relative-slide">
+        <h2>Relative steps</h2>
+        <ul>
+            <li id="first" data-step="+">First point</li>
+            <li id="second" data-step="+:1">Second point, at step two only</li>
+            <li id="third" data-step="+">Third point</li>
+        </ul>
+        <img data-inline src="relative.svg" alt="Two dots" style="width: 400px; height: 200px;">
+        <p id="last" data-step="=" data-fade-after="+">Shown with the second dot, faded after</p>
+    </section>
+</div>
+</body>
+</html>

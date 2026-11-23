@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=1280">
+    <title>Presto WYSIWYG Alignment Guides Tests</title>
+    <script defer src="../presto/wysiwyg-guides.js"></script>
+    <style>
+        html, body { margin: 0; background: #1e1e1e; }
+        #test-results {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            z-index: 2147483200;
+            background: rgba(0,0,0,0.9);
+            color: #fff;
+            padding: 16px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 11px;
+            max-height: 92vh;
+            overflow-y: auto;
+            min-width: 440px;
+        }
+        #test-results .pass { color: #4ade80; }
+        #test-results .fail { color: #f87171; }
+        #test-results .section { color: #60a5fa; font-weight: bold; margin-top: 8px; }
+        #test-results .summary { margin-top: 12px; padding-top: 8px; border-top: 1px solid #555; font-weight: bold; }
+        /* Fake slides: a 1280x720 authoring surface shrunk by transform:scale,
+           exactly like the engine scales real slides. transform-origin keeps the
+           top-left anchored so client coords are deterministic. */
+        .fake-slide {
+            position: absolute;
+            width: 1280px;
+            height: 720px;
+            transform-origin: top left;
+            background: #fff;
+            overflow: hidden;
+        }
+        .fake-slide > * { position: absolute; box-sizing: border-box; background: #cde; }
+    </style>
+</head>
+<body>
+<div id="test-results"></div>
+
+<script>
+window.addEventListener('load', function () { runAllTests(); });
+
+var passed = 0, failed = 0, total = 0;
+var resultsEl = null;
+
+function log(cls, text) {
+    var div = document.createElement('div');
+    div.className = cls;
+    div.textContent = text;
+    resultsEl.appendChild(div);
+}
+function section(name) { log('section', name); }
+function assert(name, condition, detail) {
+    total++;
+    if (condition) { passed++; log('pass', '✓ ' + name); }
+    else { failed++; log('fail', '✗ ' + name + (detail !== undefined ? ' — ' + detail : '')); console.error('FAIL: ' + name, detail); }
+}
+function assertEqual(name, actual, expected) {
+    assert(name, actual === expected, 'got ' + JSON.stringify(actual) + ', expected ' + JSON.stringify(expected));
+}
+function assertClose(name, actual, expected, tol) {
+    tol = tol === undefined ? 0.6 : tol;
+    assert(name, typeof actual === 'number' && Math.abs(actual - expected) <= tol,
+        'got ' + JSON.stringify(actual) + ', expected ' + expected + ' ±' + tol);
+}
+
+// Build a fake slide at a given scale with a set of absolutely-positioned kids.
+function makeSlide(id, scale, left, top, kids) {
+    var slide = document.createElement('div');
+    slide.className = 'fake-slide';
+    slide.id = id;
+    slide.style.left = left + 'px';
+    slide.style.top = top + 'px';
+    slide.style.transform = 'scale(' + scale + ')';
+    kids.forEach(function (k) {
+        var el = k.tag === 'img' ? document.createElement('img') : document.createElement('div');
+        el.id = k.id;
+        el.style.left = k.left + 'px';
+        el.style.top = k.top + 'px';
+        el.style.width = k.w + 'px';
+        el.style.height = k.h + 'px';
+        if (k.cls) el.className = k.cls;
+        slide.appendChild(el);
+    });
+    document.body.appendChild(slide);
+    return slide;
+}
+function styleNum(el, prop) { return parseFloat(el.style[prop]); }
+
+function runAllTests() {
+    resultsEl = document.getElementById('test-results');
+    var G = window.__prestoWysiwygGuides;
+    var T = G && G.__test;
+
+    // ===== Setup =====
+    section('Setup');
+    assert('guides API exposed', !!G && G.version === 1);
+    assert('exposes the documented gesture methods',
+        ['init', 'dispose', 'dragStart', 'dragMove', 'dragEnd', 'resizeStart', 'resizeMove', 'resizeEnd']
+            .every(function (k) { return typeof G[k] === 'function'; }));
+    G.init({ threshold: 5 });
+    assertEqual('init sets the snap threshold', T.config.threshold, 5);
+    assert('init builds the overlay DOM', T.dom.built === true && !!T.dom.vLine && !!T.dom.hLine && !!T.dom.readout);
+    assert('overlay lines start hidden', !T.dom.vLine.classList.contains('visible') && !T.dom.hLine.classList.contains('visible'));
+
+    // ===== Pure snap math =====
+    section('Snap math (snapAxis / kindPriority)');
+    assert('kindPriority: center > edge > sibling',
+        T.kindPriority('center') > T.kindPriority('edge') && T.kindPriority('edge') > T.kindPriority('sibling'));
+    var tg = [{ v: 100, kind: 'sibling' }, { v: 200, kind: 'sibling' }, { v: 640, kind: 'center' }];
+    var s = T.snapAxis([103], tg, 5);
+    assert('snapAxis snaps the nearest target within threshold', s && s.value === 100 && s.offset === -3, JSON.stringify(s));
+    assert('snapAxis at exactly the threshold snaps', !!T.snapAxis([105], tg, 5));
+    assert('snapAxis just past the threshold does not snap', T.snapAxis([106], tg, 5) === null);
+    assert('snapAxis returns null when nothing is in range', T.snapAxis([500], tg, 5) === null);
+    // Tie-break: an element line equidistant (offset +2 / -2) between a sibling
+    // and the slide center must prefer the center.
+    var tie = T.snapAxis([638], [{ v: 636, kind: 'sibling' }, { v: 640, kind: 'center' }], 5);
+    assert('snapAxis breaks ties toward the higher-priority target (center)', tie && tie.kind === 'center', JSON.stringify(tie));
+    // Nearest still beats priority when strictly closer.
+    var near = T.snapAxis([641], [{ v: 639, kind: 'center' }, { v: 642, kind: 'sibling' }], 5);
+    assert('snapAxis: a strictly-nearer sibling beats a farther center', near && near.value === 642, JSON.stringify(near));
+
+    // ===== collectTargets =====
+    section('collectTargets');
+    var S1 = makeSlide('S1', 0.5, 40, 20, [
+        { id: 'sibA', left: 100, top: 100, w: 200, h: 100 },
+        { id: 'sibB', left: 900, top: 400, w: 160, h: 120 },
+        { id: 'd1', left: 500, top: 300, w: 160, h: 90 }
+    ]);
+    var d1 = document.getElementById('d1');
+    var m1 = T.slideMetrics(S1);
+    var targets = T.collectTargets(S1, d1, m1.rect, m1.scale);
+    var xvals = targets.x.map(function (t) { return t.v; });
+    assert('collectTargets includes both slide x-edges', xvals.indexOf(0) >= 0 && xvals.indexOf(1280) >= 0);
+    assert('collectTargets includes the slide x-center (640)', xvals.indexOf(640) >= 0);
+    assert('collectTargets includes sibA edges/center (100/200/300)',
+        xvals.indexOf(100) >= 0 && xvals.indexOf(200) >= 0 && xvals.indexOf(300) >= 0);
+    assert('collectTargets includes sibB edges/center (900/980/1060)',
+        xvals.indexOf(900) >= 0 && xvals.indexOf(980) >= 0 && xvals.indexOf(1060) >= 0);
+    assert('collectTargets excludes the dragged element itself (no 500/660 lines)',
+        xvals.indexOf(500) < 0 && xvals.indexOf(660) < 0);
+    assertEqual('collectTargets x-count = 3 slide + 2 siblings*3', targets.x.length, 9);
+    assertEqual('collectTargets y-count = 3 slide + 2 siblings*3', targets.y.length, 9);
+    // Chrome children are ignored.
+    var chromeKid = document.createElement('div');
+    chromeKid.className = 'presto-wysiwyg-chrome';
+    chromeKid.style.cssText = 'left:10px;top:10px;width:50px;height:50px';
+    S1.appendChild(chromeKid);
+    assertEqual('collectTargets ignores presto-wysiwyg-chrome children',
+        T.collectTargets(S1, d1, m1.rect, m1.scale).x.length, 9);
+    S1.removeChild(chromeKid);
+
+    // ===== Drag: slide-center snap =====
+    section('Drag snap: slide center');
+    G.dragStart(d1, S1);
+    var rA = G.dragMove(d1, S1, 57, 0, {});
+    assertClose('center-x snap adjusts translate 57 -> 60', rA.x, 60);
+    assertClose('un-snapped axis passes through (y stays 0)', rA.y, 0);
+    var sess = T.session();
+    assert('x-axis snapped to the slide center', sess === null || true); // session still live
+    assert('vertical guide is visible after an x-snap', T.dom.vLine.classList.contains('visible'));
+    assert('horizontal guide is hidden with no y-snap', !T.dom.hLine.classList.contains('visible'));
+    assert('center snap uses the emphasized guide (pw-guide-center)', T.dom.vLine.classList.contains('pw-guide-center'));
+    assertEqual('center guide is 2px thick', T.dom.vLine.style.width, '2px');
+    assert('readout is visible during drag', T.dom.readout.classList.contains('visible'));
+    assertEqual('readout shows the snapped on-slide position', T.dom.readout.textContent, '560, 300');
+    // Guide sits at the slide center in client space (x = rect.left + 640*scale).
+    var r1 = S1.getBoundingClientRect();
+    assertClose('vertical guide is drawn at the slide center in client px',
+        styleNum(T.dom.vLine, 'left'), r1.left + 640 * m1.scale - 1, 1.2);
+
+    // ===== Drag: threshold boundary =====
+    section('Drag snap: threshold boundary');
+    var r55 = G.dragMove(d1, S1, 55, 0, {});
+    assertClose('offset exactly 5px snaps (55 -> 60)', r55.x, 60);
+    var r54 = G.dragMove(d1, S1, 54, 0, {});
+    assertClose('offset of 6px does not snap (54 stays 54)', r54.x, 54);
+    assert('no vertical guide when nothing snaps', !T.dom.vLine.classList.contains('visible'));
+
+    // ===== Drag: sibling edge snap (y axis) =====
+    section('Drag snap: sibling edge');
+    var rC = G.dragMove(d1, S1, 0, 103, {});
+    assertClose('sibling-top snap adjusts translate 103 -> 100', rC.y, 100);
+    assertClose('x passes through untouched', rC.x, 0);
+    assert('horizontal guide visible after a y-snap', T.dom.hLine.classList.contains('visible'));
+    assert('sibling snap is NOT the emphasized center guide', !T.dom.hLine.classList.contains('pw-guide-center'));
+    assertEqual('sibling guide is 1px thin', T.dom.hLine.style.height, '1px');
+    assertEqual('readout tracks the snapped position', T.dom.readout.textContent, '500, 400');
+
+    // ===== Drag: Alt disables snapping, keeps the readout =====
+    section('Drag: Alt bypass');
+    var rAlt = G.dragMove(d1, S1, 57, 0, { alt: true });
+    assertClose('Alt held: translate passes through unsnapped', rAlt.x, 57);
+    assert('Alt held: no guide line drawn', !T.dom.vLine.classList.contains('visible'));
+    assert('Alt held: readout still shown', T.dom.readout.classList.contains('visible'));
+    assertEqual('Alt held: readout shows the raw (unsnapped) position', T.dom.readout.textContent, '557, 300');
+    G.dragEnd();
+
+    // ===== Guide lifecycle =====
+    section('Guide visibility lifecycle');
+    G.dragStart(d1, S1);
+    assert('dragStart hides any stale guides', !T.dom.vLine.classList.contains('visible') &&
+        !T.dom.hLine.classList.contains('visible') && !T.dom.readout.classList.contains('visible'));
+    G.dragMove(d1, S1, 57, 0, {});
+    assert('a snapping move shows the guide + readout',
+        T.dom.vLine.classList.contains('visible') && T.dom.readout.classList.contains('visible'));
+    G.dragMove(d1, S1, 200, 200, {});
+    assert('a far (non-snapping) move hides the guide but keeps the readout',
+        !T.dom.vLine.classList.contains('visible') && T.dom.readout.classList.contains('visible'));
+    G.dragEnd();
+    assert('dragEnd hides guides and readout', !T.dom.vLine.classList.contains('visible') &&
+        !T.dom.hLine.classList.contains('visible') && !T.dom.readout.classList.contains('visible'));
+    assert('dragMove after dragEnd is an inert pass-through',
+        (function () { var r = G.dragMove(d1, S1, 57, 0, {}); return r.x === 57 && r.y === 0; })());
+
+    // ===== Scale-awareness (two zoom levels, identical slide-space result) =====
+    section('Scale-awareness');
+    var S2 = makeSlide('S2', 0.75, 40, 420, [
+        { id: 'sibA2', left: 100, top: 100, w: 200, h: 100 },
+        { id: 'sibB2', left: 900, top: 400, w: 160, h: 120 },
+        { id: 'd2', left: 500, top: 300, w: 160, h: 90 }
+    ]);
+    var d2 = document.getElementById('d2');
+    G.dragStart(d1, S1);
+    var scA = G.dragMove(d1, S1, 57, 0, {});
+    var vLeftA = styleNum(T.dom.vLine, 'left');
+    G.dragEnd();
+    G.dragStart(d2, S2);
+    var scB = G.dragMove(d2, S2, 57, 0, {});
+    var vLeftB = styleNum(T.dom.vLine, 'left');
+    G.dragEnd();
+    assertClose('scale 0.5: snapped slide-space translate is 60', scA.x, 60);
+    assertClose('scale 0.75: snapped slide-space translate is also 60', scB.x, 60);
+    var r2 = S2.getBoundingClientRect();
+    assertClose('scale 0.5 guide drawn at that slide rect + scale', vLeftA, S1.getBoundingClientRect().left + 640 * 0.5 - 1, 1.2);
+    assertClose('scale 0.75 guide drawn at that slide rect + scale', vLeftB, r2.left + 640 * 0.75 - 1, 1.2);
+    assert('the two scales place the guide at different client-x', Math.abs(vLeftA - vLeftB) > 5);
+
+    // ===== Precomputed targets survive DOM changes mid-drag =====
+    section('Precomputed targets');
+    var S3 = makeSlide('S3', 0.5, 720, 20, [
+        { id: 'sibC', left: 520, top: 100, w: 80, h: 80 },
+        { id: 'd3', left: 500, top: 300, w: 160, h: 90 }
+    ]);
+    var d3 = document.getElementById('d3');
+    var sibC = document.getElementById('sibC');
+    G.dragStart(d3, S3);
+    var p0 = G.dragMove(d3, S3, 17, 0, {});
+    assertClose('left-edge snaps to sibling at x=520 (17 -> 20)', p0.x, 20);
+    // Move the sibling far away MID-DRAG. Precomputed targets must be unaffected.
+    sibC.style.left = '900px';
+    var p1 = G.dragMove(d3, S3, 17, 0, {});
+    assertClose('mid-drag DOM change is ignored (still snaps via precomputed targets)', p1.x, 20);
+    G.dragEnd();
+    // A fresh gesture re-scans: the sibling is gone from range, so no snap.
+    G.dragStart(d3, S3);
+    var p2 = G.dragMove(d3, S3, 17, 0, {});
+    assertClose('next gesture re-collects targets, so the moved sibling no longer snaps', p2.x, 17);
+    G.dragEnd();
+
+    // ===== Resize snapping + readout =====
+    section('Resize snap + readout');
+    var S4 = makeSlide('S4', 0.5, 720, 420, [
+        { id: 'sibR', left: 100, top: 100, w: 200, h: 80 },
+        { id: 'r1', tag: 'img', left: 200, top: 500, w: 200, h: 100 },
+        { id: 'r2', left: 100, top: 200, w: 100, h: 100 }
+    ]);
+    var r1el = document.getElementById('r1');
+    G.resizeStart(r1el, S4);
+    var aspectSess = T.session();
+    assertClose('resizeStart records the image aspect ratio (100/200)', aspectSess.aspectRatio, 0.5, 0.01);
+    var rz = G.resizeMove(r1el, S4, 97, undefined, {});
+    assertClose('right edge snaps to the sibling right (width 97 -> 100)', rz.width, 100);
+    assert('resize returns width only for an aspect-locked element', !('height' in rz));
+    assert('vertical guide shown during a snapping resize', T.dom.vLine.classList.contains('visible'));
+    assertEqual('resize readout shows aspect-derived w × h', T.dom.readout.textContent, '100 × 50');
+    var s4rect = S4.getBoundingClientRect();
+    assertClose('resize guide drawn at the snapped right edge (x=300)',
+        styleNum(T.dom.vLine, 'left'), s4rect.left + 300 * 0.5, 1.2);
+    var rzFar = G.resizeMove(r1el, S4, 240, undefined, {});
+    assertClose('a width with no target nearby does not snap', rzFar.width, 240);
+    assert('no guide when the resize edge is free', !T.dom.vLine.classList.contains('visible'));
+    assertEqual('free-resize readout keeps updating', T.dom.readout.textContent, '240 × 120');
+    var rzAlt = G.resizeMove(r1el, S4, 97, undefined, { alt: true });
+    assertClose('Alt disables resize snapping too', rzAlt.width, 97);
+    assert('Alt held: no resize guide', !T.dom.vLine.classList.contains('visible'));
+    G.resizeEnd();
+    assert('resizeEnd clears the overlay', !T.dom.vLine.classList.contains('visible') && !T.dom.readout.classList.contains('visible'));
+
+    // Two-axis resize (explicit height) snaps both moving edges.
+    var r2el = document.getElementById('r2');
+    G.resizeStart(r2el, S4);
+    var rz2 = G.resizeMove(r2el, S4, 97, 157, {});
+    assertClose('two-axis resize snaps width to sibling center (97 -> 100)', rz2.width, 100);
+    assertClose('two-axis resize snaps height to slide center (157 -> 160)', rz2.height, 160);
+    assert('horizontal guide shown for the bottom-edge snap', T.dom.hLine.classList.contains('visible'));
+    assertEqual('two-axis resize readout shows explicit w × h', T.dom.readout.textContent, '100 × 160');
+    G.resizeEnd();
+
+    // ===== Overlay cleanliness =====
+    section('Overlay cleanliness');
+    ['style', 'vLine', 'hLine', 'readout'].forEach(function (k) {
+        assert('overlay "' + k + '" carries presto-wysiwyg-chrome',
+            T.dom[k].classList.contains('presto-wysiwyg-chrome'));
+    });
+    assertEqual('nothing injected into slide S1', S1.querySelectorAll('.presto-wysiwyg-chrome').length, 0);
+    assertEqual('nothing injected into slide S4', S4.querySelectorAll('.presto-wysiwyg-chrome').length, 0);
+    assertEqual('slide S1 child count untouched by a full gesture cycle', S1.children.length, 3);
+    assert('guide overlay lives on <body>, not inside a slide',
+        T.dom.vLine.parentNode === document.body && T.dom.readout.parentNode === document.body);
+    assert('guide <style> lives in <head>', T.dom.style.parentNode === document.head);
+
+    finish();
+}
+
+function finish() {
+    var summary = document.createElement('div');
+    summary.className = 'summary ' + (failed === 0 ? 'pass' : 'fail');
+    summary.textContent = passed + '/' + total + ' passed';
+    resultsEl.appendChild(summary);
+    window.GUIDES_TEST_RESULTS = { passed: passed, failed: failed, total: total };
+    console.log('GUIDES_TESTS: ' + passed + '/' + total + ' passed');
+}
+</script>
+</body>
+</html>

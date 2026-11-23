@@ -1,0 +1,332 @@
+/* Presto Decks mode (presto/design/mockups-2026-10-28/decks.png).
+   The native toolbar above this page holds the mode control, search and
+   Open…; this page draws the sidebar, the Continue hero and the deck grid.
+   Colours, type and depth come from ui-tokens.css. */
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+[hidden] { display: none !important; }
+
+html, body {
+    height: 100%;
+    background: var(--p-surface, #FFFFFF);
+    color: var(--p-ink, #1C2532);
+    font-family: var(--p-font-ui, -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif);
+    font-size: 13px;
+    -webkit-font-smoothing: antialiased;
+    -webkit-user-select: none;
+    user-select: none;
+    cursor: default;
+    overflow: hidden;
+}
+
+button { font: inherit; color: inherit; background: none; border: 0; cursor: default; }
+svg { fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; }
+
+#decks-app { display: flex; height: 100vh; min-height: 0; }
+
+/* ---------- sidebar ---------- */
+#decks-side {
+    width: 222px;
+    flex: none;
+    background: var(--p-panel, #F3F4F6);
+    border-right: 1px solid var(--p-hair, #DDE0E5);
+    padding: 14px 10px 18px;
+    overflow-y: auto;
+}
+#decks-side h6 {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--p-dim, #7B8390);
+    letter-spacing: .02em;
+    padding: 12px 10px 6px;
+}
+.side-item {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    width: 100%;
+    height: 30px;
+    padding: 0 10px;
+    border-radius: var(--p-radius-control, 7px);
+    font-size: 13px;
+    color: var(--p-ink, #1C2532);
+    text-align: left;
+    white-space: nowrap;
+}
+.side-item .label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.side-item svg { width: 15px; height: 15px; stroke: var(--p-ink-2, #485263); stroke-width: 1.6; flex: none; }
+.side-item em { font-style: normal; color: var(--p-faint, #A9AFB8); font-size: 12px; font-variant-numeric: tabular-nums; }
+.side-item:hover { background: rgba(0, 0, 0, .04); }
+.side-item.on {
+    background: var(--p-surface, #FFFFFF);
+    box-shadow: 0 0 0 .5px rgba(0, 0, 0, .08), 0 1px 2px rgba(0, 0, 0, .06);
+    font-weight: 500;
+}
+.side-item.quiet { color: var(--p-dim, #7B8390); }
+.side-item.quiet svg { stroke: var(--p-dim, #7B8390); }
+.side-item.missing .label { color: var(--p-faint, #A9AFB8); }
+.side-item:focus-visible { outline: 2px solid var(--p-accent-ring, rgba(47, 107, 216, .28)); outline-offset: -1px; }
+
+/* ---------- library ---------- */
+#decks-lib {
+    flex: 1;
+    min-width: 0;
+    overflow-y: auto;
+    padding: 28px 36px 44px;
+    background: var(--p-surface, #FFFFFF);
+    outline: none;
+}
+.section-h {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--p-dim, #7B8390);
+    margin-bottom: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 16px;
+}
+.section-h .aside { font-weight: 400; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* thumbnails: a fixed 16:9 box, so nothing moves when an image arrives */
+.thumb {
+    position: relative;
+    aspect-ratio: 16 / 9;
+    background: #FFFFFF;
+    border-radius: 6px;
+    overflow: hidden;
+    container-type: inline-size;
+    box-shadow: 0 0 0 1px var(--p-hair, #DDE0E5), 0 2px 6px rgba(16, 24, 40, .06);
+    transition: box-shadow var(--p-dur, 140ms) var(--p-ease, ease);
+}
+.thumb img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    opacity: 0;
+    transition: opacity var(--p-dur, 140ms) var(--p-ease, ease);
+}
+.thumb img.loaded { opacity: 1; }
+.thumb .ph {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: .55em;
+    padding: 0 9%;
+    font-size: max(9px, 4.4cqw);
+    line-height: 1.22;
+    color: var(--p-ink, #1C2532);
+}
+.thumb .ph b { font-weight: 650; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; }
+.thumb .ph small { font-size: .72em; color: var(--p-dim, #7B8390); display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+.thumb.has-image .ph { visibility: hidden; }
+
+/* ---------- Continue hero ---------- */
+#decks-continue { margin-bottom: 34px; }
+.hero {
+    display: flex;
+    gap: 26px;
+    padding: 18px;
+    border-radius: 14px;
+    background: var(--p-panel, #F3F4F6);
+    border: 1px solid var(--p-hair, #DDE0E5);
+    align-items: center;
+    outline: none;
+    transition: box-shadow var(--p-dur, 140ms) var(--p-ease, ease);
+}
+.hero.is-focus { box-shadow: 0 0 0 3px var(--p-accent-ring, rgba(47, 107, 216, .28)); border-color: var(--p-accent, #2F6BD8); }
+.hero-thumb {
+    width: clamp(240px, 40%, 400px);
+    flex: none;
+    border-radius: 7px;
+    box-shadow: var(--p-shadow-slide, 0 1px 2px rgba(16, 24, 40, .06), 0 10px 30px rgba(16, 24, 40, .10));
+}
+.hero .meta { flex: 1; min-width: 0; }
+.hero .eyebrow { font-size: 12px; color: var(--p-dim, #7B8390); font-weight: 500; }
+.hero-title {
+    font-family: var(--p-font-serif, "New York", ui-serif, Georgia, serif);
+    font-size: 24px;
+    line-height: 1.2;
+    font-weight: 600;
+    margin: 6px 0 8px;
+    letter-spacing: -.01em;
+    color: var(--p-ink, #1C2532);
+}
+.hero-facts { color: var(--p-ink-2, #485263); font-size: 13.5px; line-height: 1.55; }
+.where { margin-top: 14px; display: flex; gap: 12px; align-items: center; font-size: 13px; color: var(--p-ink-2, #485263); }
+.where-thumb { position: relative; width: 84px; aspect-ratio: 16 / 9; flex: none; border-radius: 3px; overflow: hidden; background: #FFFFFF; box-shadow: 0 0 0 1px var(--p-hair, #DDE0E5); }
+.where-thumb img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.where-text b { color: var(--p-ink, #1C2532); font-weight: 500; }
+.hero .acts { display: flex; gap: 8px; margin-top: 18px; flex-wrap: wrap; }
+
+/* ---------- buttons ---------- */
+.btn {
+    height: 28px;
+    padding: 0 11px;
+    border-radius: var(--p-radius-control, 7px);
+    font-size: var(--p-text-ui, 12.5px);
+    font-weight: 500;
+    color: var(--p-ink, #1C2532);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--p-surface, #FFFFFF);
+    box-shadow: 0 0 0 .5px rgba(0, 0, 0, .14), 0 1px 1.5px rgba(0, 0, 0, .07);
+    white-space: nowrap;
+}
+.btn svg { width: 14px; height: 14px; stroke-width: 1.7; }
+.btn:hover { background: #F7F8FA; }
+.btn:active { background: #EEF0F3; }
+.btn.primary { background: var(--p-accent, #2F6BD8); color: #FFFFFF; box-shadow: 0 1px 1.5px rgba(0, 0, 0, .12); }
+.btn.primary:hover { background: #2A62C9; }
+.btn.primary:active { background: #2558B6; }
+.btn .play { fill: currentColor; stroke: none; }
+.btn:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--p-accent-ring, rgba(47, 107, 216, .28)), 0 0 0 .5px rgba(0, 0, 0, .14); }
+
+/* ---------- grid ---------- */
+#decks-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(228px, 1fr));
+    gap: 26px 24px;
+}
+/* No content-visibility here: its paint containment clips the ring and hover outline. */
+.card { outline: none; min-width: 0; }
+.card .qa {
+    position: absolute;
+    right: 8px;
+    bottom: 8px;
+    display: flex;
+    gap: 6px;
+    opacity: 0;
+    transform: translateY(2px);
+    transition: opacity var(--p-dur, 140ms) var(--p-ease, ease), transform var(--p-dur, 140ms) var(--p-ease, ease);
+    pointer-events: none;
+}
+.card:hover .qa, .card.is-focus .qa { opacity: 1; transform: none; pointer-events: auto; }
+.card:hover .thumb, .card.is-focus .thumb {
+    box-shadow: 0 0 0 2px var(--p-accent, #2F6BD8), 0 6px 18px rgba(16, 24, 40, .14);
+}
+/* While a file is dragged over Decks the pointer still hovers the card under
+   the drop target: no ring and no Edit/Present buttons there, gone at once
+   like the drop target appears. */
+body.dropping .card .qa { opacity: 0; transform: translateY(2px); pointer-events: none; transition: none; }
+body.dropping .card .thumb {
+    box-shadow: 0 0 0 1px var(--p-hair, #DDE0E5), 0 2px 6px rgba(16, 24, 40, .06);
+    transition: none;
+}
+.card-title {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+    font-family: var(--p-font-serif, "New York", ui-serif, Georgia, serif);
+    font-size: 14.5px;
+    font-weight: 600;
+    margin-top: 10px;
+    line-height: 1.3;
+    color: var(--p-ink, #1C2532);
+}
+.card-meta {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+    color: var(--p-dim, #7B8390);
+    margin-top: 3px;
+    white-space: nowrap;
+    overflow: hidden;
+}
+.card-meta span { overflow: hidden; text-overflow: ellipsis; }
+.card-meta svg { width: 11px; height: 11px; flex: none; stroke-width: 1.8; }
+.card-meta .pin { stroke: var(--p-accent, #2F6BD8); fill: var(--p-accent, #2F6BD8); }
+
+#decks-none { color: var(--p-dim, #7B8390); font-size: 13px; padding: 28px 0; }
+
+/* ---------- empty state ---------- */
+#decks-empty {
+    min-height: calc(100% - 40px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 10px;
+    padding-bottom: 40px;
+}
+#decks-empty .empty-art { width: 76px; height: 57px; stroke: var(--p-faint, #A9AFB8); stroke-width: 1.4; margin-bottom: 6px; }
+#decks-empty .empty-art rect:first-child { fill: var(--p-panel, #F3F4F6); }
+#decks-empty .empty-art rect:nth-child(2) { fill: #FFFFFF; }
+#decks-empty h2 { font-family: var(--p-font-serif, "New York", ui-serif, Georgia, serif); font-size: 22px; font-weight: 600; letter-spacing: -.01em; }
+#decks-empty p { color: var(--p-ink-2, #485263); font-size: 13.5px; line-height: 1.5; max-width: 340px; }
+#decks-empty .acts { display: flex; gap: 8px; margin-top: 8px; }
+
+/* ---------- context menu ---------- */
+#decks-menu {
+    position: fixed;
+    z-index: 50;
+    min-width: 210px;
+    padding: 5px;
+    border-radius: 9px;
+    background: rgba(255, 255, 255, .97);
+    -webkit-backdrop-filter: blur(20px) saturate(1.6);
+    backdrop-filter: blur(20px) saturate(1.6);
+    box-shadow: var(--p-shadow-pop, 0 1px 2px rgba(16, 24, 40, .08), 0 8px 24px rgba(16, 24, 40, .14), 0 0 0 .5px rgba(0, 0, 0, .08));
+    font-size: 13px;
+    outline: none;
+}
+#decks-menu .mi {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    width: 100%;
+    height: 24px;
+    padding: 0 10px;
+    border-radius: 5px;
+    color: var(--p-ink, #1C2532);
+    text-align: left;
+    white-space: nowrap;
+}
+#decks-menu .mi kbd { font: inherit; font-size: 12px; color: var(--p-dim, #7B8390); }
+#decks-menu .mi.active { background: var(--p-accent, #2F6BD8); color: #FFFFFF; }
+#decks-menu .mi.active kbd { color: rgba(255, 255, 255, .8); }
+#decks-menu .mi.danger { color: var(--p-live, #D4462C); }
+#decks-menu .mi.danger.active { color: #FFFFFF; background: var(--p-live, #D4462C); }
+#decks-menu .sep { height: 1px; background: var(--p-hair, #DDE0E5); margin: 5px 6px; }
+
+/* ---------- drop target ---------- */
+#decks-drop {
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    display: grid;
+    place-items: center;
+    background: rgba(231, 234, 238, .7);
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+    pointer-events: none;
+}
+#decks-drop .drop-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 30px 46px;
+    border-radius: 16px;
+    background: var(--p-surface, #FFFFFF);
+    border: 2px dashed var(--p-accent, #2F6BD8);
+    box-shadow: var(--p-shadow-pop, 0 1px 2px rgba(16, 24, 40, .08), 0 8px 24px rgba(16, 24, 40, .14), 0 0 0 .5px rgba(0, 0, 0, .08));
+}
+#decks-drop svg { width: 30px; height: 30px; stroke: var(--p-accent, #2F6BD8); stroke-width: 1.7; margin-bottom: 4px; }
+#decks-drop b { font-size: 15px; font-weight: 600; }
+#decks-drop small { font-size: 12.5px; color: var(--p-dim, #7B8390); }
+
+@media (max-width: 760px) {
+    .hero { flex-direction: column; align-items: stretch; }
+    .hero-thumb { width: 100%; }
+}

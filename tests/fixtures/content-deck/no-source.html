@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=1280">
+    <title>Content fixture without a stats source</title>
+    <!-- Decks that declare no stats source keep data-stat placeholders as typed
+         (the TCD deck tags numbers this way for its own checker). -->
+    <link rel="stylesheet" href="../../../engine/webslides.css">
+    <link rel="stylesheet" href="../../../engine/themes/academic.css">
+    <script defer src="../../../engine/webslides.js"></script>
+</head>
+<body>
+<div class="ws-deck">
+    <section class="slide content" id="plain">
+        <h2>No stats source</h2>
+        <p>Analyses: <span id="n-placeholder" data-stat="n_analyses">4,000</span></p>
+        <svg id="no-math-svg" xmlns="http://www.w3.org/2000/svg" width="400" height="80" viewBox="0 0 400 80">
+            <text id="no-katex" x="10" y="40" font-size="20">costs $5 and $6, no KaTeX here</text>
+        </svg>
+    </section>
+</div>
+</body>
+</html>

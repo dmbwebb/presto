@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 400" width="800" height="400">
+  <g id="frame">
+    <line x1="60" y1="340" x2="760" y2="340" stroke="#444" stroke-width="2"/>
+    <text x="60" y="380" font-size="28" fill="#444">Frame always visible</text>
+  </g>
+  <g data-step="1">
+    <rect x="100" y="200" width="120" height="140" fill="#3F73B8"/>
+    <text x="100" y="185" font-size="28">Step one bar</text>
+  </g>
+  <g data-step="2">
+    <rect x="320" y="120" width="120" height="220" fill="#B8612A"/>
+    <text x="320" y="105" font-size="28">Step two bar</text>
+  </g>
+  <g data-step="3">
+    <rect x="540" y="60" width="120" height="280" fill="#2A9D8F"/>
+    <text x="540" y="45" font-size="28">Step three bar</text>
+  </g>
+</svg>

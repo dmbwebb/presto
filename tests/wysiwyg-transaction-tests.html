@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Visual editor transaction regressions</title>
+  <link rel="stylesheet" href="../engine/webslides.css">
+  <script defer src="../engine/webslides.js"></script>
+  <script defer src="../presto/wysiwyg.js"></script>
+</head>
+<body>
+<div class="ws-deck"><section class="slide"><p id="text">Original</p></section></div>
+<pre id="results" style="position:fixed;z-index:2147483647;top:0;right:0"></pre>
+<script>
+const messages = [];
+window.webkit = {messageHandlers: {presto: {postMessage(m) { messages.push(m); }}}};
+window.addEventListener('load', () => {
+  const W = window.__prestoWysiwyg;
+  W.enable();
+  let passed = 0, failed = 0;
+  function check(name, condition) {
+    document.querySelector('#results').textContent += (condition ? 'PASS: ' : 'FAIL: ') + name + '\n';
+    condition ? passed++ : failed++;
+  }
+  function reset() {
+    W.notifyExternalReplace(0);
+    WS.slides[0].innerHTML = '<p id="text">Original</p>';
+  }
+  W.beginTextEdit('#text');
+  document.querySelector('#text').textContent = 'First edit';
+  check('Undo commits and reverses the first active text session', W.undo() &&
+        document.querySelector('#text').textContent === 'Original');
+
+  reset();
+  W.select('#text');
+  W.setFontSize(40);
+  W.undo();
+  W.beginTextEdit('#text');
+  document.querySelector('#text').textContent = 'New text after undo';
+  let redoResult, redoError;
+  try { redoResult = W.redo(); } catch (e) { redoError = e.message; }
+  check('Redo after new typing does not throw', !redoError);
+  check('New typing invalidates redo without discarding the text',
+        redoResult === false && document.querySelector('#text').textContent === 'New text after undo');
+
+  reset();
+  W.select('#text');
+  const font = document.querySelector('#presto-wysiwyg-font-size');
+  font.value = '47';
+  W.commitActiveSession();
+  check('Native Save flushes an unblurred font field', document.querySelector('#text').style.fontSize === '47px');
+  check('Native Save emits the final font size', messages.some(m =>
+        m.type === 'wysiwygChanged' && m.html.includes('47px')));
+
+  window.WYSIWYG_TRANSACTION_RESULTS = {passed, failed, total: passed + failed};
+  document.querySelector('#results').textContent += passed + '/' + (passed + failed) + ' passed';
+});
+</script>
+</body>
+</html>

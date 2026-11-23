@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Presto — Editor</title>
+    <link rel="stylesheet" href="ui-tokens.css">
+    <link rel="stylesheet" href="editor.css">
+</head>
+<body>
+    <div id="editor-layout">
+        <header id="toolbar">
+            <div class="tabs" role="tablist">
+                <span class="tab on" role="tab" aria-selected="true">Source</span>
+            </div>
+            <span id="slide-label">Slide &#8212;</span>
+            <span id="save-status" role="status" aria-live="polite"></span>
+            <button type="button" id="inspector-close" class="icon-btn" title="Close inspector (&#8997;&#8984;I)" aria-label="Close inspector">
+                <svg viewBox="0 0 18 18" aria-hidden="true"><path d="M5 5l8 8M13 5l-8 8"/></svg>
+            </button>
+        </header>
+        <div id="save-error" role="alert" hidden>
+            <svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.2"/><path d="M8 4.8v3.8M8 11.1v.1"/></svg>
+            <span id="save-error-text"></span>
+            <button type="button" id="save-retry" class="link-btn">Try again</button>
+        </div>
+        <div id="editor-container">
+            <div id="section-open" class="section-wrapper-line" aria-hidden="true"></div>
+            <div id="code-shell">
+                <pre id="highlighting" aria-hidden="true"><code id="highlighting-content"></code></pre>
+                <textarea id="editor" aria-label="HTML source for the current slide"
+                          spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off"></textarea>
+            </div>
+            <div id="section-close" class="section-wrapper-line" aria-hidden="true">&lt;/section&gt;</div>
+        </div>
+        <div id="refine-bar">
+            <div id="refine-head">
+                <b>Refine with AI</b>
+                <button type="button" id="refine-history-toggle" class="link-btn quiet" aria-expanded="false" hidden></button>
+                <span class="refine-head-actions">
+                    <button type="button" id="refine-undo" class="link-btn" title="Undo last change" disabled>Undo last</button>
+                    <button type="button" id="refine-redo" class="link-btn" title="Redo" disabled hidden>Redo</button>
+                </span>
+            </div>
+            <div id="refine-history-panel" hidden>
+                <div id="refine-history-empty">No earlier changes on this slide.</div>
+                <ul id="refine-history-list"></ul>
+            </div>
+            <div id="refine-error" hidden>
+                <span id="refine-error-text"></span>
+                <button type="button" id="refine-error-dismiss" title="Dismiss" aria-label="Dismiss">
+                    <svg viewBox="0 0 18 18" aria-hidden="true"><path d="M5.5 5.5l7 7M12.5 5.5l-7 7"/></svg>
+                </button>
+            </div>
+            <div id="refine-status" hidden>
+                <span class="refine-spinner"></span>
+                <span id="refine-status-text"></span>
+            </div>
+            <form id="refine-form" class="refine-card">
+                <textarea id="refine-input" rows="2" autocomplete="off" spellcheck="true"
+                          aria-label="Describe a change to this slide"
+                          placeholder="Describe a change to this slide"></textarea>
+                <div class="refine-row">
+                    <small>Changes this slide only &#183; &#8984;&#8617; to send</small>
+                    <button type="submit" id="refine-submit" title="Send (&#8984;&#8617;)" aria-label="Send to Refine">
+                        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 13V3M4 7l4-4 4 4"/></svg>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <script src="editor.js"></script>
+</body>
+</html>

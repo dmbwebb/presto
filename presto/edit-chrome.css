@@ -1,0 +1,545 @@
+/* Presto edit chrome: the slide rail, the step strip under the slide, the zoom
+   label, the link card and the Back chip. Injected into the edit preview only,
+   before edit-chrome.js. Light only; every colour is a presto/ui-tokens.css
+   variable with a literal fallback, because the deck page may paint before the
+   tokens arrive. Nothing here may style slide content outside the rail's own
+   thumbnail clones. */
+
+body.presto-edit-chrome-on {
+    background: var(--p-canvas, #E7EAEE);
+}
+
+/* ===== Rail ===== */
+
+#presto-edit-rail {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 232px;
+    z-index: 2147482000;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    background: var(--p-panel, #F3F4F6);
+    border-right: 1px solid var(--p-hair, #DDE0E5);
+    font-family: var(--p-font-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif);
+    font-size: var(--p-text-small, 11.5px);
+    color: var(--p-ink-2, #485263);
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-font-smoothing: antialiased;
+}
+body.presto-rail-hidden #presto-edit-rail { display: none; }
+#presto-edit-rail:focus { outline: none; }
+
+#presto-edit-rail .pec-rail-scroll {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 8px 0 18px;
+    overscroll-behavior: contain;
+}
+
+.pec-sec { position: relative; }
+
+.pec-sec-h {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 10px 14px 6px 12px;
+    border: 0;
+    background: transparent;
+    font: 600 var(--p-text-small, 11.5px)/1.25 var(--p-font-ui, -apple-system, BlinkMacSystemFont, sans-serif);
+    color: var(--p-ink-2, #485263);
+    text-align: left;
+    cursor: default;
+}
+.pec-sec-h .pec-sec-name {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.pec-sec-h svg {
+    flex: none;
+    width: 11px;
+    height: 11px;
+    stroke: var(--p-dim, #7B8390);
+    fill: none;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transition: transform var(--p-dur, 140ms) var(--p-ease, ease);
+}
+.pec-sec.folded .pec-sec-h { color: var(--p-dim, #7B8390); }
+.pec-sec.folded .pec-sec-h svg { transform: rotate(-90deg); }
+.pec-sec.folded .pec-sec-body { display: none; }
+.pec-sec-h em {
+    margin-left: auto;
+    padding-left: 8px;
+    font-style: normal;
+    font-weight: 400;
+    color: var(--p-faint, #A9AFB8);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+.pec-sec-h:hover { color: var(--p-ink, #1C2532); }
+.pec-sec-h:focus-visible,
+.pec-th:focus-visible {
+    outline: 2px solid var(--p-accent-ring, rgba(47, 107, 216, 0.28));
+    outline-offset: -2px;
+    border-radius: 6px;
+}
+.pec-sec-appendix .pec-sec-h svg.pec-sec-chev { stroke: var(--p-faint, #A9AFB8); }
+
+.pec-th {
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+    padding: 5px 14px 5px 10px;
+    cursor: default;
+}
+.pec-th .pec-n {
+    flex: none;
+    width: 20px;
+    padding-top: 2px;
+    text-align: right;
+    font-size: 11px;
+    color: var(--p-dim, #7B8390);
+    font-variant-numeric: tabular-nums;
+}
+.pec-th .pec-pic {
+    position: relative;
+    flex: none;
+    width: 180px;
+    height: 101.25px;
+    overflow: hidden;
+    border-radius: 3px;
+    background: #FFFFFF;
+    box-shadow: 0 0 0 1px var(--p-hair, #DDE0E5), 0 1px 2px rgba(0, 0, 0, .05);
+    transition: box-shadow var(--p-dur, 140ms) var(--p-ease, ease);
+}
+.pec-th:hover .pec-pic { box-shadow: 0 0 0 1px var(--p-hair-strong, #C8CCD3), 0 1px 3px rgba(0, 0, 0, .08); }
+.pec-th.on .pec-n { color: var(--p-accent, #2F6BD8); font-weight: 600; }
+.pec-th.on .pec-pic,
+.pec-th.on:hover .pec-pic { box-shadow: 0 0 0 2.5px var(--p-accent, #2F6BD8); }
+
+.pec-pic .pec-dots {
+    position: absolute;
+    right: 4px;
+    bottom: 4px;
+    display: flex;
+    gap: 2px;
+    z-index: 2;
+}
+.pec-pic .pec-dots i {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: rgba(28, 37, 50, .35);
+}
+
+/* Thumbnail clones: a 1280x720 slide scaled with transform (never CSS zoom,
+   which breaks KaTeX below 1 in WebKit). Reveal and wysiwyg chrome states are
+   frozen at the slide's final step by edit-chrome.js. */
+.pec-canvas {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 1280px;
+    height: 720px;
+    transform-origin: 0 0;
+    pointer-events: none;
+    overflow: hidden;
+    contain: layout paint style;
+}
+.pec-canvas > .slide {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    right: auto !important;
+    bottom: auto !important;
+    margin: 0 !important;
+    zoom: normal !important;
+    transform: none !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: none !important;
+}
+.pec-canvas .slide,
+.pec-canvas .slide * {
+    transition: none !important;
+    animation: none !important;
+    caret-color: transparent;
+}
+.pec-canvas .katex { zoom: normal !important; }
+.pec-placeholder {
+    position: absolute;
+    inset: 0;
+    background: #FFFFFF;
+}
+
+/* ===== Step strip ===== */
+
+#presto-step-strip {
+    position: fixed;
+    left: 50%;
+    bottom: 16px;
+    z-index: 2147482000;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    height: 38px;
+    box-sizing: border-box;
+    padding: 6px 8px 6px 14px;
+    background: var(--p-surface, #FFFFFF);
+    border-radius: 11px;
+    box-shadow: 0 0 0 .5px rgba(0, 0, 0, .1), 0 2px 8px rgba(16, 24, 40, .08);
+    font: var(--p-text-ui, 12.5px)/1 var(--p-font-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif);
+    color: var(--p-ink-2, #485263);
+    white-space: nowrap;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-font-smoothing: antialiased;
+}
+#presto-step-strip .pec-steps {
+    display: flex;
+    align-items: center;
+}
+#presto-step-strip .pec-step {
+    min-width: 26px;
+    height: 26px;
+    padding: 0 4px;
+    box-sizing: border-box;
+    display: grid;
+    place-items: center;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    font: 500 12px/1 var(--p-font-ui, -apple-system, BlinkMacSystemFont, sans-serif);
+    color: var(--p-dim, #7B8390);
+    font-variant-numeric: tabular-nums;
+    cursor: default;
+}
+#presto-step-strip .pec-step:hover { background: rgba(0, 0, 0, .05); }
+#presto-step-strip .pec-step.done { color: var(--p-ink, #1C2532); }
+#presto-step-strip .pec-step.on,
+#presto-step-strip .pec-step.on:hover { background: var(--p-accent, #2F6BD8); color: #FFFFFF; }
+#presto-step-strip .pec-step:focus-visible { outline: 2px solid var(--p-accent-ring, rgba(47, 107, 216, 0.28)); outline-offset: 1px; }
+#presto-step-strip .pec-step-link {
+    width: 10px;
+    height: 1.5px;
+    background: var(--p-hair-strong, #C8CCD3);
+}
+#presto-step-strip.dense .pec-step-link { width: 3px; }
+#presto-step-strip.dense .pec-step { min-width: 22px; }
+#presto-step-strip .pec-none { color: var(--p-dim, #7B8390); }
+#presto-step-strip.no-steps .pec-strip-label { display: none; }
+#presto-step-strip .pec-keys { color: var(--p-dim, #7B8390); }
+#presto-step-strip .pec-sep {
+    width: 1px;
+    height: 20px;
+    background: var(--p-hair, #DDE0E5);
+}
+#presto-step-strip .pec-ghost {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: default;
+}
+#presto-step-strip.no-steps .pec-ghost { color: var(--p-faint, #A9AFB8); }
+
+.pec-switch {
+    position: relative;
+    flex: none;
+    width: 28px;
+    height: 16px;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 8px;
+    background: var(--p-hair-strong, #C8CCD3);
+    cursor: default;
+    transition: background-color var(--p-dur, 140ms) var(--p-ease, ease);
+}
+.pec-switch::after {
+    content: "";
+    position: absolute;
+    left: 2px;
+    top: 2px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #FFFFFF;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, .2);
+    transition: transform var(--p-dur, 140ms) var(--p-ease, ease);
+}
+.pec-switch[aria-checked="true"] { background: var(--p-accent, #2F6BD8); }
+.pec-switch[aria-checked="true"]::after { transform: translateX(12px); }
+.pec-switch:disabled { opacity: .45; }
+/* A slide with no reveal steps: the switch shows off, not a greyed-out "on"
+   that reads as broken. aria-checked keeps the saved setting, which comes
+   back as soon as the switch is enabled. */
+.pec-switch:disabled[aria-checked="true"] { background: var(--p-hair-strong, #C8CCD3); }
+.pec-switch:disabled[aria-checked="true"]::after { transform: none; }
+.pec-switch:focus-visible { outline: 2px solid var(--p-accent-ring, rgba(47, 107, 216, 0.28)); outline-offset: 2px; }
+
+/* ===== Zoom label ===== */
+
+#presto-zoom-label {
+    position: fixed;
+    right: 18px;
+    bottom: 26px;
+    z-index: 2147482000;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font: 12px/1 var(--p-font-ui, -apple-system, BlinkMacSystemFont, sans-serif);
+    color: var(--p-dim, #7B8390);
+    font-variant-numeric: tabular-nums;
+    -webkit-user-select: none;
+    user-select: none;
+    pointer-events: none;
+}
+#presto-zoom-label b { font-weight: 500; color: var(--p-ink-2, #485263); }
+
+/* ===== Back chip ===== */
+
+#presto-back-chip {
+    position: fixed;
+    top: 18px;
+    left: 50%;
+    z-index: 2147482500;
+    transform: translateX(-50%);
+    display: none;
+    align-items: center;
+    gap: 6px;
+    height: 30px;
+    max-width: 60vw;
+    margin: 0;
+    padding: 0 12px 0 8px;
+    border: 0;
+    border-radius: 8px;
+    background: var(--p-surface, #FFFFFF);
+    box-shadow: 0 0 0 .5px rgba(0, 0, 0, .12), 0 2px 8px rgba(16, 24, 40, .10);
+    font: 500 var(--p-text-ui, 12.5px)/1 var(--p-font-ui, -apple-system, BlinkMacSystemFont, sans-serif);
+    color: var(--p-accent, #2F6BD8);
+    white-space: nowrap;
+    cursor: default;
+    -webkit-font-smoothing: antialiased;
+}
+#presto-back-chip.visible { display: flex; }
+#presto-back-chip span { overflow: hidden; text-overflow: ellipsis; }
+#presto-back-chip:hover { box-shadow: 0 0 0 .5px rgba(0, 0, 0, .16), 0 3px 10px rgba(16, 24, 40, .14); }
+#presto-back-chip:focus-visible { outline: 2px solid var(--p-accent-ring, rgba(47, 107, 216, 0.28)); outline-offset: 2px; }
+#presto-back-chip svg {
+    flex: none;
+    width: 14px;
+    height: 14px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+/* ===== Link card ===== */
+
+#presto-link-card {
+    position: fixed;
+    z-index: 2147483100;
+    display: none;
+    width: 352px;
+    box-sizing: border-box;
+    padding: 12px;
+    background: var(--p-surface, #FFFFFF);
+    border-radius: var(--p-radius-card, 12px);
+    box-shadow: var(--p-shadow-pop, 0 1px 2px rgba(16, 24, 40, .08), 0 8px 24px rgba(16, 24, 40, .14), 0 0 0 .5px rgba(0, 0, 0, .08));
+    font: var(--p-text-ui, 12.5px)/1.3 var(--p-font-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif);
+    color: var(--p-ink, #1C2532);
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-font-smoothing: antialiased;
+}
+#presto-link-card.visible { display: block; }
+#presto-link-card .pec-lc-h {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    min-width: 0;
+    color: var(--p-dim, #7B8390);
+}
+#presto-link-card .pec-lc-h b {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--p-ink, #1C2532);
+    font-weight: 600;
+}
+#presto-link-card svg.pec-ico {
+    flex: none;
+    width: 14px;
+    height: 14px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 1.7;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+#presto-link-card .pec-lc-t {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin: 10px 0 12px;
+    padding: 8px;
+    border-radius: 8px;
+    background: var(--p-panel, #F3F4F6);
+}
+#presto-link-card .pec-lc-t .pec-pic {
+    position: relative;
+    flex: none;
+    width: 112px;
+    height: 63px;
+    overflow: hidden;
+    border-radius: 3px;
+    background: #FFFFFF;
+    box-shadow: 0 0 0 1px var(--p-hair, #DDE0E5);
+}
+#presto-link-card .pec-lc-t b {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.3;
+    overflow-wrap: anywhere;
+}
+#presto-link-card .pec-lc-t small {
+    display: block;
+    margin-top: 3px;
+    font-size: 12px;
+    color: var(--p-dim, #7B8390);
+    overflow-wrap: anywhere;
+}
+#presto-link-card .pec-lc-t.missing b { color: var(--p-live, #D4462C); }
+#presto-link-card .pec-lc-a { display: flex; gap: 6px; }
+#presto-link-card .pec-lc-f {
+    margin-top: 10px;
+    font-size: var(--p-text-small, 11.5px);
+    color: var(--p-dim, #7B8390);
+}
+
+.pec-btn {
+    height: 28px;
+    margin: 0;
+    padding: 0 11px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border: 0;
+    border-radius: var(--p-radius-control, 7px);
+    background: var(--p-surface, #FFFFFF);
+    box-shadow: 0 0 0 .5px rgba(0, 0, 0, .14), 0 1px 1.5px rgba(0, 0, 0, .07);
+    font: 500 var(--p-text-ui, 12.5px)/1 var(--p-font-ui, -apple-system, BlinkMacSystemFont, sans-serif);
+    color: var(--p-ink, #1C2532);
+    white-space: nowrap;
+    cursor: default;
+}
+.pec-btn:hover { background: #F7F8FA; }
+.pec-btn:active { background: #EEF0F3; }
+.pec-btn:disabled { color: var(--p-faint, #A9AFB8); }
+.pec-btn:focus-visible { outline: 2px solid var(--p-accent-ring, rgba(47, 107, 216, 0.28)); outline-offset: 1px; }
+.pec-btn.primary {
+    background: var(--p-accent, #2F6BD8);
+    color: #FFFFFF;
+    box-shadow: 0 1px 1.5px rgba(0, 0, 0, .12);
+}
+.pec-btn.primary:hover { background: #2A61C6; }
+.pec-btn.primary:active { background: #2556B0; }
+.pec-btn svg {
+    width: 14px;
+    height: 14px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 1.7;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+/* Change target: searchable slide list (appendix first). */
+#presto-link-card .pec-pick-search {
+    display: block;
+    width: 100%;
+    height: 30px;
+    box-sizing: border-box;
+    margin: 10px 0 8px;
+    padding: 0 10px;
+    border: 0;
+    border-radius: var(--p-radius-control, 7px);
+    background: rgba(0, 0, 0, .055);
+    font: var(--p-text-ui, 12.5px)/1 var(--p-font-ui, -apple-system, BlinkMacSystemFont, sans-serif);
+    color: var(--p-ink, #1C2532);
+    outline: none;
+    -webkit-user-select: text;
+    user-select: text;
+}
+#presto-link-card .pec-pick-search:focus { box-shadow: 0 0 0 3px var(--p-accent-ring, rgba(47, 107, 216, 0.28)); }
+#presto-link-card .pec-pick-list {
+    max-height: 264px;
+    overflow-y: auto;
+    margin: 0 -4px;
+    padding: 0 4px;
+}
+#presto-link-card .pec-pick-group {
+    padding: 8px 6px 4px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--p-dim, #7B8390);
+}
+#presto-link-card .pec-pick-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    box-sizing: border-box;
+    min-height: 28px;
+    margin: 0;
+    padding: 4px 6px;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    font: var(--p-text-ui, 12.5px)/1.25 var(--p-font-ui, -apple-system, BlinkMacSystemFont, sans-serif);
+    color: var(--p-ink, #1C2532);
+    text-align: left;
+    cursor: default;
+}
+#presto-link-card .pec-pick-row .pec-pick-n {
+    flex: none;
+    width: 28px;
+    color: var(--p-dim, #7B8390);
+    font-variant-numeric: tabular-nums;
+}
+#presto-link-card .pec-pick-row .pec-pick-title {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+#presto-link-card .pec-pick-row .pec-pick-check { flex: none; width: 14px; color: var(--p-accent, #2F6BD8); }
+#presto-link-card .pec-pick-row.active { background: var(--p-accent-tint, rgba(47, 107, 216, 0.11)); }
+#presto-link-card .pec-pick-empty { padding: 10px 6px; color: var(--p-dim, #7B8390); }
+#presto-link-card .pec-pick-foot {
+    display: flex;
+    justify-content: flex-end;
+    gap: 6px;
+    margin-top: 10px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .pec-sec-h svg, .pec-switch, .pec-switch::after, .pec-th .pec-pic { transition: none; }
+}

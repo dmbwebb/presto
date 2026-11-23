@@ -1,0 +1,1706 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=1280">
+    <title>Presto WYSIWYG Editing Tests</title>
+    <link rel="stylesheet" href="../engine/webslides.css">
+    <link rel="stylesheet" href="../engine/themes/academic.css">
+    <script defer src="../engine/webslides.js"></script>
+    <script defer src="../presto/wysiwyg.js"></script>
+    <style>
+        #test-results {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            z-index: 2147483200;
+            background: rgba(0,0,0,0.9);
+            color: #fff;
+            padding: 16px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 11px;
+            max-height: 90vh;
+            overflow-y: auto;
+            min-width: 420px;
+        }
+        #test-results .pass { color: #4ade80; }
+        #test-results .fail { color: #f87171; }
+        #test-results .section { color: #60a5fa; font-weight: bold; margin-top: 8px; }
+        #test-results .summary { margin-top: 12px; padding-top: 8px; border-top: 1px solid #555; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<!-- Authored slide bodies live in templates so tests can compare serialization
+     output against the browser-canonical form of the authored source. -->
+<template id="authored-content"><h2>Content Slide</h2>
+    <p id="para">Hello <strong>world</strong> paragraph.</p>
+    <ul id="list">
+        <li id="li-one">First bullet</li>
+        <li data-step="1" id="li-step">Stepped bullet</li>
+    </ul>
+    <p id="bullet-target">Turn this into a bullet</p>
+    <div class="text-box" id="overlap-back"
+         style="position: absolute; left: 760px; top: 600px; width: 220px;">Earlier reveal</div>
+    <div class="text-box" id="overlap-front" data-step="1"
+         style="position: absolute; left: 760px; top: 600px; width: 220px;">Later reveal</div>
+    <div class="box" id="box"><div class="box-title">Box title</div><p id="box-para">Box body</p></div>
+    <p data-class="emphasized:2" id="classed">Class step target</p></template>
+
+<template id="authored-table"><h2>Tables</h2>
+    <div class="table-container" id="ext-table" data-table-src="data:text/html,%3Ctable%3E%3Ctbody%3E%3Ctr%3E%3Ctd%3Eext%20cell%3C%2Ftd%3E%3C%2Ftr%3E%3Ctr%20data-step%3D%221%22%3E%3Ctd%3Estep%20row%3C%2Ftd%3E%3C%2Ftr%3E%3C%2Ftbody%3E%3C%2Ftable%3E"></div>
+    <div class="table-container" id="inline-table"><table><tbody><tr><td>inline cell</td></tr></tbody></table></div></template>
+
+<template id="authored-media"><h2>Media</h2>
+    <img id="inline-svg-img" data-inline class="figure" alt="inline figure"
+         src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2010%2010'%3E%3Ccircle%20id='wys-dot'%20cx='5'%20cy='5'%20r='4'/%3E%3C/svg%3E">
+    <img id="plain-img" alt="plain figure"
+         src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2010%2010'%3E%3Crect%20width='10'%20height='10'/%3E%3C/svg%3E">
+    <img id="leak-svg-img" data-inline alt="leak figure"
+         src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20class='svglite'%20viewBox='0%200%2010%2010'%3E%3Crect%20width='10'%20height='10'/%3E%3C/svg%3E"></template>
+
+<template id="authored-katex"><h2>Math</h2>
+    <p id="math-para">Inline <span class="katex"><span class="katex-mathml"><math><semantics><mrow></mrow><annotation encoding="application/x-tex">x^2</annotation></semantics></math></span><span class="katex-html" aria-hidden="true">x2</span></span> math.</p>
+    <span class="katex-display"><span class="katex"><span class="katex-mathml"><math><semantics><mrow></mrow><annotation encoding="application/x-tex">\int_0^1 f</annotation></semantics></math></span></span></span></template>
+
+<template id="authored-extra"><h2>Extra Slide</h2>
+    <p id="extra-para">Extra paragraph body</p>
+    <p id="extra-step" data-step="1">Stepped extra line</p>
+    <p id="nudge-target">Nudge target</p>
+    <p id="clamp-target">Clamp target</p>
+    <p id="styled-fmt" style="font-weight: 700; font-style: italic; text-decoration-line: underline;">Preformatted text</p>
+    <div id="bare-block"><span id="bare-inner">bare block content</span></div></template>
+
+<template id="authored-extra2"><h2>Extra Slide Two</h2>
+    <p id="extra2-para">Second extra paragraph</p></template>
+
+<div class="ws-deck">
+    <section class="slide title" id="s-title">
+        <h1>WYSIWYG Test Deck</h1>
+        <p class="subtitle" id="subtitle">Direct manipulation</p>
+        <aside class="notes" id="title-notes">Speaker notes for the title slide.</aside>
+    </section>
+    <section class="slide content" id="s-content"></section>
+    <section class="slide content" id="s-table"></section>
+    <section class="slide content" id="s-media"></section>
+    <section class="slide content" id="s-katex"></section>
+    <section class="slide content" id="s-extra"></section>
+    <section class="slide content" id="s-extra2"></section>
+</div>
+<div id="ws-footer">
+    <span id="ws-footer-left">WYSIWYG Tests</span>
+    <span id="ws-footer-right"></span>
+</div>
+<div id="test-results"></div>
+
+<script>
+// Populate slides from the authored templates before the engine initializes.
+['content', 'table', 'media', 'katex', 'extra', 'extra2'].forEach(function (name) {
+    document.getElementById('s-' + name).innerHTML =
+        document.getElementById('authored-' + name).innerHTML;
+});
+</script>
+
+<script>
+window.addEventListener('load', function () { runAllTests(); });
+
+var passed = 0, failed = 0, total = 0;
+var resultsEl = null;
+
+function log(cls, text) {
+    var div = document.createElement('div');
+    div.className = cls;
+    div.textContent = text;
+    resultsEl.appendChild(div);
+}
+
+function section(name) { log('section', name); }
+
+function assert(name, condition, detail) {
+    total++;
+    if (condition) {
+        passed++;
+        log('pass', '✓ ' + name);
+    } else {
+        failed++;
+        log('fail', '✗ ' + name + (detail !== undefined ? ' — ' + detail : ''));
+        console.error('FAIL: ' + name, detail);
+    }
+}
+
+function assertEqual(name, actual, expected) {
+    assert(name, actual === expected, 'got ' + JSON.stringify(actual) + ', expected ' + JSON.stringify(expected));
+}
+
+function assertClose(name, actual, expected, tol) {
+    tol = tol === undefined ? 1.5 : tol;
+    assert(name, typeof actual === 'number' && Math.abs(actual - expected) <= tol,
+        'got ' + actual + ', expected ' + expected + ' ±' + tol);
+}
+
+function tick(ms) { return new Promise(function (r) { setTimeout(r, ms || 0); }); }
+
+function waitFor(cond, timeoutMs) {
+    var deadline = Date.now() + (timeoutMs || 5000);
+    return new Promise(function (resolve, reject) {
+        (function poll() {
+            if (cond()) return resolve();
+            if (Date.now() > deadline) return reject(new Error('waitFor timeout'));
+            setTimeout(poll, 40);
+        })();
+    });
+}
+
+function canonical(templateId) {
+    return document.getElementById(templateId).innerHTML;
+}
+
+function mouse(type, target, clientX, clientY, opts) {
+    var init = Object.assign({
+        bubbles: true, cancelable: true, view: window,
+        clientX: clientX || 0, clientY: clientY || 0, button: 0
+    }, opts || {});
+    target.dispatchEvent(new MouseEvent(type, init));
+}
+
+function keydown(target, key, opts) {
+    var init = Object.assign({ bubbles: true, cancelable: true, key: key }, opts || {});
+    target.dispatchEvent(new KeyboardEvent('keydown', init));
+}
+
+function keyup(target, key, opts) {
+    var init = Object.assign({ bubbles: true, cancelable: true, key: key }, opts || {});
+    target.dispatchEvent(new KeyboardEvent('keyup', init));
+}
+
+function translateX(el) {
+    return parseFloat((el.style.translate || '0').split(/\s+/)[0]) || 0;
+}
+
+function center(el) {
+    var r = el.getBoundingClientRect();
+    return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+}
+
+function clickToSelect(el) {
+    var c = center(el);
+    mouse('mousedown', el, c.x, c.y);
+    mouse('mouseup', el, c.x, c.y);
+    mouse('click', el, c.x, c.y);
+}
+
+function dblclickOn(el, x, y) {
+    var c = x === undefined ? center(el) : { x: x, y: y };
+    mouse('mousedown', el, c.x, c.y);
+    mouse('mouseup', el, c.x, c.y);
+    mouse('dblclick', el, c.x, c.y);
+}
+
+function slideScaleFor(slide) {
+    return slide.getBoundingClientRect().width / 1280;
+}
+
+// A committed text box (a box nobody types into is discarded, BACKLOG 9).
+function makeBox(x, y, text) {
+    var box = window.__prestoWysiwyg.addTextBox(x, y);
+    document.execCommand('insertText', false, text || 'Box');
+    window.__prestoWysiwyg.endTextEdit();
+    return box;
+}
+
+// Drive a full resize gesture through a handle: mousedown on the handle (which
+// runs startResize), then a single document mousemove past the ±2px threshold,
+// then mouseup (onResizeEnd). Mirrors the real capture-phase event flow.
+function resizeGesture(handleKind, dxClient, dyClient, opts) {
+    var handle = document.querySelector('.presto-wysiwyg-handle[data-handle="' + handleKind + '"]');
+    if (!handle) return false;
+    var c = center(handle);
+    mouse('mousedown', handle, c.x, c.y, opts);
+    mouse('mousemove', document, c.x + dxClient, c.y + dyClient, opts);
+    mouse('mouseup', document, c.x + dxClient, c.y + dyClient, opts);
+    return true;
+}
+
+function handleCenter(kind) {
+    var h = document.querySelector('.presto-wysiwyg-handle[data-handle="' + kind + '"]');
+    var r = h.getBoundingClientRect();
+    return { x: r.left + r.width / 2, y: r.top + r.height / 2,
+             visible: h.classList.contains('visible') };
+}
+
+var messages = [];
+function messagesOfType(type) {
+    return messages.filter(function (m) { return m.type === type; });
+}
+function lastMessage(type) {
+    var list = messagesOfType(type);
+    return list.length ? list[list.length - 1] : null;
+}
+
+async function runAllTests() {
+    resultsEl = document.getElementById('test-results');
+    var W = window.__prestoWysiwyg;
+
+    try {
+        await waitFor(function () {
+            return window.WS && WS.slides && WS.slides.length === 7 &&
+                document.querySelector('#ext-table table') &&
+                document.querySelector('#s-media svg[data-ws-original-img]');
+        });
+    } catch (e) {
+        assert('deck initialized with async content', false, String(e));
+        finish();
+        return;
+    }
+
+    section('Setup');
+    assert('wysiwyg API exposed', !!W && W.version === 1);
+    W.onMessage = function (msg) { messages.push(msg); };
+    localStorage.setItem('presto-hidden-step-opacity', '0');
+    W.enable();
+    await waitFor(function () { return W.state().enabled; });
+    assert('enable() marks body', document.body.classList.contains('presto-wysiwyg-on'));
+    assert('engine stashed original img', !!document.querySelector('#s-media svg[data-ws-original-img]'));
+    assert('engine stashed original table html', document.getElementById('ext-table').hasAttribute('data-ws-original-html'));
+
+    // ===== The old dark top-right panel is gone (PDF, <>, Step, Opacity) =====
+    section('Light chrome: no dark panel');
+    assert('no top-right step/opacity panel', !document.getElementById('presto-step-visibility'));
+    assert('no in-page HTML source toggle', !document.getElementById('presto-source-toggle'));
+    assert('no in-page PDF button', !document.getElementById('presto-pdf-export'));
+    var chromeCss = document.getElementById('presto-wysiwyg-style').textContent;
+    assert('no dark #252526 chrome colours remain', chromeCss.indexOf('#252526') < 0 && chromeCss.indexOf('#3c3c3c') < 0);
+    assert('chrome styles use the shared accent token', chromeCss.indexOf('var(--p-accent') >= 0);
+
+    // PDF export and the source pane moved to the native toolbar; the API stays.
+    section('HTML source and PDF export API');
+    messages.length = 0;
+    W.toggleSourceSidebar();
+    assert('toggleSourceSidebar() requests the native sidebar', !!lastMessage('toggleSourceSidebar'));
+    W.setSourceSidebarVisible(true);
+    assert('state reports source sidebar open', W.state().sourceSidebarVisible === true);
+    W.setSourceSidebarVisible(false);
+    assert('state reports source sidebar closed', W.state().sourceSidebarVisible === false);
+    messages.length = 0;
+    assert('exportPDF() posts the shared native export request', W.exportPDF() === true && !!lastMessage('exportPDFRequested'));
+    W.setPDFExportAvailable(false);
+    messages.length = 0;
+    assert('a busy export refuses a duplicate request', W.exportPDF() === false && !lastMessage('exportPDFRequested'));
+    W.setPDFExportAvailable(true);
+    assert('state reports export available again', W.state().pdfExportAvailable === true);
+
+    // ===== Ghosted reveal steps =====
+    section('Reveal ghosting');
+    WS.goToSlide(1, 0);
+    await tick(50);
+    var stepLi = document.getElementById('li-step');
+    var ghostStyle = getComputedStyle(stepLi);
+    assertEqual('hidden step restores its saved opacity at step 0', ghostStyle.opacity, '0');
+    assertEqual('fully hidden step blocks pointer events', ghostStyle.pointerEvents, 'none');
+    assertEqual('ghost setting restored off from storage', W.state().hiddenStepOpacity, 0);
+    var ghostEvents = [];
+    document.addEventListener('presto:ghostfuture', function (e) { ghostEvents.push(e.detail.on); });
+    messages.length = 0;
+    W.setGhostFuture(true, { silent: true });
+    await tick(20);
+    assertEqual('setGhostFuture(true) shows hidden steps at 33%', getComputedStyle(stepLi).opacity, '0.33');
+    assertEqual('ghosted step accepts pointer events again', getComputedStyle(stepLi).pointerEvents, 'auto');
+    assertEqual('ghost setting persists', localStorage.getItem('presto-hidden-step-opacity'), '0.33');
+    assert('a silent change (edit chrome or shell) posts nothing to Swift', !lastMessage('ghostFutureChanged'));
+    assertEqual('setGhostFuture announces presto:ghostfuture for the step strip', ghostEvents.join(','), 'true');
+    WS.goToSlide(1, 1);
+    await tick(50);
+    assertEqual('revealed step is fully opaque', getComputedStyle(stepLi).opacity, '1');
+    WS.goToSlide(1, 0);
+    await tick(20);
+
+    // ⇧⌘O typed into the page toggles it and tells Swift (menu checkmark).
+    keydown(document.body, 'O', { metaKey: true, shiftKey: true });
+    assertEqual('cmd-shift-O hides future steps', W.state().hiddenStepOpacity, 0);
+    var ghostMsg = lastMessage('ghostFutureChanged');
+    assert('cmd-shift-O posts ghostFutureChanged {on:false}', !!ghostMsg && ghostMsg.on === false);
+    keydown(document.body, 'o', { metaKey: true, shiftKey: true });
+    assertEqual('cmd-shift-O restores ghosted future steps', W.state().hiddenStepOpacity, 0.33);
+    assert('second cmd-shift-O posts {on:true}', lastMessage('ghostFutureChanged').on === true);
+
+    // ===== Selection model =====
+    section('Selection');
+    var para = document.getElementById('para');
+    assertEqual('pickSelectable: paragraph', W.pickSelectable(para), para);
+    assertEqual('pickSelectable: text inside strong -> paragraph', W.pickSelectable(para.querySelector('strong')), para.querySelector('strong').closest('p'));
+    assertEqual('pickSelectable: li', W.pickSelectable(document.getElementById('li-one')), document.getElementById('li-one'));
+    assertEqual('pickSelectable: box title -> box child', W.pickSelectable(document.querySelector('#box .box-title')).id, 'box');
+
+    clickToSelect(para);
+    assert('click selects paragraph', W.state().hasSelection && para.classList.contains('presto-wysiwyg-selected'));
+    assert('selection posts editing state', lastMessage('wysiwygEditingState') && lastMessage('wysiwygEditingState').hasSelection === true);
+    assert('mousedown posts wysiwygWillEdit', messagesOfType('wysiwygWillEdit').length > 0);
+    var toolbar = document.getElementById('presto-wysiwyg-toolbar');
+    assert('toolbar visible on selection', toolbar && toolbar.classList.contains('visible'));
+
+    // Click empty slide area deselects
+    var slide1 = WS.slides[1];
+    var slideRect = slide1.getBoundingClientRect();
+    mouse('mousedown', slide1, slideRect.left + 30, slideRect.bottom - 12);
+    mouse('mouseup', slide1, slideRect.left + 30, slideRect.bottom - 12);
+    assert('click on empty slide area deselects', !W.state().hasSelection);
+    assert('toolbar hidden after deselect', !toolbar.classList.contains('visible'));
+
+    // Hover affordance
+    var boxPara = document.getElementById('box-para');
+    mouse('mousemove', boxPara, center(boxPara).x, center(boxPara).y);
+    assert('hover marks selectable element', boxPara.classList.contains('presto-wysiwyg-hover'));
+    mouse('mousemove', slide1, slideRect.left + 30, slideRect.bottom - 12);
+    assert('hover clears off elements', !boxPara.classList.contains('presto-wysiwyg-hover'));
+
+    // Escape deselects
+    clickToSelect(para);
+    keydown(document.body, 'Escape');
+    assert('Escape deselects', !W.state().hasSelection);
+
+    // Engine click navigation suppressed
+    WS.goToSlide(1, 0);
+    await tick(20);
+    var stepBefore = WS.currentStep;
+    var rightSide = { x: slideRect.right - 40, y: slideRect.top + 200 };
+    mouse('mousedown', para, rightSide.x, rightSide.y);
+    mouse('mouseup', para, rightSide.x, rightSide.y);
+    mouse('click', para, rightSide.x, rightSide.y);
+    assertEqual('engine click-navigation suppressed', WS.currentStep, stepBefore);
+
+    section('Overlapping selection');
+    var overlapFront = document.getElementById('overlap-front');
+    var overlapBack = document.getElementById('overlap-back');
+    // overlap-front is a future step (data-step=1); at step 0 the object
+    // visible right now outranks its ghost.
+    clickToSelect(overlapFront);
+    assert('first click selects the object visible at the current step', overlapBack.classList.contains('presto-wysiwyg-selected'));
+    clickToSelect(overlapFront);
+    assert('second click cycles to the ghosted future-step object', overlapFront.classList.contains('presto-wysiwyg-selected'));
+    assert('overlap hint explains how to select behind',
+        document.getElementById('presto-wysiwyg-hint').textContent.indexOf('click again') >= 0);
+    clickToSelect(overlapFront);
+    assert('another click cycles back to the visible object', overlapBack.classList.contains('presto-wysiwyg-selected'));
+    var overlapPoint = center(overlapFront);
+    mouse('mousedown', overlapFront, overlapPoint.x, overlapPoint.y);
+    mouse('mousemove', document, overlapPoint.x + 20, overlapPoint.y + 10, { buttons: 1 });
+    mouse('mouseup', document, overlapPoint.x + 20, overlapPoint.y + 10);
+    assert('dragging after cycling moves only the selected visible object',
+        !!overlapBack.style.translate && !overlapFront.style.translate);
+    W.deselect();
+
+    // With both objects revealed, the topmost wins again.
+    WS.goToSlide(1, 1);
+    await tick(30);
+    clickToSelect(overlapFront);
+    assert('with both revealed, first click selects the top object', overlapFront.classList.contains('presto-wysiwyg-selected'));
+    clickToSelect(overlapFront);
+    assert('with both revealed, clicking cycles to the object behind', overlapBack.classList.contains('presto-wysiwyg-selected'));
+    W.deselect();
+
+    // At 0% opacity the invisible future step is not selectable at all.
+    WS.goToSlide(1, 0);
+    await tick(20);
+    keydown(document.body, 'O', { metaKey: true, shiftKey: true });
+    assertEqual('shortcut hides ghosts for the exclusion check', W.state().hiddenStepOpacity, 0);
+    assertEqual('invisible future step blocks pointer events', getComputedStyle(overlapFront).pointerEvents, 'none');
+    clickToSelect(overlapFront);
+    assert('click over an invisible ghost selects the visible object', overlapBack.classList.contains('presto-wysiwyg-selected'));
+    clickToSelect(overlapFront);
+    assert('cycling never reaches an invisible ghost', overlapBack.classList.contains('presto-wysiwyg-selected') && !overlapFront.classList.contains('presto-wysiwyg-selected'));
+    keydown(document.body, 'O', { metaKey: true, shiftKey: true });
+    assertEqual('ghosts restored after the exclusion check', W.state().hiddenStepOpacity, 0.33);
+    W.deselect();
+
+    // ===== Atoms =====
+    section('Atomic elements');
+    WS.goToSlide(2, 0);
+    await tick(30);
+    var extTable = document.getElementById('ext-table');
+    var extCell = extTable.querySelector('td');
+    clickToSelect(extCell);
+    assertEqual('click inside external table selects container', W.state().selectedTag, 'div');
+    assert('external table container is selected', extTable.classList.contains('presto-wysiwyg-selected'));
+    assert('external table cannot be text edited', !W.canTextEdit(extTable));
+    keydown(document.body, 'Escape');
+
+    var inlineCell = document.querySelector('#inline-table td');
+    assert('inline-source table cell can be text edited', W.canTextEdit(inlineCell.closest('#inline-table') ? inlineCell : inlineCell));
+
+    WS.goToSlide(3, 0);
+    await tick(30);
+    var inlinedSvg = document.querySelector('#s-media svg[data-ws-original-img]');
+    clickToSelect(inlinedSvg);
+    assertEqual('inlined svg selects as atom', W.state().selectedTag, 'svg');
+    assert('svg cannot be text edited', !W.canTextEdit(inlinedSvg));
+    keydown(document.body, 'Escape');
+
+    WS.goToSlide(4, 0);
+    await tick(30);
+    var katex = document.querySelector('#math-para .katex');
+    clickToSelect(katex.querySelector('.katex-html') || katex);
+    assert('katex selects as atom', W.state().hasSelection && document.querySelector('.presto-wysiwyg-selected').classList.contains('katex'));
+    assert('katex cannot be text edited', !W.canTextEdit(katex));
+    keydown(document.body, 'Escape');
+
+    // ===== Text editing =====
+    section('Text editing');
+    WS.goToSlide(1, 0);
+    await tick(30);
+    messages.length = 0;
+    dblclickOn(para);
+    assert('dblclick starts text editing', W.state().textEditing);
+    assertEqual('contenteditable applied', para.getAttribute('contenteditable'), 'true');
+    assert('editing state posted', lastMessage('wysiwygEditingState') && lastMessage('wysiwygEditingState').textEditing === true);
+
+    // Engine keyboard navigation suppressed while editing
+    var idxBefore = WS.currentIndex;
+    keydown(para, 'ArrowRight');
+    assertEqual('arrow key does not navigate while editing', WS.currentIndex, idxBefore);
+
+    document.execCommand('insertText', false, 'EDITED ');
+    keydown(para, 'Escape');
+    assert('Escape ends text editing', !W.state().textEditing);
+    assert('element still selected after editing', W.state().hasSelection);
+    assert('contenteditable removed', !para.hasAttribute('contenteditable'));
+    assert('typed text landed in slide', para.textContent.indexOf('EDITED') >= 0);
+    var changeMsg = lastMessage('wysiwygChanged');
+    assert('text commit posted wysiwygChanged', !!changeMsg);
+    assertEqual('commit targets slide 1', changeMsg && changeMsg.index, 1);
+    assert('commit payload contains typed text', changeMsg && changeMsg.html.indexOf('EDITED') >= 0);
+    assert('commit payload has no artifacts', changeMsg && changeMsg.html.indexOf('contenteditable') < 0 && changeMsg.html.indexOf('presto-wysiwyg') < 0);
+
+    // Save confirmation drives the status chip
+    var status = document.getElementById('presto-wysiwyg-status');
+    W.saveConfirmed(changeMsg.saveId);
+    assert('saveConfirmed shows Saved chip', status.classList.contains('saved') && status.classList.contains('visible'));
+
+    // Line breaks: Enter inserts <br> inside a paragraph
+    dblclickOn(para);
+    document.execCommand('insertText', false, 'X');
+    keydown(para, 'Enter');
+    assert('Enter inserts line break in paragraph', para.innerHTML.indexOf('<br>') >= 0);
+    keydown(para, 'Escape');
+
+    // Paste is plain-text only
+    dblclickOn(para);
+    var pasteWorked = false;
+    try {
+        var dt = new DataTransfer();
+        dt.setData('text/plain', 'PASTEDTEXT');
+        var pasteEvent = new ClipboardEvent('paste', { bubbles: true, cancelable: true, clipboardData: dt });
+        para.dispatchEvent(pasteEvent);
+        pasteWorked = para.textContent.indexOf('PASTEDTEXT') >= 0;
+    } catch (e) { pasteWorked = false; }
+    assert('paste inserts plain text', pasteWorked);
+    assert('paste does not insert markup', para.innerHTML.indexOf('PASTEDTEXT</b>') < 0);
+    keydown(para, 'Escape');
+    keydown(document.body, 'Escape');
+
+    // ===== Undo / redo =====
+    section('Undo / redo');
+    var undoDepthBefore = W.state().undoDepth;
+    assert('edits accumulated undo history', undoDepthBefore >= 3);
+    var textBeforeUndo = para.textContent;
+    assert('undo returns true', W.undo());
+    assert('undo restored earlier content', para.textContent !== textBeforeUndo || document.getElementById('para').textContent !== textBeforeUndo);
+    var paraAfterUndo = document.getElementById('para');
+    assert('redo returns true', W.redo());
+    assertEqual('redo reapplies content', document.getElementById('para').textContent, textBeforeUndo);
+    assert('undo posts save for restored state', messagesOfType('wysiwygChanged').length >= 3);
+
+    // Undo via keyboard with selection
+    W.select('#para');
+    keydown(document.body, 'z', { metaKey: true });
+    assert('Cmd+Z with selection undoes', document.getElementById('para').textContent !== textBeforeUndo);
+    keydown(document.body, 'z', { metaKey: true, shiftKey: true });
+    assertEqual('Shift+Cmd+Z redoes', document.getElementById('para').textContent, textBeforeUndo);
+    keydown(document.body, 'Escape');
+
+    // ===== Move / nudge / delete / duplicate =====
+    section('Structural operations');
+    para = document.getElementById('para');
+    W.select('#para');
+    var scale = WS.slides[1].getBoundingClientRect().width / 1280;
+    var c = center(para);
+    mouse('mousedown', para, c.x, c.y);
+    mouse('mousemove', document, c.x + 60, c.y + 40, { buttons: 1 });
+    mouse('mousemove', document, c.x + 60, c.y + 40, { buttons: 1 });
+    mouse('mouseup', document, c.x + 60, c.y + 40);
+    var t = (para.style.translate || '').split(/\s+/).map(parseFloat);
+    assertEqual('drag sets x translate in slide units', t[0], Math.round(60 / scale));
+    assertEqual('drag sets y translate in slide units', t[1], Math.round(40 / scale));
+    var dragMsg = lastMessage('wysiwygChanged');
+    assert('drag committed a save with translate', dragMsg && dragMsg.html.indexOf('translate') >= 0);
+
+    keydown(document.body, 'ArrowRight');
+    t = (para.style.translate || '').split(/\s+/).map(parseFloat);
+    assertEqual('arrow nudge moves 2px', t[0], Math.round(60 / scale) + 2);
+    keydown(document.body, 'ArrowDown', { shiftKey: true });
+    t = (para.style.translate || '').split(/\s+/).map(parseFloat);
+    assertEqual('shift nudge moves 20px', t[1], Math.round(40 / scale) + 20);
+
+    // Duplicate
+    var listItems = document.querySelectorAll('#s-content li').length;
+    W.select('#li-one');
+    assert('duplicate returns true', W.duplicateSelected());
+    assertEqual('duplicate adds a list item', document.querySelectorAll('#s-content li').length, listItems + 1);
+    assert('duplicate is selected', W.state().hasSelection);
+    // Delete the duplicate via keyboard
+    keydown(document.body, 'Delete');
+    assertEqual('Delete removes the duplicate', document.querySelectorAll('#s-content li').length, listItems);
+    assert('undo restores deleted element', W.undo() && document.querySelectorAll('#s-content li').length === listItems + 1);
+    assert('second undo removes duplicate again', W.undo() && document.querySelectorAll('#s-content li').length === listItems);
+
+    // ===== Formatting =====
+    section('Formatting');
+    W.select('#para');
+    assert('setFontSize applies', W.setFontSize(40));
+    assertEqual('font size inline style set', document.getElementById('para').style.fontSize, '40px');
+    assertEqual('currentFontSizePx reads back', W.currentFontSizePx(), 40);
+    W.adjustFontSize(2);
+    assertEqual('adjustFontSize steps up', document.getElementById('para').style.fontSize, '42px');
+
+    W.toggleBold();
+    assertEqual('block bold applied', document.getElementById('para').style.fontWeight, '700');
+    W.toggleBold();
+    assertEqual('block bold toggles off', document.getElementById('para').style.fontWeight, '400');
+    W.toggleItalic();
+    assertEqual('block italic applied', document.getElementById('para').style.fontStyle, 'italic');
+    W.setColor('#2E8B7A');
+    assert('color applied', document.getElementById('para').style.color.length > 0);
+    W.setAlign('center');
+    assertEqual('alignment applied', document.getElementById('para').style.textAlign, 'center');
+    var fmtMsg = lastMessage('wysiwygChanged');
+    assert('formatting committed to source', fmtMsg && fmtMsg.html.indexOf('text-align: center') >= 0);
+
+    // ===== Bullets and nesting =====
+    section('Bullets and nesting');
+    assert('bullet, indent, and outdent controls are present',
+        !!document.querySelector('.pw-bullets') &&
+        !!document.querySelector('.pw-indent') &&
+        !!document.querySelector('.pw-outdent'));
+    W.select('#bullet-target');
+    assert('bulleted-list control converts a paragraph', W.makeBulletedList());
+    var bulletTarget = document.getElementById('bullet-target');
+    assertEqual('paragraph becomes a list item', bulletTarget.tagName, 'LI');
+    assert('new list item remains selected', bulletTarget.classList.contains('presto-wysiwyg-selected'));
+    var bulletMsg = lastMessage('wysiwygChanged');
+    var bulletSaved = document.createElement('template');
+    bulletSaved.innerHTML = bulletMsg.html;
+    assert('bulleted-list conversion saves clean list markup',
+        !!bulletSaved.content.querySelector('ul > li#bullet-target'));
+
+    var nestedStep = document.getElementById('li-step');
+    assert('list item starts a text session for keyboard nesting', W.beginTextEdit(nestedStep));
+    keydown(nestedStep, 'Tab');
+    assertEqual('Tab nests the item below its previous bullet',
+        nestedStep.parentElement.parentElement, document.getElementById('li-one'));
+    assert('outdent control enables for a nested bullet', !document.querySelector('.pw-outdent').disabled);
+    keydown(nestedStep, 'Escape');
+    var nestedMsg = lastMessage('wysiwygChanged');
+    var nestedSaved = document.createElement('template');
+    nestedSaved.innerHTML = nestedMsg.html;
+    assert('nested bullet structure is saved',
+        !!nestedSaved.content.querySelector('#li-one > ul > #li-step'));
+    assert('nested item starts a second text session', W.beginTextEdit(nestedStep));
+    keydown(nestedStep, 'Tab', { shiftKey: true });
+    assertEqual('Shift-Tab returns the item to the parent list', nestedStep.parentElement.id, 'list');
+    keydown(nestedStep, 'Escape');
+    var outdentMsg = lastMessage('wysiwygChanged');
+    var outdentSaved = document.createElement('template');
+    outdentSaved.innerHTML = outdentMsg.html;
+    assert('outdented bullet structure is saved',
+        !!outdentSaved.content.querySelector('#list > #li-step'));
+
+    // Ranged inline formatting during a text session
+    dblclickOn(document.getElementById('li-one'));
+    var liEl = document.getElementById('li-one');
+    var range = document.createRange();
+    range.selectNodeContents(liEl);
+    var sel = getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+    W.toggleBold();
+    assert('ranged bold wraps selection', liEl.querySelector('b, strong') !== null || getComputedStyle(liEl).fontWeight === '700');
+    keydown(liEl, 'Escape');
+    keydown(document.body, 'Escape');
+
+    // ===== Add text box =====
+    section('Add text box');
+    var depthBeforeBox = W.state().undoDepth;
+    messages.length = 0;
+    var created = W.addTextBox(300, 500);
+    assert('text box created', !!created && created.classList.contains('text-box'));
+    assertEqual('text box left', created.style.left, '300px');
+    assertEqual('text box top', created.style.top, '500px');
+    assert('text box opens in text editing', W.state().textEditing);
+    assertEqual('nothing is saved before anything is typed (BACKLOG 9)', messagesOfType('wysiwygChanged').length, 0);
+    document.execCommand('insertText', false, 'New label');
+    keydown(created, 'Escape');
+    assertEqual('typed into new box replaces placeholder', created.textContent, 'New label');
+    var boxMsg = lastMessage('wysiwygChanged');
+    assert('text box serialized to source', boxMsg && boxMsg.html.indexOf('text-box') >= 0 && boxMsg.html.indexOf('New label') >= 0);
+    assertEqual('adding and typing is one undo step', W.state().undoDepth, depthBeforeBox + 1);
+    assertEqual('the step is labelled Add Text Box', PrestoEdit.historyState().undoLabel, 'Undo Add Text Box');
+    keydown(document.body, 'Escape');
+
+    // dblclick on empty area creates a text box; an untouched one vanishes.
+    var slide1El = WS.slides[1];
+    var r1 = slide1El.getBoundingClientRect();
+    var boxCountBefore = slide1El.querySelectorAll('.text-box').length;
+    var depthBeforeStray = W.state().undoDepth;
+    messages.length = 0;
+    dblclickOn(slide1El, r1.left + 40 * scale, r1.top + 680 * scale);
+    assertEqual('dblclick empty area adds text box', slide1El.querySelectorAll('.text-box').length, boxCountBefore + 1);
+    keydown(document.activeElement || document.body, 'Escape');
+    assertEqual('an accidental box with nothing typed is removed on Escape (BACKLOG 9)',
+        slide1El.querySelectorAll('.text-box').length, boxCountBefore);
+    assertEqual('the accidental box posts no save', messagesOfType('wysiwygChanged').length, 0);
+    assertEqual('the accidental box leaves no undo step', W.state().undoDepth, depthBeforeStray);
+    assert('the accidental box leaves nothing selected', !W.state().hasSelection);
+    assert('no "Text" placeholder reaches the source', W.serializeCurrentSlide().indexOf('>Text<') < 0);
+    // Clicking away from an untouched box also discards it.
+    var stray2 = W.addTextBox(500, 650);
+    var away = document.getElementById('para');
+    mouse('mousedown', away, center(away).x, center(away).y);
+    mouse('mouseup', away, center(away).x, center(away).y);
+    assert('clicking away from an untouched box removes it', !stray2.isConnected);
+    keydown(document.body, 'Escape');
+    // Deleting the placeholder text also counts as nothing typed.
+    var stray3 = W.addTextBox(520, 640);
+    document.execCommand('delete');
+    keydown(stray3, 'Escape');
+    assert('a box emptied before leaving is removed', !stray3.isConnected);
+    // PrestoEdit.addTextBox(): the Text box button, centred in the slide.
+    var centred = PrestoEdit.addTextBox();
+    assert('PrestoEdit.addTextBox() starts typing in a new box', W.state().textEditing && centred.classList.contains('text-box'));
+    var cr = centred.getBoundingClientRect();
+    var sr = WS.slides[1].getBoundingClientRect();
+    assertClose('Text box is centred horizontally', (cr.left + cr.width / 2 - sr.left) / scale, 640, 3);
+    assertClose('Text box is centred vertically', (cr.top + cr.height / 2 - sr.top) / scale, 360, 3);
+    document.execCommand('insertText', false, 'Centred');
+    keydown(centred, 'Escape');
+    assert('a typed centred box is kept', centred.isConnected && centred.textContent === 'Centred');
+    W.select(centred);
+    W.deleteSelected();
+    keydown(document.body, 'Escape');
+
+    // ===== Serialization round-trips =====
+    section('Serialization');
+    WS.goToSlide(2, 1);
+    await tick(30);
+    var tableSerialized = W.serializeSection(document.getElementById('s-table'));
+    assertEqual('external table round-trips to authored source', tableSerialized, canonical('authored-table'));
+    assert('live external table still rendered after serialize', !!document.querySelector('#ext-table table'));
+    assert('serialized table keeps data-table-src', tableSerialized.indexOf('data-table-src') >= 0);
+    assert('serialized table has no stash attribute', tableSerialized.indexOf('data-ws-original-html') < 0);
+    assert('serialized table has no reveal classes', tableSerialized.indexOf('ws-visible') < 0);
+
+    WS.goToSlide(3, 0);
+    await tick(30);
+    var mediaSerialized = W.serializeSection(document.getElementById('s-media'));
+    assertEqual('inlined svg round-trips to authored img', mediaSerialized, canonical('authored-media'));
+    // The inlined SVG's own file-root class (svglite) must never be written back
+    // onto the authored <img> — only the authored img's own class survives.
+    assert('inlined SVG file-root class is not leaked onto the authored img',
+        mediaSerialized.indexOf('class="svglite"') < 0);
+    assert('the class-less leak img still round-trips (id preserved, no class attr)',
+        mediaSerialized.indexOf('id="leak-svg-img"') >= 0);
+
+    // Move the inlined svg, then serialization must carry the move onto the img
+    inlinedSvg = document.querySelector('#s-media svg[data-ws-original-img]');
+    W.select(inlinedSvg);
+    W.nudge(10, 6);
+    var movedMedia = W.serializeSection(document.getElementById('s-media'));
+    assert('moved svg serializes as img with translate', /<img[^>]*translate: 10px 6px/.test(movedMedia));
+    W.undo();
+    keydown(document.body, 'Escape');
+
+    WS.goToSlide(4, 0);
+    await tick(30);
+    var katexSerialized = W.serializeSection(document.getElementById('s-katex'));
+    assert('inline katex restores to $...$', katexSerialized.indexOf('Inline $x^2$ math.') >= 0);
+    assert('display katex restores to $$...$$', katexSerialized.indexOf('$$\\int_0^1 f$$') >= 0);
+    assert('no katex markup remains in source', katexSerialized.indexOf('katex') < 0);
+
+    // Content slide: serialization is stable (no artifacts accumulate)
+    WS.goToSlide(1, 1);
+    await tick(30);
+    var s1 = W.serializeCurrentSlide();
+    W.select('#para');
+    W.deselect();
+    var s2 = W.serializeCurrentSlide();
+    assertEqual('serialization stable across select/deselect', s2, s1);
+    assert('serialized content has no engine classes', s1.indexOf('ws-visible') < 0 && s1.indexOf('ws-active') < 0);
+    WS.goToSlide(1, 2);
+    await tick(30);
+    var s3 = W.serializeCurrentSlide();
+    assert('data-class runtime class stripped from source', s3.indexOf('emphasized') < 0 || /data-class="emphasized:2"/.test(s3));
+    assert('data-class attribute preserved', s3.indexOf('data-class="emphasized:2"') >= 0);
+
+    // ===== data-reveal="each" shortcut (contract C2) =====
+    // The engine expands the shortcut into per-item data-step attributes marked
+    // data-ws-auto-step; the serializer must hand back the authored list only.
+    section('Reveal shortcut serialization');
+    var authoredReveal = '<ul data-reveal="each" data-reveal-start="2"><li>Alpha</li>' +
+        '<li>Beta<ul><li>Beta one</li></ul></li><li data-step="7">Explicit</li></ul>';
+    var revealSection = document.createElement('section');
+    revealSection.className = 'slide content';
+    revealSection.innerHTML = authoredReveal;
+    var canonicalReveal = revealSection.innerHTML;
+    var autoItems = revealSection.querySelectorAll('li:not([data-step])');
+    autoItems.forEach(function (li, i) {
+        li.setAttribute('data-step', String(2 + i));
+        li.setAttribute('data-ws-auto-step', '');
+        if (i === 0) li.classList.add('ws-visible');
+    });
+    var revealSer = W.serializeSection(revealSection);
+    assertEqual('auto-step list serializes back to the authored shortcut', revealSer, canonicalReveal);
+    assert('serialized list has no data-ws-auto-step marker', revealSer.indexOf('data-ws-auto-step') < 0);
+    assert('explicit author step survives next to auto steps', revealSer.indexOf('<li data-step="7">Explicit</li>') >= 0);
+    assert('serializing does not strip the live generated steps',
+        revealSection.querySelectorAll('[data-ws-auto-step][data-step]').length === autoItems.length);
+    var liOne = document.getElementById('li-one');
+    liOne.setAttribute('data-step', '1');
+    liOne.setAttribute('data-ws-auto-step', '');
+    var liveReveal = document.createElement('template');
+    liveReveal.innerHTML = W.serializeCurrentSlide();
+    liOne.removeAttribute('data-step');
+    liOne.removeAttribute('data-ws-auto-step');
+    var liveLiOne = liveReveal.content.querySelector('#li-one');
+    assert('live slide serialization drops a generated step',
+        !!liveLiOne && !liveLiOne.hasAttribute('data-step') && !liveLiOne.hasAttribute('data-ws-auto-step'),
+        liveLiOne && liveLiOne.outerHTML);
+    var liveLiStep = liveReveal.content.querySelector('#li-step');
+    assert('live slide serialization keeps the authored step',
+        !!liveLiStep && liveLiStep.getAttribute('data-step') === '1');
+
+    // ===== Slide navigation resets editing state =====
+    section('Navigation integration');
+    WS.goToSlide(1, 0);
+    await tick(30);
+    W.select('#para');
+    WS.goToSlide(0, 0);
+    await tick(30);
+    assert('navigating away drops selection', !W.state().hasSelection);
+    dblclickOn(document.getElementById('subtitle'));
+    assert('editing on title slide works', W.state().textEditing);
+    WS.goToSlide(1, 0);
+    await tick(30);
+    assert('navigation ends text editing', !W.state().textEditing);
+
+    // ===== Boot: idempotence & state shape =====
+    section('Boot idempotence & state shape');
+    var bootState = W.state();
+    assert('state() reports enabled', bootState.enabled === true);
+    assert('state() exposes the documented shape',
+        ['enabled', 'textEditing', 'hasSelection', 'selectedTag', 'slideIndex', 'undoDepth', 'redoDepth']
+            .every(function (k) { return k in bootState; }));
+    var toolbarCountBefore = document.querySelectorAll('#presto-wysiwyg-toolbar').length;
+    assertEqual('exactly one toolbar installed', toolbarCountBefore, 1);
+    W.enable();
+    assert('enable() is idempotent (still enabled)', W.state().enabled);
+    assertEqual('enable() does not duplicate chrome',
+        document.querySelectorAll('#presto-wysiwyg-toolbar').length, toolbarCountBefore);
+
+    // ===== Selection model: ignores, fallback, return values, class cleanup =====
+    section('Selection model (extended)');
+    WS.goToSlide(0, 0);
+    await tick(20);
+    assertEqual('aside.notes is never selectable', W.pickSelectable(document.getElementById('title-notes')), null);
+    assert('select() by selector returns true', W.select('#subtitle') === true);
+    assert('subtitle carries selection class', document.getElementById('subtitle').classList.contains('presto-wysiwyg-selected'));
+    W.deselect();
+    assertEqual('deselect preserves authored class', document.getElementById('subtitle').getAttribute('class'), 'subtitle');
+
+    WS.goToSlide(1, 0);
+    await tick(20);
+    assert('select() by element returns true', W.select(document.getElementById('li-one')) === true);
+    assertEqual('select() by element resolves that element', W.state().selectedTag, 'li');
+    W.select(document.querySelector('#box .box-title'));
+    assertEqual('child inside box resolves to the box container', document.querySelector('.presto-wysiwyg-selected').id, 'box');
+    W.deselect();
+
+    W.select('#para');
+    var chromeBtn = document.querySelector('#presto-wysiwyg-toolbar .pw-b');
+    mouse('mousedown', chromeBtn, 5, 5);
+    assert('mousedown on toolbar chrome does not clear selection', W.state().hasSelection);
+    W.deselect();
+    assert('deselect on a class-less element drops the class attribute', !document.getElementById('para').hasAttribute('class'));
+
+    WS.goToSlide(5, 0);
+    await tick(20);
+    assertEqual('bare div fallback: child resolves to the direct slide child',
+        W.pickSelectable(document.getElementById('bare-inner')), document.getElementById('bare-block'));
+
+    WS.goToSlide(3, 0);
+    await tick(20);
+    var plainImg = document.getElementById('plain-img');
+    assertEqual('plain img resolves to itself as an atom', W.pickSelectable(plainImg), plainImg);
+    assert('plain img cannot be text edited', !W.canTextEdit(plainImg));
+    var svgAtom = document.querySelector('#s-media svg[data-ws-original-img]');
+    var svgChild = svgAtom.querySelector('circle') || svgAtom.querySelector('*');
+    assertEqual('element inside inlined svg resolves to the svg atom', W.pickSelectable(svgChild), svgAtom);
+    W.deselect();
+
+    // ===== Text editing: commit only when content actually changed =====
+    section('Text edit commit gating');
+    WS.goToSlide(5, 0);
+    await tick(20);
+    W.deselect();
+    var teTarget = document.getElementById('extra-para');
+    var depthBeforeNoop = W.state().undoDepth;
+    assert('beginTextEdit enters text editing', W.beginTextEdit('#extra-para') === true && W.state().textEditing);
+    assertEqual('contenteditable applied on beginTextEdit', teTarget.getAttribute('contenteditable'), 'true');
+    W.endTextEdit();
+    assert('endTextEdit keeps the selection', W.state().hasSelection);
+    assert('contenteditable removed on endTextEdit', !teTarget.hasAttribute('contenteditable'));
+    assertEqual('unchanged text edit pushes no undo', W.state().undoDepth, depthBeforeNoop);
+    W.beginTextEdit('#extra-para');
+    // Mutate content directly so the commit-gating (liveHTML diff) is exercised
+    // deterministically, without depending on execCommand caret/focus timing.
+    teTarget.appendChild(document.createTextNode(' ZZ edited'));
+    W.endTextEdit();
+    assertEqual('changed text edit pushes exactly one undo', W.state().undoDepth, depthBeforeNoop + 1);
+    assert('changed text landed in the element', teTarget.textContent.indexOf('ZZ edited') >= 0);
+
+    messages.length = 0;
+    W.beginTextEdit('#extra-para');
+    teTarget.appendChild(document.createTextNode(' BLUR committed'));
+    window.dispatchEvent(new Event('blur'));
+    assert('moving focus to the source sidebar ends visual text editing', !W.state().textEditing);
+    var blurSave = lastMessage('wysiwygChanged');
+    assert('moving focus to source commits the visual edit', !!blurSave &&
+        blurSave.html.indexOf('BLUR committed') >= 0);
+
+    W.deselect();
+    WS.goToSlide(2, 0);
+    await tick(20);
+    assert('beginTextEdit refuses an atomic external table', W.beginTextEdit('#ext-table') === false);
+    W.deselect();
+
+    // ===== Nudge: accumulate + reset to zero drops style attr =====
+    section('Nudge / translate (extended)');
+    WS.goToSlide(5, 0);
+    await tick(20);
+    W.select('#nudge-target');
+    var nudgeEl = document.getElementById('nudge-target');
+    W.nudge(4, 6);
+    assertEqual('nudge writes the standalone translate property', nudgeEl.style.translate, '4px 6px');
+    assert('nudge never writes transform', !nudgeEl.style.transform);
+    W.nudge(3, 0);
+    assertEqual('nudge accumulates', nudgeEl.style.translate, '7px 6px');
+    W.nudge(-7, -6);
+    assert('nudge back to 0,0 removes the translate property', !nudgeEl.style.translate);
+    assert('nudge back to 0,0 drops the empty style attribute', !nudgeEl.hasAttribute('style'));
+    W.deselect();
+
+    // ===== Formatting: clamp + computed-state read =====
+    section('Formatting (extended)');
+    WS.goToSlide(5, 0);
+    await tick(20);
+    W.select('#clamp-target');
+    W.setFontSize(9999);
+    assertEqual('setFontSize clamps to max 300', document.getElementById('clamp-target').style.fontSize, '300px');
+    W.setFontSize(1);
+    assertEqual('setFontSize clamps to min 6', document.getElementById('clamp-target').style.fontSize, '6px');
+    assert('setFontSize returns true with a selection', W.setFontSize(24));
+    assertEqual('setFontSize applies exact px', document.getElementById('clamp-target').style.fontSize, '24px');
+    assertEqual('currentFontSizePx reads back the applied size', W.currentFontSizePx(), 24);
+    W.adjustFontSize(-4);
+    assertEqual('adjustFontSize steps from the current size', document.getElementById('clamp-target').style.fontSize, '20px');
+    W.deselect();
+
+    W.select('#styled-fmt');
+    assert('toolbar bold toggle reflects a pre-bold element', document.querySelector('#presto-wysiwyg-toolbar .pw-b').classList.contains('on'));
+    assert('toolbar italic toggle reflects a pre-italic element', document.querySelector('#presto-wysiwyg-toolbar .pw-i').classList.contains('on'));
+    assert('toolbar underline toggle reflects a pre-underline element', document.querySelector('#presto-wysiwyg-toolbar .pw-u').classList.contains('on'));
+    W.toggleBold();
+    assertEqual('toggleBold reads pre-bold and turns it off', document.getElementById('styled-fmt').style.fontWeight, '400');
+    W.toggleItalic();
+    assertEqual('toggleItalic reads pre-italic and turns it off', document.getElementById('styled-fmt').style.fontStyle, 'normal');
+    W.toggleUnderline();
+    assertEqual('toggleUnderline reads pre-underline and turns it off', document.getElementById('styled-fmt').style.textDecorationLine, 'none');
+    W.deselect();
+
+    // ===== Duplicate: absolute offset + clean copy =====
+    section('Duplicate (extended)');
+    WS.goToSlide(5, 0);
+    await tick(20);
+    W.deselect();
+    var absBox = makeBox(200, 160);
+    W.select(absBox);
+    var boxesBefore = WS.slides[5].querySelectorAll('.text-box').length;
+    assert('duplicate of an absolute element returns true', W.duplicateSelected());
+    assertEqual('duplicate adds one text-box', WS.slides[5].querySelectorAll('.text-box').length, boxesBefore + 1);
+    var absCopy = document.querySelector('.presto-wysiwyg-selected');
+    assertEqual('absolute duplicate offsets left by 24px', absCopy.style.left, '224px');
+    assertEqual('absolute duplicate offsets top by 24px', absCopy.style.top, '184px');
+    assert('duplicate copy carries no editing class', !absCopy.classList.contains('presto-wysiwyg-editing'));
+    assert('duplicate copy carries no contenteditable', !absCopy.hasAttribute('contenteditable'));
+    W.deselect();
+
+    // ===== Undo/redo: per-slide isolation, redo-clear, MAX_UNDO cap =====
+    section('Undo / redo (extended)');
+    WS.goToSlide(6, 0);
+    await tick(20);
+    W.deselect();
+    assertEqual('a fresh slide starts with zero undo depth', W.state().undoDepth, 0);
+    W.select('#extra2-para');
+    W.setFontSize(28);
+    assertEqual('a commit on slide 6 sets undo depth to 1', W.state().undoDepth, 1);
+    WS.goToSlide(5, 0);
+    await tick(20);
+    var depth5 = W.state().undoDepth;
+    assert('slide 5 retains its own accumulated history', depth5 > 0);
+    WS.goToSlide(6, 0);
+    await tick(20);
+    assertEqual('slide 6 history is isolated from slide 5', W.state().undoDepth, 1);
+    W.select('#extra2-para');
+    assert('undo on slide 6 returns true', W.undo());
+    assertEqual('redo is available after an undo', W.state().redoDepth, 1);
+    W.select('#extra2-para');
+    W.setFontSize(33);
+    assertEqual('a new commit clears the redo stack', W.state().redoDepth, 0);
+    W.select('#extra2-para');
+    for (var iCap = 0; iCap < 105; iCap++) { W.setFontSize(10 + (iCap % 120)); }
+    assertEqual('undo depth caps at MAX_UNDO (100)', W.state().undoDepth, 100);
+    W.deselect();
+
+    // ===== applySnapshot re-applies reveal max-step on undo =====
+    section('Reveal restore via undo');
+    WS.goToSlide(5, 0);
+    await tick(30);
+    var revealSlide = WS.slides[5];
+    assert('reveal target present before delete', !!document.getElementById('extra-step'));
+    W.select('#extra-step');
+    W.deleteSelected();
+    assert('reveal target removed after delete', !document.getElementById('extra-step'));
+    W.undo();
+    await tick(30);
+    var restoredStep = document.getElementById('extra-step');
+    assert('undo restores the deleted reveal target', !!restoredStep && restoredStep.isConnected);
+    assertEqual('undo recomputes the slide max-step', WS.slideSteps.get(revealSlide), 1);
+    WS.goToSlide(5, 1);
+    await tick(30);
+    assert('restored reveal target becomes visible at its step',
+        restoredStep.classList.contains('ws-visible'));
+    W.deselect();
+
+    // ===== Guards: no-ops with nothing selected / empty history =====
+    section('Guards');
+    WS.goToSlide(5, 0);
+    await tick(20);
+    W.deselect();
+    assert('deleteSelected with no selection returns false', W.deleteSelected() === false);
+    assert('duplicateSelected with no selection returns false', W.duplicateSelected() === false);
+    assert('nudge with no selection returns false', W.nudge(5, 5) === false);
+    assert('toggleBold with no selection returns false', W.toggleBold() === false);
+    assert('toggleItalic with no selection returns false', W.toggleItalic() === false);
+    assert('toggleUnderline with no selection returns false', W.toggleUnderline() === false);
+    assert('setColor with no selection returns false', W.setColor('#000') === false);
+    assert('setAlign with no selection returns false', W.setAlign('left') === false);
+    assert('setFontSize with no selection returns false', W.setFontSize(20) === false);
+    assert('adjustFontSize with no selection returns false', W.adjustFontSize(2) === false);
+    WS.goToSlide(0, 0);
+    await tick(20);
+    W.deselect();
+    assertEqual('title slide has empty undo history', W.state().undoDepth, 0);
+    assert('undo with empty history returns false', W.undo() === false);
+    assert('redo with empty history returns false', W.redo() === false);
+
+    // ===== Messages: saveId, saveConfirmed, saveFailed, editing-state dedup =====
+    section('Messages (extended)');
+    WS.goToSlide(5, 0);
+    await tick(20);
+    var statusEl = document.getElementById('presto-wysiwyg-status');
+    W.select('#extra-para');
+    messages.length = 0;
+    W.setFontSize(18);
+    var m1 = lastMessage('wysiwygChanged');
+    W.setFontSize(19);
+    var m2 = lastMessage('wysiwygChanged');
+    assert('wysiwygChanged carries the slide index', m1 && m1.index === 5);
+    assert('wysiwygChanged carries html', m1 && typeof m1.html === 'string' && m1.html.length > 0);
+    assert('saveId increments across commits', !!(m1 && m2 && m2.saveId > m1.saveId));
+    W.saveConfirmed(m1.saveId);
+    assert('a stale saveConfirmed is ignored (no Saved chip)', !statusEl.classList.contains('saved'));
+    W.saveConfirmed(m2.saveId);
+    assert('the current saveConfirmed shows the Saved chip', statusEl.classList.contains('saved') && statusEl.classList.contains('visible'));
+    W.saveFailed(m2.saveId, 'Disk on fire');
+    assert('saveFailed sets the error status', statusEl.classList.contains('error'));
+    assertEqual('saveFailed shows its message', statusEl.textContent, 'Disk on fire');
+    W.deselect();
+    messages.length = 0;
+    W.select('#extra-para');
+    W.select('#extra-para');
+    assertEqual('editing-state posts once for a repeated same selection', messagesOfType('wysiwygEditingState').length, 1);
+    W.deselect();
+    W.deselect();
+    assertEqual('editing-state dedups a repeated deselect', messagesOfType('wysiwygEditingState').length, 2);
+
+    // ===== Serialization: idempotent, non-mutating, table + attr cleanup =====
+    section('Serialization (extended)');
+    WS.goToSlide(2, 1);
+    await tick(30);
+    var sTableEl = document.getElementById('s-table');
+    var ser1 = W.serializeSection(sTableEl);
+    var ser2 = W.serializeSection(sTableEl);
+    assertEqual('serialize is idempotent across calls', ser2, ser1);
+    assert('serialize does not mutate the live external table',
+        document.getElementById('ext-table').hasAttribute('data-ws-original-html') && !!document.querySelector('#ext-table table'));
+    assert('serialized output has no empty class attributes', ser1.indexOf('class=""') < 0);
+    assert('serialized output has no empty style attributes', ser1.indexOf('style=""') < 0);
+    var extC = document.getElementById('ext-table');
+    extC.style.height = '777px';
+    var innerTable = extC.querySelector('table');
+    innerTable.style.transform = 'scale(0.5)';
+    // The engine also writes overflow/position on the container and
+    // transform-origin on the table when fitting; its refit reset omits them,
+    // so the serializer must strip all of them (nothing engine-written leaks).
+    extC.style.overflow = 'hidden';
+    extC.style.position = 'relative';
+    innerTable.style.transformOrigin = 'top left';
+    var serClean = W.serializeSection(sTableEl);
+    assert('serialize strips the table-container runtime height', serClean.indexOf('777px') < 0);
+    assert('serialize strips the inner table transform', serClean.indexOf('scale(0.5)') < 0);
+    assert('serialize strips the table-container overflow', serClean.indexOf('overflow') < 0);
+    assert('serialize strips the table-container position', serClean.indexOf('position: relative') < 0);
+    assert('serialize strips the inner table transform-origin', serClean.indexOf('transform-origin') < 0);
+    assertEqual('serialize leaves the live table-container height untouched', extC.style.height, '777px');
+    extC.style.removeProperty('height');
+    innerTable.style.removeProperty('transform');
+    extC.style.removeProperty('overflow');
+    extC.style.removeProperty('position');
+    innerTable.style.removeProperty('transform-origin');
+    WS.goToSlide(3, 0);
+    await tick(20);
+    var svgBefore = document.querySelector('#s-media svg[data-ws-original-img]');
+    W.serializeSection(document.getElementById('s-media'));
+    assert('serialize does not mutate the live inlined svg',
+        document.querySelector('#s-media svg[data-ws-original-img]') === svgBefore);
+
+    // ===== Navigation + watchdog =====
+    section('Navigation & watchdog');
+    WS.goToSlide(5, 0);
+    await tick(20);
+    W.select('#extra-para');
+    WS.goToSlide(5, 1);
+    await tick(20);
+    assert('selection on a still-connected element survives same-slide navigation',
+        W.state().hasSelection && document.querySelector('.presto-wysiwyg-selected') === document.getElementById('extra-para'));
+    W.deselect();
+    WS.goToSlide(6, 0);
+    await tick(20);
+    W.select('#extra2-para');
+    assert('selection is set before the external DOM swap', W.state().hasSelection);
+    WS.slides[6].innerHTML = '<h2>Swapped</h2><p>replaced content</p>';
+    await tick(700);
+    assert('watchdog clears a detached selection within ~700ms', !W.state().hasSelection);
+    assert('watchdog clears text editing after an external DOM swap', !W.state().textEditing);
+
+    // ===== Editing chrome owns its own input (regression) =====
+    // Real-input bugs found by the Chrome E2E harness: handles/toolbar live
+    // outside the slide, so the capture-phase handlers must claim them via
+    // isChrome() instead of treating them as deselect-clicks, and keys typed
+    // into chrome controls must never reach the selection key model.
+    section('Chrome input ownership');
+    WS.goToSlide(3, 0);
+    await tick(20);
+    W.select('svg[data-ws-original-img]');
+    assert('image selected with visible resize handle', W.state().hasSelection &&
+        document.querySelector('.presto-wysiwyg-handle[data-handle="se"]').classList.contains('visible'));
+    var seHandle = document.querySelector('.presto-wysiwyg-handle[data-handle="se"]');
+    var hc = center(seHandle);
+    mouse('mousedown', seHandle, hc.x, hc.y);
+    assert('mousedown on a resize handle keeps the selection', W.state().hasSelection);
+    mouse('mouseup', seHandle, hc.x, hc.y);
+    W.deselect();
+    WS.goToSlide(1, 0);
+    await tick(20);
+    W.select('#para');
+    var fontInput = document.getElementById('presto-wysiwyg-font-size');
+    keydown(fontInput, 'Enter');
+    assert('Enter typed into the font input does not start a text session',
+        !W.state().textEditing && W.state().hasSelection);
+    keydown(fontInput, 'Escape');
+    assert('Escape typed into the font input does not deselect the element',
+        W.state().hasSelection);
+    keydown(fontInput, 'Backspace');
+    assert('Backspace typed into the font input does not delete the element',
+        !!document.getElementById('para'));
+    W.deselect();
+
+    // ===== Data-safety audit fixes =====
+
+    // --- 1. Session owner capture: cross-slide navigation mid-session saves to
+    //        the OWNING slide, never the navigated-to slide. ---
+    section('Session owner capture (cross-slide nav)');
+    WS.goToSlide(6, 0);
+    await tick(20);
+    W.deselect();
+    var slide6DepthBefore = W.state().undoDepth;
+    WS.goToSlide(5, 0);
+    await tick(20);
+    W.deselect();
+    messages.length = 0;
+    W.beginTextEdit('#extra-para');
+    document.getElementById('extra-para').appendChild(document.createTextNode(' OWNERTAG'));
+    WS.goToSlide(6, 0);   // cross-slide navigation while a session is live
+    await tick(30);
+    assert('cross-slide navigation ended the text session', !W.state().textEditing);
+    var ownerSave = lastMessage('wysiwygChanged');
+    assertEqual('typed text saved to the OWNING slide index (5)', ownerSave && ownerSave.index, 5);
+    assert('save payload carries the text typed on the owning slide',
+        ownerSave && ownerSave.html.indexOf('OWNERTAG') >= 0);
+    assert('the text actually landed on slide 5 in the DOM',
+        document.getElementById('extra-para').textContent.indexOf('OWNERTAG') >= 0);
+    assertEqual('the navigated-to slide (6) history was not poisoned', W.state().undoDepth, slide6DepthBefore);
+    W.deselect();
+
+    // --- 2. Nested-atom protection + katex serializer defense ---
+    section('Nested-atom protection in text sessions');
+    WS.goToSlide(4, 0);
+    await tick(30);
+    W.deselect();
+    var mathPara = document.getElementById('math-para');
+    assert('math paragraph can be text edited', W.canTextEdit(mathPara));
+    W.beginTextEdit('#math-para');
+    var nestedKatex = mathPara.querySelector('.katex');
+    assertEqual('nested katex is locked non-editable during the session',
+        nestedKatex.getAttribute('contenteditable'), 'false');
+    assert('locked atom carries the cleanup marker', nestedKatex.hasAttribute('data-pw-atom-lock'));
+    W.endTextEdit();
+    assert('atom lock removed after the session ends',
+        !nestedKatex.hasAttribute('contenteditable') && !nestedKatex.hasAttribute('data-pw-atom-lock'));
+    var mathSer = W.serializeSection(document.getElementById('s-katex'));
+    assert('serialized math after a no-op session has no katex soup', mathSer.indexOf('katex') < 0);
+    assert('serialized math still restores inline $x^2$', mathSer.indexOf('$x^2$') >= 0);
+    W.deselect();
+    // Serializer defense: orphan katex (annotation destroyed) never reaches source.
+    var orphanSection = document.createElement('section');
+    orphanSection.className = 'slide content';
+    orphanSection.innerHTML = '<p>Broken <span class="katex"><span class="katex-html">x</span></span> math</p>';
+    var orphanSer = W.serializeSection(orphanSection);
+    assert('orphan katex (no annotation) is stripped from serialized source', orphanSer.indexOf('katex') < 0);
+    assert('orphan katex strip leaves the surrounding prose',
+        orphanSer.indexOf('Broken') >= 0 && orphanSer.indexOf('math') >= 0);
+
+    // --- 3. KaTeX move/format round-trip via a style wrapper, idempotent ---
+    section('KaTeX move/format round-trip');
+    function makeInlineKatex(styleAttr) {
+        var sec = document.createElement('section');
+        sec.className = 'slide content';
+        sec.innerHTML = '<p>Pre <span class="katex"' + (styleAttr ? ' style="' + styleAttr + '"' : '') +
+            '><span class="katex-mathml"><math><semantics><mrow></mrow>' +
+            '<annotation encoding="application/x-tex">x^2</annotation></semantics></math></span>' +
+            '<span class="katex-html" aria-hidden="true">x2</span></span> post</p>';
+        return sec;
+    }
+    var movedSer = W.serializeSection(makeInlineKatex('translate: 24px 0px'));
+    assert('moved inline equation serializes with a style wrapper',
+        movedSer.indexOf('<span style="translate: 24px 0px">$x^2$</span>') >= 0);
+    assert('moved equation source carries the authored TeX', movedSer.indexOf('$x^2$') >= 0);
+    assert('moved equation source has no katex markup', movedSer.indexOf('katex') < 0);
+    // edit -> serialize -> re-render -> edit -> serialize is stable (no nesting).
+    var pass1 = W.serializeSection(makeInlineKatex('color: red'));
+    var reRendered = document.createElement('section');
+    reRendered.className = 'slide content';
+    reRendered.innerHTML = '<p>Pre <span style="color: red"><span class="katex">' +
+        '<span class="katex-mathml"><math><semantics><mrow></mrow>' +
+        '<annotation encoding="application/x-tex">x^2</annotation></semantics></math></span>' +
+        '</span></span> post</p>';
+    var pass2 = W.serializeSection(reRendered);
+    assertEqual('katex serialization is idempotent across re-render', pass2, pass1);
+    assert('re-rendered wrapper does not nest a second wrapper',
+        pass2.indexOf('<span style="color: red"><span') < 0);
+    assert('idempotent output keeps a single styled wrapper',
+        pass2.indexOf('<span style="color: red">$x^2$</span>') >= 0);
+    var dispSec = document.createElement('section');
+    dispSec.className = 'slide content';
+    dispSec.innerHTML = '<span class="katex-display" style="translate: 0px 12px"><span class="katex">' +
+        '<span class="katex-mathml"><math><semantics><mrow></mrow>' +
+        '<annotation encoding="application/x-tex">\\int_0^1 f</annotation></semantics></math></span></span></span>';
+    var dispSer = W.serializeSection(dispSec);
+    assert('moved display equation serializes with a div wrapper carrying the style',
+        dispSer.indexOf('<div style="translate: 0px 12px">$$\\int_0^1 f$$</div>') >= 0);
+    assert('display equation wrapper has no katex markup', dispSer.indexOf('katex') < 0);
+
+    // --- 4. External-replacement history invalidation ---
+    section('External replacement history invalidation');
+    WS.goToSlide(5, 0);
+    await tick(20);
+    W.deselect();
+    W.select('#nudge-target');
+    W.nudge(3, 0);
+    assert('slide 5 has undo history before external replace', W.state().undoDepth > 0);
+    assert('notifyExternalReplace returns true for a valid index', W.notifyExternalReplace(5) === true);
+    assertEqual('notifyExternalReplace cleared the slide history', W.state().undoDepth, 0);
+    assert('undo after external replace is a no-op (returns false)', W.undo() === false);
+    W.beginTextEdit('#nudge-target');
+    document.getElementById('nudge-target').appendChild(document.createTextNode(' STALE'));
+    messages.length = 0;
+    W.notifyExternalReplace(5);
+    assert('external replace ended the live session', !W.state().textEditing);
+    assert('external replace did NOT post a save of the stale content',
+        messagesOfType('wysiwygChanged').length === 0);
+    W.deselect();
+
+    // --- 5. commitActiveSession ---
+    section('commitActiveSession');
+    WS.goToSlide(5, 0);
+    await tick(20);
+    W.deselect();
+    assert('commitActiveSession returns false with no live session', W.commitActiveSession() === false);
+    W.beginTextEdit('#clamp-target');
+    document.getElementById('clamp-target').appendChild(document.createTextNode(' COMMITNOW'));
+    messages.length = 0;
+    assert('commitActiveSession returns true when a session existed', W.commitActiveSession() === true);
+    assert('commitActiveSession ended the text session', !W.state().textEditing);
+    assert('commitActiveSession keeps the element selected', W.state().hasSelection);
+    var commitSave = lastMessage('wysiwygChanged');
+    assert('commitActiveSession flushed the typed text to a save',
+        commitSave && commitSave.html.indexOf('COMMITNOW') >= 0);
+    W.deselect();
+
+    // --- 6a. Engine-injected section-nav chrome stripped from source ---
+    section('Serializer: section-nav chrome stripped');
+    var hdr = document.createElement('section');
+    hdr.className = 'slide section-header';
+    hdr.innerHTML = '<div class="ws-section-eyebrow">Part I</div><h1>Methods</h1>' +
+        '<ul class="section-toc"><li class="active"><span class="ws-toc-label">1. Methods</span></li>' +
+        '<li><span class="ws-toc-label">2. Results</span></li></ul>';
+    var hdrSer = W.serializeSection(hdr);
+    assert('engine-injected section-toc is stripped from source',
+        hdrSer.indexOf('section-toc') < 0 && hdrSer.indexOf('ws-toc-label') < 0);
+    assert('engine-injected eyebrow is stripped from source', hdrSer.indexOf('ws-section-eyebrow') < 0);
+    assert('authored heading survives the strip', hdrSer.indexOf('<h1>Methods</h1>') >= 0);
+    var manualToc = document.createElement('section');
+    manualToc.className = 'slide section-header';
+    manualToc.innerHTML = '<h1>Agenda</h1><ul class="section-toc"><li>Intro</li><li>Body</li></ul>';
+    var manualSer = W.serializeSection(manualToc);
+    assert('a manually authored section-toc (no ws-toc-label) is preserved',
+        manualSer.indexOf('section-toc') >= 0 && manualSer.indexOf('Intro') >= 0);
+
+    // --- 6d. Translate robustness for %/em/calc/3-value ---
+    section('Translate robustness: non-px units');
+    WS.goToSlide(5, 0);
+    await tick(20);
+    W.deselect();
+    var pctBox = makeBox(100, 100);
+    W.select(pctBox);
+    pctBox.style.translate = '50% 10px';
+    assert('nudge composes a %/unit translate via calc (returns true)', W.nudge(2, 0) === true);
+    assertEqual('percentage translate composed, not px-corrupted', pctBox.style.translate, 'calc(50% + 2px) 10px');
+    assert('nudge refuses a calc() translate', W.nudge(2, 0) === false);
+    assertEqual('calc translate left untouched by the refused nudge', pctBox.style.translate, 'calc(50% + 2px) 10px');
+    pctBox.style.translate = '10px 20px 5px';
+    assert('nudge refuses a 3-value (z-axis) translate', W.nudge(2, 0) === false);
+    assertEqual('3-value translate untouched (z preserved)', pctBox.style.translate, '10px 20px 5px');
+    pctBox.style.translate = '10px 10px';
+    assert('nudge still moves a plain px translate', W.nudge(2, 0) === true);
+    assertEqual('px translate accumulated normally', pctBox.style.translate, '12px 10px');
+    W.deselect();
+    var pctAbs = makeBox(0, 0);
+    pctAbs.style.left = '50%';
+    pctAbs.style.top = '2em';
+    W.select(pctAbs);
+    assert('duplicate of a %/em positioned element returns true', W.duplicateSelected());
+    var pctCopy = document.querySelector('.presto-wysiwyg-selected');
+    assertEqual('duplicate composes % left with calc (no px corruption)', pctCopy.style.left, 'calc(50% + 24px)');
+    assertEqual('duplicate composes em top with calc', pctCopy.style.top, 'calc(2em + 24px)');
+    W.deleteSelected();
+    W.deselect();
+
+    // --- 7a. Lazy snapshot source is correct across undo/redo ---
+    section('Snapshot source (lazy) correctness');
+    WS.goToSlide(5, 0);
+    await tick(20);
+    W.deselect();
+    W.select('#extra-para');
+    W.setFontSize(30);
+    var directSer = W.serializeCurrentSlide();
+    W.undo();
+    var undoSave = lastMessage('wysiwygChanged');
+    W.redo();
+    var redoSave = lastMessage('wysiwygChanged');
+    assertEqual('redo restores via lazy snapshot source to the same content',
+        W.serializeCurrentSlide(), directSer);
+    assert('undo/redo saves via lazy source are artifact-free',
+        undoSave.html.indexOf('presto-wysiwyg') < 0 && redoSave.html.indexOf('contenteditable') < 0);
+    W.deselect();
+
+    // --- 7b. Sidebar thumbnail rebuilds are coalesced to gesture-idle ---
+    section('Sidebar thumbnail coalescing');
+    WS.goToSlide(5, 0);
+    await tick(20);
+    W.deselect();
+    var thumbCalls = 0;
+    var prevThumb = window.updatePrestoEditSidebarThumbnail;
+    window.updatePrestoEditSidebarThumbnail = function () { thumbCalls++; };
+    W.select('#extra-para');
+    W.setFontSize(21);
+    W.setFontSize(22);
+    W.setFontSize(23);
+    assertEqual('rapid commits do not each rebuild the thumbnail synchronously', thumbCalls, 0);
+    await tick(60);
+    assert('coalesced thumbnail rebuild ran after idle', thumbCalls >= 1 && thumbCalls <= 2);
+    var callsBeforeNav = thumbCalls;
+    W.select('#extra-para');
+    W.setFontSize(24);
+    WS.goToSlide(4, 0);   // navigation flushes pending thumbnails synchronously
+    assert('navigation flushed the pending thumbnail synchronously', thumbCalls > callsBeforeNav);
+    window.updatePrestoEditSidebarThumbnail = prevThumb;
+    W.deselect();
+
+    // ===== Keyboard model + toolbar UX (this flow) =====
+    section('⌘←/→ navigate, never nudge');
+    WS.goToSlide(5, 0);
+    await tick(20);
+    var navEl = document.getElementById('nudge-target');
+    navEl.style.removeProperty('translate');
+    W.select('#nudge-target');
+    assert('element selected before ⌘→', W.state().hasSelection);
+    messages.length = 0;
+    var transBefore = navEl.style.translate || '';
+    keydown(document.body, 'ArrowRight', { metaKey: true });
+    assertEqual('⌘→ does not nudge the element', navEl.style.translate || '', transBefore);
+    assert('⌘→ drops the selection (lets navigation propagate)', !W.state().hasSelection);
+    assertEqual('⌘→ writes nothing to disk', messagesOfType('wysiwygChanged').length, 0);
+    W.select('#nudge-target');
+    keydown(document.body, 'ArrowLeft', { metaKey: true });
+    assert('⌘← also deselects instead of nudging', !W.state().hasSelection);
+
+    section('Nudge coalescing (one undo + one save per burst)');
+    W.select('#nudge-target');
+    var burstEl = document.getElementById('nudge-target');
+    var x0 = translateX(burstEl);
+    var depth0 = W.state().undoDepth;
+    messages.length = 0;
+    keydown(document.body, 'ArrowRight');
+    keydown(document.body, 'ArrowRight');
+    keydown(document.body, 'ArrowRight');
+    assertEqual('three rapid nudges each move the element (2px steps)', translateX(burstEl), x0 + 6);
+    assertEqual('a nudge burst pushes no undo step until it ends', W.state().undoDepth, depth0);
+    assertEqual('a nudge burst posts no save until it ends', messagesOfType('wysiwygChanged').length, 0);
+    keyup(document.body, 'ArrowRight');
+    assertEqual('arrow keyup flushes the burst as ONE undo step', W.state().undoDepth, depth0 + 1);
+    assertEqual('arrow keyup flushes the burst as ONE save', messagesOfType('wysiwygChanged').length, 1);
+    W.undo();
+    // undo replaces the slide's innerHTML, so re-query (burstEl is now detached).
+    assertEqual('undo after a burst restores the pre-burst position',
+        translateX(document.getElementById('nudge-target')), x0);
+    W.deselect();
+
+    section('Replace-on-type');
+    WS.goToSlide(5, 0);
+    await tick(20);
+    W.select('#extra-para');
+    keydown(document.body, 'a');
+    assert('a printable key on a selected text element starts a session', W.state().textEditing);
+    assert('replace-on-type selected the whole block for replacement',
+        !getSelection().isCollapsed && getSelection().toString().length > 0);
+    keydown(document.getElementById('extra-para'), 'Escape');
+    keydown(document.body, 'Escape');
+    W.select('#extra-para');
+    keydown(document.body, 'b', { metaKey: true });
+    assert('⌘B does not start a replace-on-type session', !W.state().textEditing);
+    W.deselect();
+    WS.goToSlide(3, 0);
+    await tick(20);
+    var atomSvg = document.querySelector('#s-media svg[data-ws-original-img]');
+    W.select(atomSvg);
+    keydown(document.body, 'x');
+    assert('a printable key on an atom does not start a session', !W.state().textEditing);
+    W.deselect();
+
+    section('Toolbar stickiness');
+    WS.goToSlide(5, 0);
+    await tick(20);
+    W.select('#clamp-target');
+    var stbar = document.getElementById('presto-wysiwyg-toolbar');
+    var pos0 = { top: stbar.style.top, left: stbar.style.left };
+    var sbr = stbar.getBoundingClientRect();
+    mouse('mousemove', stbar, sbr.left + sbr.width / 2, sbr.top + sbr.height / 2);
+    W.setFontSize(80);
+    assertEqual('toolbar top holds while the pointer is over it', stbar.style.top, pos0.top);
+    assertEqual('toolbar left holds while the pointer is over it', stbar.style.left, pos0.left);
+    W.select('#extra-para');
+    assert('a new selection re-anchors the toolbar (forced)',
+        stbar.style.top !== pos0.top || stbar.style.left !== pos0.left);
+    W.deselect();
+
+    section('Font field: blur applies, arrows step, invalid reverts');
+    WS.goToSlide(5, 0);
+    await tick(20);
+    W.select('#extra-para');
+    W.setFontSize(30);
+    var fi = document.getElementById('presto-wysiwyg-font-size');
+    fi.value = '48';
+    fi.dispatchEvent(new FocusEvent('blur'));
+    assertEqual('font field blur applies the typed value', document.getElementById('extra-para').style.fontSize, '48px');
+    keydown(fi, 'ArrowUp');
+    assertEqual('font field ArrowUp steps +1 live', document.getElementById('extra-para').style.fontSize, '49px');
+    keydown(fi, 'ArrowDown', { shiftKey: true });
+    assertEqual('font field Shift+ArrowDown steps -10 live', document.getElementById('extra-para').style.fontSize, '39px');
+    keyup(fi, 'ArrowDown');
+    fi.value = 'not a number';
+    fi.dispatchEvent(new FocusEvent('blur'));
+    assertEqual('invalid font entry reverts the field to the real size', fi.value, '39');
+    W.deselect();
+
+    section('Double / triple-click text selection');
+    WS.goToSlide(1, 0);
+    await tick(20);
+    var wpara = document.getElementById('para');
+    // Synthetic input bypasses browser hit-testing. Wait until the slide
+    // transition exposes the paragraph before testing rendered text selection.
+    await waitFor(function () { return getComputedStyle(wpara).visibility === 'visible'; });
+    var wr = wpara.getBoundingClientRect();
+    dblclickOn(wpara, wr.left + 8, wr.top + wr.height / 2);
+    assert('double-click starts a text session', W.state().textEditing);
+    assert('double-click does not select the whole block (word or caret)',
+        getSelection().toString() !== wpara.textContent);
+    mouse('click', wpara, wr.left + 8, wr.top + wr.height / 2, { detail: 3 });
+    assertEqual('triple-click selects the whole block',
+        getSelection().toString().replace(/\s+/g, ' ').trim(),
+        wpara.textContent.replace(/\s+/g, ' ').trim());
+    keydown(wpara, 'Escape');
+    keydown(document.body, 'Escape');
+
+    section('Inline B/I/U at a collapsed caret');
+    WS.goToSlide(5, 0);
+    await tick(20);
+    var cbEl = document.getElementById('extra-para');
+    cbEl.style.removeProperty('font-weight');
+    var cbr = cbEl.getBoundingClientRect();
+    dblclickOn(cbEl, cbr.left + 8, cbr.top + cbr.height / 2);
+    assert('session started for collapsed-caret bold', W.state().textEditing);
+    getSelection().collapseToStart();
+    assert('caret is collapsed inside the session', getSelection().isCollapsed);
+    W.toggleBold();
+    assertEqual('collapsed-caret ⌘B sets typing style, not block weight',
+        document.getElementById('extra-para').style.fontWeight, '');
+    keydown(cbEl, 'Escape');
+    keydown(document.body, 'Escape');
+    // ===== Resize: full handle set, 2D math, aspect, anchoring, table refit =====
+    // Drives real handle gestures (mousedown handle -> document mousemove ->
+    // mouseup). The guides module is NOT loaded here, so these exercise the raw
+    // resize math; guides integration is covered by chrome-wysiwyg-e2e.js.
+
+    section('Resize: handle geometry');
+    WS.goToSlide(3, 0);
+    await tick(30);
+    W.deselect();
+    W.select('svg[data-ws-original-img]');
+    await tick(10);
+    var rImg = document.querySelector('svg[data-ws-original-img]');
+    var geomRect = rImg.getBoundingClientRect();
+    var seH = handleCenter('se'), eH = handleCenter('e'), sH = handleCenter('s'), wH = handleCenter('w');
+    assert('all four resize handles are visible', seH.visible && eH.visible && sH.visible && wH.visible);
+    assert('SE handle sits at the bottom-right corner',
+        Math.abs(seH.x - geomRect.right) < 3 && Math.abs(seH.y - geomRect.bottom) < 3, JSON.stringify(seH));
+    assert('E handle sits at the right edge, vertically centered',
+        Math.abs(eH.x - geomRect.right) < 3 && Math.abs(eH.y - (geomRect.top + geomRect.height / 2)) < 3, JSON.stringify(eH));
+    assert('S handle sits at the bottom edge, horizontally centered',
+        Math.abs(sH.x - (geomRect.left + geomRect.width / 2)) < 3 && Math.abs(sH.y - geomRect.bottom) < 3, JSON.stringify(sH));
+    assert('W handle sits at the left edge, vertically centered',
+        Math.abs(wH.x - geomRect.left) < 3 && Math.abs(wH.y - (geomRect.top + geomRect.height / 2)) < 3, JSON.stringify(wH));
+    W.deselect();
+
+    section('Resize: 2D corner (SE) at two zoom scales');
+    WS.goToSlide(5, 0);
+    await tick(30);
+    W.deselect();
+    var slide5 = WS.slides[5];
+    var scale1 = slideScaleFor(slide5);
+    var boxA = makeBox(120, 120);
+    boxA.style.boxSizing = 'border-box';
+    boxA.style.padding = '0';
+    boxA.style.borderWidth = '0';
+    boxA.style.width = '240px';
+    boxA.style.height = '120px';
+    W.select(boxA);
+    await tick(10);
+    resizeGesture('se', 40, 30);
+    assertClose('SE grows width by dx/scale (scale ~1)', parseFloat(boxA.style.width) - 240, 40 / scale1, 2);
+    assertClose('SE grows height by dy/scale (scale ~1)', parseFloat(boxA.style.height) - 120, 30 / scale1, 2);
+    // Force a second, different scale on the active slide and repeat: the
+    // client->slide-px conversion must compensate so the same client delta maps
+    // to a proportionally larger slide-px delta.
+    var savedTransform = slide5.style.transform;
+    slide5.style.transform = 'translate(-50%, -50%) scale(0.5)';
+    await tick(10);
+    var scale2 = slideScaleFor(slide5);
+    assert('the forced second scale differs from the first', Math.abs(scale2 - scale1) > 0.1, { scale1: scale1, scale2: scale2 });
+    var wA1 = parseFloat(boxA.style.width), hA1 = parseFloat(boxA.style.height);
+    W.select(boxA);
+    await tick(10);
+    resizeGesture('se', 40, 30);
+    assertClose('SE grows width by dx/scale at a second zoom', parseFloat(boxA.style.width) - wA1, 40 / scale2, 3);
+    assertClose('SE grows height by dy/scale at a second zoom', parseFloat(boxA.style.height) - hA1, 30 / scale2, 3);
+    slide5.style.transform = savedTransform;
+    W.deselect();
+
+    section('Resize: media aspect-lock + Shift frees the ratio');
+    WS.goToSlide(3, 0);
+    await tick(30);
+    W.deselect();
+    var img = document.querySelector('svg[data-ws-original-img]');
+    var scaleM = slideScaleFor(WS.slides[3]);
+    W.select(img);
+    await tick(10);
+    var imgW0 = img.getBoundingClientRect().width / scaleM;
+    resizeGesture('se', 50, 12);
+    assertEqual('media corner drag keeps height:auto (aspect-locked)', img.style.height, 'auto');
+    assertClose('media corner drag grows width by dx/scale', parseFloat(img.style.width) - imgW0, 50 / scaleM, 3);
+    resizeGesture('se', 20, 40, { shiftKey: true });
+    assert('Shift-corner on media sets an explicit height (ratio freed)',
+        img.style.height !== 'auto' && parseFloat(img.style.height) > 0, img.style.height);
+    W.deselect();
+
+    section('Resize: E width-only + S height-only (no cross-axis jitter)');
+    WS.goToSlide(5, 0);
+    await tick(30);
+    W.deselect();
+    var scaleB = slideScaleFor(WS.slides[5]);
+    var boxB = makeBox(150, 150);
+    boxB.style.boxSizing = 'border-box';
+    boxB.style.padding = '0';
+    boxB.style.borderWidth = '0';
+    boxB.style.width = '200px';
+    boxB.style.height = '100px';
+    W.select(boxB);
+    await tick(10);
+    resizeGesture('e', 40, 25);   // vertical jitter must be ignored on E
+    assertClose('E handle grows width by dx/scale', parseFloat(boxB.style.width) - 200, 40 / scaleB, 2);
+    assertEqual('E handle leaves the explicit height untouched', boxB.style.height, '100px');
+    var wBeforeS = parseFloat(boxB.style.width);
+    resizeGesture('s', 30, 40);   // horizontal jitter must be ignored on S
+    assertClose('S handle grows height by dy/scale', parseFloat(boxB.style.height) - 100, 40 / scaleB, 2);
+    assertEqual('S handle does not change width (no horizontal jitter)', parseFloat(boxB.style.width), wBeforeS);
+    W.deselect();
+
+    section('Resize: W handle keeps the right edge fixed');
+    WS.goToSlide(5, 0);
+    await tick(30);
+    W.deselect();
+    var scaleW = slideScaleFor(WS.slides[5]);
+    // Absolute element: horizontal anchor via `left`.
+    var boxC = makeBox(300, 400);
+    boxC.style.boxSizing = 'border-box';
+    boxC.style.padding = '0';
+    boxC.style.borderWidth = '0';
+    boxC.style.width = '200px';
+    W.select(boxC);
+    await tick(10);
+    var rightBeforeC = boxC.getBoundingClientRect().right;
+    resizeGesture('w', -40, 0);   // drag the left edge leftward -> wider
+    assertClose('W drag keeps the right edge fixed (absolute)', boxC.getBoundingClientRect().right - rightBeforeC, 0, 2);
+    assertClose('W drag grows width by |dx|/scale (absolute)', parseFloat(boxC.style.width) - 200, 40 / scaleW, 2);
+    assertClose('W drag moves the left edge left by |dx|/scale (absolute)', 300 - parseFloat(boxC.style.left), 40 / scaleW, 2);
+    W.deselect();
+    // Translate-positioned (non-absolute) element: horizontal anchor via translate.
+    var boxD = makeBox(0, 0);
+    boxD.style.boxSizing = 'border-box';
+    boxD.style.padding = '0';
+    boxD.style.borderWidth = '0';
+    boxD.style.position = 'static';
+    boxD.style.removeProperty('left');
+    boxD.style.removeProperty('top');
+    boxD.style.width = '160px';
+    boxD.style.translate = '100px 40px';
+    W.select(boxD);
+    await tick(10);
+    var rightBeforeD = boxD.getBoundingClientRect().right;
+    resizeGesture('w', -30, 0);
+    assertClose('W on a translate element keeps the right edge fixed', boxD.getBoundingClientRect().right - rightBeforeD, 0, 2);
+    assertClose('W on a translate element shifted translate x left by |dx|/scale', 100 - parseFloat(boxD.style.translate), 30 / scaleW, 2);
+    W.deselect();
+
+    section('Resize: minimum size clamp (24px)');
+    WS.goToSlide(5, 0);
+    await tick(20);
+    W.deselect();
+    var boxE = makeBox(200, 200);
+    boxE.style.boxSizing = 'border-box';
+    boxE.style.padding = '0';
+    boxE.style.borderWidth = '0';
+    boxE.style.width = '120px';
+    boxE.style.height = '80px';
+    W.select(boxE);
+    await tick(10);
+    resizeGesture('se', -500, -500);   // shrink far past zero
+    assertEqual('width clamps to the 24px minimum', parseFloat(boxE.style.width), 24);
+    assertEqual('height clamps to the 24px minimum', parseFloat(boxE.style.height), 24);
+    W.deselect();
+
+    section('Resize: table container triggers WS.refitTables; saved source fit-free');
+    WS.goToSlide(2, 0);
+    await tick(50);
+    W.deselect();
+    var refitCalls = 0;
+    var origRefit = WS.refitTables;
+    WS.refitTables = function () { refitCalls++; return origRefit.apply(WS, arguments); };
+    var tableC = document.getElementById('inline-table');
+    W.select(tableC);
+    await tick(10);
+    assert('table container is resizable (handle shown)', handleCenter('se').visible);
+    messages.length = 0;
+    resizeGesture('e', 60, 0);
+    await tick(10);
+    assert('resizing a table container called WS.refitTables (live table re-fits)', refitCalls >= 1, refitCalls);
+    var tableSave = lastMessage('wysiwygChanged');
+    assert('table resize committed a save', !!tableSave);
+    assert('saved source carries the new container width', tableSave && /width:\s*\d+px/.test(tableSave.html),
+        tableSave && tableSave.html.slice(0, 200));
+    assert('saved source has no engine fit styles (transform/overflow)',
+        tableSave && tableSave.html.indexOf('transform') < 0 && tableSave.html.indexOf('overflow') < 0,
+        tableSave && tableSave.html.slice(0, 300));
+    WS.refitTables = origRefit;
+    W.deselect();
+
+    section('Resize: saved source after an image resize is clean');
+    WS.goToSlide(3, 0);
+    await tick(30);
+    W.deselect();
+    W.select('svg[data-ws-original-img]');
+    await tick(10);
+    messages.length = 0;
+    resizeGesture('se', 40, 0);
+    await tick(10);
+    var imgSave = lastMessage('wysiwygChanged');
+    assert('image resize committed a save', !!imgSave);
+    assert('image resize serialized back to <img> with width, no chrome/atoms',
+        imgSave && imgSave.html.indexOf('<img') >= 0 && /width:\s*\d+px/.test(imgSave.html) &&
+        imgSave.html.indexOf('presto-wysiwyg') < 0 && imgSave.html.indexOf('data-ws-original-img') < 0,
+        imgSave && imgSave.html.slice(0, 300));
+    W.deselect();
+
+    // ===== Disable =====
+    section('Disable');
+    W.disable();
+    assert('disable clears body marker', !document.body.classList.contains('presto-wysiwyg-on'));
+    assert('disable drops selection', !W.state().hasSelection);
+    var idxBeforeDisabled = WS.currentStep;
+    clickToSelect(document.getElementById('para'));
+    assert('clicks no longer select when disabled', !W.state().hasSelection);
+    W.enable();
+    assert('re-enable works', W.state().enabled);
+
+    finish();
+}
+
+function finish() {
+    var summary = document.createElement('div');
+    summary.className = 'summary ' + (failed === 0 ? 'pass' : 'fail');
+    summary.textContent = passed + '/' + total + ' passed';
+    resultsEl.appendChild(summary);
+    window.WYSIWYG_TEST_RESULTS = { passed: passed, failed: failed, total: total };
+    console.log('WYSIWYG_TESTS: ' + passed + '/' + total + ' passed');
+}
+</script>
+</body>
+</html>

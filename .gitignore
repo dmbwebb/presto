@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+.DS_Store
+presto/app/Presto.app/Contents/MacOS/
+presto/app/Presto.app/Contents/_CodeSignature/
+presto/app/Presto.app/Contents/Resources/AppIcon.icns
+tests/local.env
+skill/webslides/references/local.md
+skill/webslides/references/deck_locations.yaml
+skill/webslides/scripts/local.json

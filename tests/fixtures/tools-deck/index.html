@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=1280">
+    <title>Tools fixture deck</title>
+    <!-- Behavioural fixture for tools/ tests (check_style, screenshot_slide,
+         export_pdf, check_overflow). Each slide carries one known feature or
+         defect; tests/test_tools_fixture_deck.py asserts on them by slide id. -->
+    <link rel="stylesheet" href="../../../engine/webslides.css">
+    <link rel="stylesheet" href="../../../engine/themes/academic.css">
+    <script defer src="../../../engine/webslides.js"></script>
+</head>
+<body>
+<div class="ws-deck" data-known-acronyms="BREAD">
+
+    <section class="slide title">
+        <h1>Tools fixture deck</h1>
+        <div class="author"><b>Test Author</b>, with Fixture Coauthor</div>
+    </section>
+
+    <section class="slide content" id="ranged" data-steps="5">
+        <h2>Ranged reveals</h2>
+        <p data-step="1-2">Early text shown only in steps one and two</p>
+        <p data-step="3">Late text from step three onward</p>
+    </section>
+
+    <section class="slide content" id="svg-steps">
+        <h2>Steps inside an inline figure</h2>
+        <img data-inline src="figures/steps.svg" alt="Stepped bars" style="width: 800px;">
+    </section>
+
+    <section class="slide content" id="table-steps">
+        <h2>Table steps</h2>
+        <div class="table-container" data-table-src="tables/stepped.html"></div>
+    </section>
+
+    <section class="slide content" id="reveal-each">
+        <h2>One bullet per step</h2>
+        <ul data-reveal="each">
+            <li>Alpha bullet</li>
+            <li>Beta bullet
+                <ul><li>Beta detail</li></ul>
+            </li>
+            <li>Gamma bullet</li>
+        </ul>
+    </section>
+
+    <section class="slide content" id="tiny-text">
+        <h2>Tiny text</h2>
+        <p style="font-size: 12px;">Tiny twelve pixel text</p>
+        <p style="font-size: 16px;">Small sixteen pixel text</p>
+        <p class="footnote" style="font-size: 16px;">Footnote at sixteen pixels</p>
+        <img data-inline src="figures/small-label.svg" alt="Small label" style="width: 300px;">
+    </section>
+
+    <section class="slide content" id="clipped">
+        <h2>Clipped table</h2>
+        <div style="height: 90px; overflow: hidden;">
+            <table>
+                <tr><td>Row one stays visible</td></tr>
+                <tr><td>Row two</td></tr>
+                <tr><td>Row three</td></tr>
+                <tr><td>Row four</td></tr>
+                <tr><td>Row five is cut off</td></tr>
+                <tr><td>Row six is cut off</td></tr>
+            </table>
+        </div>
+    </section>
+
+    <section class="slide content" id="acronyms">
+        <h2>Acronyms</h2>
+        <ul>
+            <li>We estimate intent-to-treat (ITT) effects</li>
+            <li>The RCT and ITT estimates agree</li>
+            <li>XYZQ drives the result</li>
+            <li>BREAD audiences know this already</li>
+        </ul>
+    </section>
+
+    <section class="slide content" id="lowres">
+        <h2>Low-resolution image</h2>
+        <img src="figures/lowres.png" alt="Tiny raster" style="width: 640px; height: 360px;">
+    </section>
+
+    <section class="slide content" id="dense">
+        <h2>Dense slide</h2>
+        <ul>
+            <li>This first bullet keeps going well past a headline because it tries to explain the whole design, the sample, the timing and the outcomes</li>
+            <li>The second bullet repeats the same mistake by adding a long list of caveats, robustness checks and secondary numbers that belong elsewhere</li>
+            <li>A third bullet then narrates the data processing steps one by one instead of describing the resulting sample in plain words</li>
+            <li>The fourth bullet closes with another long sentence that the speaker could simply say out loud instead of writing it down</li>
+        </ul>
+    </section>
+
+    <section class="slide content" id="footer-overlap">
+        <h2>Footer overlap</h2>
+        <p>Short body text</p>
+        <div style="position: absolute; right: 20px; bottom: 2px; font-size: 24px; background: #fff;">Overlapping the slide number</div>
+    </section>
+
+    <section class="slide content" id="top-heavy">
+        <h2>Top heavy</h2>
+        <ul>
+            <li>Only one short bullet</li>
+        </ul>
+    </section>
+
+    <section class="slide content" id="katex-error">
+        <h2>Formula</h2>
+        <p>The estimate is <span class="katex-error" title="ParseError: KaTeX parse error: Expected group after '^'">x^</span></p>
+    </section>
+
+    <section class="slide content v-center" id="clean">
+        <h2>A clean slide</h2>
+        <ul>
+            <li>One short headline</li>
+            <li>Another short headline</li>
+            <li>A third short headline</li>
+        </ul>
+    </section>
+
+    <section class="slide thanks">
+        <h1>Thank you!</h1>
+        <div class="email">test@example.org</div>
+    </section>
+
+    <section class="slide content appendix" id="app-small">
+        <h2>Appendix text</h2>
+        <p style="font-size: 16px;">Appendix sixteen pixel text</p>
+        <p style="font-size: 12px;">Appendix twelve pixel text</p>
+    </section>
+
+</div>
+<div id="ws-footer">
+    <span id="ws-footer-left">Fixture · Tools</span>
+    <span id="ws-footer-right"></span>
+</div>
+</body>
+</html>

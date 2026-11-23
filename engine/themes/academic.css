@@ -1,0 +1,1265 @@
+/* ============================================
+   WEBSLIDES — Academic Theme
+   ============================================
+   Lato headings and body, warm accent on pure
+   white. The default look follows the BREAD 2026
+   Madagascar deck (46px titles without underline,
+   28px body, appendix buttons bottom-right).
+   Designed for lectures and research talks.
+   ============================================ */
+
+/* ===== Fonts =====
+   Local copies of the Google Fonts files (engine/fonts/, sources and
+   checksums in engine/vendor/README.md), so decks render offline. Lato has
+   no 500 or 600 weight (a 500 request rendered as 400 and 600 as 700), so
+   the theme uses just 400 and 700, upright and italic. Each subset keeps
+   Google's unicode-range, in Google's order. */
+@font-face { font-family: 'Lato'; font-style: normal; font-weight: 400; font-display: swap; src: url('../fonts/lato-400-normal-latin-ext.woff2') format('woff2'); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: 'Lato'; font-style: normal; font-weight: 400; font-display: swap; src: url('../fonts/lato-400-normal-latin.woff2') format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: 'Lato'; font-style: normal; font-weight: 700; font-display: swap; src: url('../fonts/lato-700-normal-latin-ext.woff2') format('woff2'); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: 'Lato'; font-style: normal; font-weight: 700; font-display: swap; src: url('../fonts/lato-700-normal-latin.woff2') format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: 'Lato'; font-style: italic; font-weight: 400; font-display: swap; src: url('../fonts/lato-400-italic-latin-ext.woff2') format('woff2'); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: 'Lato'; font-style: italic; font-weight: 400; font-display: swap; src: url('../fonts/lato-400-italic-latin.woff2') format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: 'Lato'; font-style: italic; font-weight: 700; font-display: swap; src: url('../fonts/lato-700-italic-latin-ext.woff2') format('woff2'); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: 'Lato'; font-style: italic; font-weight: 700; font-display: swap; src: url('../fonts/lato-700-italic-latin.woff2') format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: 'JetBrains Mono'; font-style: normal; font-weight: 400; font-display: swap; src: url('../fonts/jetbrains-mono-400-normal-cyrillic-ext.woff2') format('woff2'); unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F; }
+@font-face { font-family: 'JetBrains Mono'; font-style: normal; font-weight: 400; font-display: swap; src: url('../fonts/jetbrains-mono-400-normal-cyrillic.woff2') format('woff2'); unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116; }
+@font-face { font-family: 'JetBrains Mono'; font-style: normal; font-weight: 400; font-display: swap; src: url('../fonts/jetbrains-mono-400-normal-greek.woff2') format('woff2'); unicode-range: U+0370-0377, U+037A-037F, U+0384-038A, U+038C, U+038E-03A1, U+03A3-03FF; }
+@font-face { font-family: 'JetBrains Mono'; font-style: normal; font-weight: 400; font-display: swap; src: url('../fonts/jetbrains-mono-400-normal-vietnamese.woff2') format('woff2'); unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB; }
+@font-face { font-family: 'JetBrains Mono'; font-style: normal; font-weight: 400; font-display: swap; src: url('../fonts/jetbrains-mono-400-normal-latin-ext.woff2') format('woff2'); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: 'JetBrains Mono'; font-style: normal; font-weight: 400; font-display: swap; src: url('../fonts/jetbrains-mono-400-normal-latin.woff2') format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+
+/* ===== Color Palette (CSS Variables — override per deck) ===== */
+:root {
+    /* Core palette */
+    --color-bg: #FFFFFF;
+    --color-text: #2F3037;
+    --color-heading: #1E2A3A;
+    --color-accent: #B8612A;
+    --color-accent-2: #3F73B8;
+    --color-muted: #6F747C;
+    --color-faint: #979BA2;
+
+    /* Surfaces */
+    --color-box-bg: #F3F1ED;
+    --color-box-border: #B8612A;
+    --color-card: #F7F8F9;
+    --color-result-bg: #EFF5FC;
+    --color-result-border: #3F73B8;
+    --color-highlight-bg: #FEF6EE;
+    --color-border: #D9DDE3;
+    --color-border-soft: #E7E2D8;
+    --color-muted-soft: #A8A59C;
+    --color-section-bg: #1E2A3A;
+
+    /* Emphasis colors (for .red, .orange, .green, .blue classes) */
+    --color-red: #C44536;
+    --color-orange: #D98B48;
+    --color-green: #2D8A4E;
+    --color-blue: #4A7FBF;
+    --color-yellow: #C9961A;
+
+    /* Typography */
+    --font-heading: 'Lato', system-ui, -apple-system, 'Helvetica Neue', Arial, sans-serif;
+    --font-body: 'Lato', system-ui, -apple-system, 'Helvetica Neue', Arial, sans-serif;
+    --font-mono: 'JetBrains Mono', 'SF Mono', 'Consolas', monospace;
+
+    /* Spacing */
+    --ws-slide-padding: 52px 72px;
+    --ws-gap: 24px;
+
+    /* Reveal highlight color (used by webslides.css) */
+    --ws-highlight-color: rgba(255, 195, 80, 0.3);
+}
+
+/* ===== Body Background (override engine #111 to prevent dark flash between slides) ===== */
+html, body {
+    background: var(--color-bg);
+}
+
+/* ===== Slide Base ===== */
+.slide {
+    background: var(--color-bg);
+    color: var(--color-text);
+    font-family: var(--font-body);
+    font-size: 28px;
+    line-height: 1.36;
+    padding: var(--ws-slide-padding);
+    display: flex;
+    flex-direction: column;
+}
+
+/* ===== Headings ===== */
+.slide h1 {
+    font-family: var(--font-heading);
+    color: var(--color-heading);
+    font-weight: 700;
+    font-size: 44px;
+    line-height: 1.2;
+    margin-bottom: var(--ws-gap);
+}
+
+/* Slide titles: no underline */
+.slide h2 {
+    font-family: var(--font-heading);
+    color: var(--color-heading);
+    font-weight: 700;
+    font-size: 46px;
+    line-height: 1.08;
+    margin-bottom: 26px;
+    padding-bottom: 0;
+    border-bottom: none;
+    position: relative;
+}
+
+.slide h3 {
+    font-family: var(--font-body);
+    font-weight: 700;
+    color: var(--color-heading);
+    font-size: 24px;
+    margin-bottom: 12px;
+}
+
+/* ===== SLIDE TYPE: Title ===== */
+.slide.title {
+    justify-content: center;
+    align-items: flex-start;
+    padding: 64px 72px;
+}
+
+.slide.title h1 {
+    font-size: 50px;
+    line-height: 1.14;
+    border-bottom: none;
+    margin-bottom: 40px;
+    position: relative;
+    padding-bottom: 0;
+}
+
+.slide.title .subtitle,
+.slide.title .author,
+.slide.title .venue,
+.slide.title .date {
+    font-size: 25px;
+    line-height: 1.35;
+}
+
+.slide.title .subtitle {
+    color: var(--color-text);
+    margin-top: 12px;
+}
+
+.slide.title .author {
+    margin-top: 34px;
+    color: var(--color-text);
+    font-weight: 400;
+}
+
+.slide.title .author b,
+.slide.title .author strong {
+    font-weight: 700;
+}
+
+.slide.title .coauthors {
+    font-size: 23px;
+    color: var(--color-muted);
+    margin-top: 4px;
+}
+
+.slide.title .venue {
+    color: var(--color-muted);
+    margin-top: 6px;
+}
+
+.slide.title .date {
+    color: var(--color-muted);
+    margin-top: 4px;
+}
+
+/* ===== SLIDE TYPE: Section Header / Subsection Header =====
+   Both share the same shell — section dividers and subsection dividers
+   look identical except subsection slides display a small parent-section
+   eyebrow above the h1 (injected by the engine). */
+.slide.section-header,
+.slide.subsection-header {
+    background: var(--color-bg);
+    justify-content: center;
+    align-items: flex-start;
+    padding: 72px 90px;
+    overflow: hidden;
+}
+
+.slide.section-header h1,
+.slide.subsection-header h1 {
+    color: var(--color-heading);
+    font-size: 52px;
+    border-left: none;
+    border-bottom: none;
+    padding-left: 0;
+    padding-bottom: 0;
+    margin-bottom: 0;
+    z-index: 1;
+    position: relative;
+}
+
+.slide.section-header h1::after,
+.slide.subsection-header h1::after {
+    content: '';
+    display: block;
+    width: 80px;
+    height: 3px;
+    background: var(--color-accent);
+    margin-top: 20px;
+    border-radius: 2px;
+}
+
+.slide.section-header .section-number {
+    display: none;
+}
+
+.slide.section-header .section-subtitle {
+    color: var(--color-muted);
+    font-size: 20px;
+    margin-top: 16px;
+    padding-left: 0;
+    z-index: 1;
+    position: relative;
+}
+
+/* Parent-section eyebrow on subsection-header slides */
+.slide.subsection-header .ws-section-eyebrow {
+    font-family: var(--font-body);
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-accent);
+    margin-bottom: 14px;
+    z-index: 1;
+    position: relative;
+}
+
+/* Section TOC (auto-injected on section/subsection-header slides) */
+.slide.section-header .section-toc,
+.slide.subsection-header .section-toc {
+    list-style: none;
+    padding-left: 18px;
+    margin-top: 36px;
+    border-left: 2px solid var(--color-border-soft);
+    position: relative;
+    z-index: 1;
+}
+
+.slide.section-header .section-toc li,
+.slide.subsection-header .section-toc li {
+    font-family: var(--font-body);
+    font-size: 20px;
+    color: var(--color-muted-soft, var(--color-border));
+    margin-bottom: 11px;
+    font-weight: 400;
+    letter-spacing: 0.01em;
+    list-style: none;
+    position: relative;
+    transition: color 0.2s ease;
+}
+
+.slide.section-header .section-toc li.active,
+.slide.subsection-header .section-toc li.active {
+    color: var(--color-accent);
+    font-weight: 700;
+}
+
+/* Bullet centered on the border-left line (2px border at left edge of 18px padding).
+   Absolute so it doesn't shift text alignment vs inactive items. */
+.slide.section-header .section-toc > li.active::before,
+.slide.subsection-header .section-toc > li.active::before {
+    content: '';
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    background: var(--color-accent);
+    border-radius: 50%;
+    left: -23px;
+    top: 0.55em;
+}
+
+/* Make TOC labels clickable */
+.slide.section-header .section-toc .ws-toc-label,
+.slide.subsection-header .section-toc .ws-toc-label {
+    cursor: pointer;
+}
+.slide.section-header .section-toc .ws-toc-label:hover,
+.slide.subsection-header .section-toc .ws-toc-label:hover {
+    color: var(--color-accent);
+}
+
+/* Subsection list (nested under the active section) */
+.slide.section-header .section-toc .ws-subsection-list,
+.slide.subsection-header .section-toc .ws-subsection-list {
+    list-style: none;
+    padding-left: 24px;
+    margin-top: 10px;
+    margin-bottom: 6px;
+}
+
+.slide.section-header .section-toc .ws-subsection-list li,
+.slide.subsection-header .section-toc .ws-subsection-list li {
+    font-size: 20px;
+    color: var(--color-muted-soft, var(--color-border));
+    font-weight: 400;
+    margin-bottom: 7px;
+    list-style: none;
+    position: relative;
+}
+
+.slide.section-header .section-toc .ws-subsection-list li.active,
+.slide.subsection-header .section-toc .ws-subsection-list li.active {
+    color: var(--color-accent);
+    font-weight: 700;
+}
+
+.slide.section-header .section-toc .ws-subsection-list li.active::before,
+.slide.subsection-header .section-toc .ws-subsection-list li.active::before {
+    content: '';
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    background: var(--color-accent);
+    border-radius: 50%;
+    left: -14px;
+    top: 0.5em;
+}
+
+/* ===== SLIDE TYPE: Signpost =====
+   A title-only divider. On its own (class="slide signpost") it stays out of
+   the section nav. As a modifier (class="slide subsection-header signpost",
+   or on a section-header) it keeps its nav entry and eyebrow but shows no
+   contents list: the engine still injects one, this rule hides it, and
+   Presto strips it on save. */
+.slide.signpost {
+    justify-content: center;
+    align-items: flex-start;
+    padding: 72px 90px;
+}
+
+.slide.signpost h1 {
+    font-size: 52px;
+    margin-bottom: 0;
+}
+
+.slide.signpost:not(.section-header):not(.subsection-header) h1::after {
+    content: '';
+    display: block;
+    width: 80px;
+    height: 3px;
+    background: var(--color-accent);
+    margin-top: 20px;
+    border-radius: 2px;
+}
+
+.slide.signpost .section-subtitle {
+    color: var(--color-muted);
+    font-size: 26px;
+    margin-top: 18px;
+}
+
+.slide.signpost .section-toc {
+    display: none;
+}
+
+/* ===== SLIDE TYPE: Content (default) =====
+   Flex column from the .slide base. Blocks with flex: 1 (.columns,
+   .table-commentary, .fig-notes, .fig-plot) fill the height left below the
+   title whether or not a footnote follows; .v-center (below) turns that off
+   so sparse content can be centred. */
+
+/* Images placed directly on a content slide shrink to the space left
+   instead of overflowing the slide. */
+.slide.content > img,
+.slide.content > svg {
+    min-height: 0;
+    object-fit: contain;
+}
+
+/* ===== SLIDE TYPE: Figure ===== */
+.slide.figure {
+    align-items: center;
+}
+
+.slide.figure h2 {
+    align-self: stretch;
+}
+
+/* A direct-child figure also shrinks to whatever height the title and
+   caption leave (min-height: 0 lets the flex item shrink). */
+.slide.figure img,
+.slide.figure svg {
+    max-width: 100%;
+    max-height: 520px;
+    min-height: 0;
+    object-fit: contain;
+    flex-shrink: 1;
+}
+
+.slide.figure .caption,
+.fig-plot .caption {
+    font-size: 20px;
+    line-height: 1.3;
+    color: var(--color-muted);
+    margin-top: 8px;
+    text-align: center;
+}
+
+/* ===== SLIDE TYPE: Split Image (text left, image full-bleed right) ===== */
+.slide.split-image {
+    flex-direction: row;
+    padding: 0;
+}
+
+.slide.split-image .split-text {
+    flex: 1;
+    padding: 56px 36px 56px 68px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.slide.split-image .split-text h2 {
+    margin-bottom: 20px;
+}
+
+.slide.split-image .split-img {
+    flex: 1;
+    overflow: hidden;
+}
+
+.slide.split-image .split-img img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 0;
+}
+
+/* ===== SLIDE TYPE: Photo (full bleed) ===== */
+.slide.photo {
+    padding: 0;
+    background: #000;
+}
+
+.slide.photo img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.slide.photo .photo-caption {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(transparent, rgba(0,0,0,0.7));
+    color: #fff;
+    padding: 40px 68px 20px;
+    font-size: 20px;
+}
+
+/* ===== Two-Column Layout ===== */
+.columns {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 36px;
+    flex: 1;
+    align-items: start;
+}
+
+.columns.wide-left  { grid-template-columns: 3fr 2fr; }
+.columns.wide-right { grid-template-columns: 2fr 3fr; }
+.columns.narrow-left  { grid-template-columns: 1fr 2fr; }
+.columns.narrow-right { grid-template-columns: 2fr 1fr; }
+
+/* ===== Lists ===== */
+.slide ul, .slide ol {
+    padding-left: 30px;
+    margin-bottom: 8px;
+}
+
+.slide ul:not(.section-toc):not(.ws-subsection-list) {
+    list-style: none;
+    padding-left: 0;
+}
+
+.slide li {
+    margin-bottom: 16px;
+    line-height: 1.34;
+}
+
+.slide ul:not(.section-toc):not(.ws-subsection-list) > li {
+    padding-left: 1.15em;
+    position: relative;
+}
+
+.slide ul:not(.section-toc):not(.ws-subsection-list) > li::before {
+    content: '•';
+    color: var(--color-accent);
+    font-weight: 700;
+    left: 0;
+    line-height: 1.55;
+    position: absolute;
+    top: 0;
+}
+
+.slide li::marker {
+    color: var(--color-accent);
+}
+
+.slide ol li::marker {
+    color: var(--color-heading);
+    font-weight: 700;
+}
+
+/* Nested lists */
+.slide li ul, .slide li ol {
+    margin-top: 8px;
+    margin-bottom: 4px;
+}
+
+/* Sub-bullets: 25px under the 28px body */
+.slide li li {
+    margin-bottom: 8px;
+    font-size: calc(25em / 28);
+    color: var(--color-text);
+}
+
+/* ===== Definition / Result Boxes ===== */
+.box {
+    background: var(--color-box-bg);
+    border-left: 3px solid var(--color-box-border);
+    padding: 18px 24px;
+    border-radius: 0 8px 8px 0;
+    margin: var(--ws-gap) 0;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+    font-weight: 400;
+}
+
+.box p,
+.box li,
+.box div:not(.box-title) {
+    font-weight: 400;
+}
+
+.box.result {
+    background: var(--color-result-bg);
+    border-left-color: var(--color-result-border);
+}
+
+.box.warning {
+    background: #FFF5F5;
+    border-left-color: var(--color-red);
+}
+
+.box-title {
+    font-weight: 700;
+    font-size: 26px;
+    margin-bottom: 6px;
+    color: var(--color-heading);
+}
+
+/* ===== Tables =====
+   Cells and headers start at the 20px floor for substantive text; the engine
+   scales large tables down to fit. */
+.slide table {
+    border-collapse: collapse;
+    font-family: var(--font-heading);
+    font-size: 20px;
+    margin: var(--ws-gap) 0;
+}
+
+.slide thead th {
+    border-bottom: 2px solid var(--color-heading);
+    text-align: left;
+    padding: 8px 14px;
+    font-weight: 700;
+    color: var(--color-heading);
+    font-size: 20px;
+}
+
+/* The engine sizes a scaled .table-container to the table's own height, so a
+   table margin there pushes the last rows out of view. */
+.table-container > table {
+    margin-top: 0;
+    margin-bottom: 0;
+}
+
+.slide tbody td {
+    padding: 7px 14px;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.slide tbody tr:last-child td {
+    border-bottom: 2px solid var(--color-heading);
+}
+
+/* Compact tables — tighter padding for dense regression tables (text stays
+   at the 20px floor; the engine scales the whole table if it is too big) */
+.slide .compact-table { font-size: 20px; }
+.slide .compact-table th,
+.slide .compact-table td { padding: 4px 8px; }
+
+/* Table overlay — rounded border highlight over columns or rows (via data-overlays) */
+.column-overlay {
+    position: absolute;
+    border: 3px solid var(--color-orange, #E8804C);
+    border-radius: 8px;
+    pointer-events: none;
+    z-index: 10;
+    box-sizing: border-box;
+    transition: opacity 0.35s ease;
+}
+.column-overlay.blue { border-color: var(--color-accent-2, #2A7B9B); }
+.column-overlay.accent { border-color: var(--color-accent, #C0603A); }
+.column-overlay.red { border-color: var(--color-red, #D64545); }
+.column-overlay.green { border-color: var(--color-green, #2D8A4E); }
+
+/* Significance stars */
+.slide .stars { color: var(--color-accent); font-weight: 700; }
+
+/* Standard errors in parentheses (never below the 20px floor) */
+.slide .se { color: var(--color-muted); font-size: max(0.9em, 20px); }
+
+/* ===== Emphasis Classes ===== */
+/* KaTeX marks \hat, \bar, \tilde... with its own .accent span; the emphasis
+   class must not make those bold or coloured. :where() keeps the rule's
+   specificity at one class, so deck .accent overrides still win; the reset
+   below also undoes deck-level .accent rules inside maths. */
+.accent:where(:not(.katex *)) { color: var(--color-accent); font-weight: 700; }
+.katex .accent { color: inherit; font-weight: inherit; }
+.accent2 { color: var(--color-accent-2); font-weight: 700; }
+.red     { color: var(--color-red);      font-weight: 700; }
+.orange  { color: var(--color-orange);   font-weight: 700; }
+.green   { color: var(--color-green);    font-weight: 700; }
+.blue    { color: var(--color-blue);     font-weight: 700; }
+.muted   { color: var(--color-muted); }
+.bold    { font-weight: 700; }
+
+.highlight {
+    background: var(--color-highlight-bg);
+    padding: 2px 6px;
+    border-radius: 3px;
+}
+
+/* ===== Appendix Navigation Links ===== */
+.ws-appendix-link {
+    display: inline-block;
+    font-family: var(--font-body);
+    font-size: 16px;
+    line-height: 1.36;
+    color: #999;
+    text-decoration: none;
+    padding: 4px 14px;
+    border: 1.5px solid #ccc;
+    border-radius: 16px;
+    margin: 4px 6px 4px 0;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    vertical-align: middle;
+}
+
+.ws-appendix-link:hover {
+    color: #666;
+    border-color: #999;
+    background: rgba(0,0,0,0.03);
+}
+
+/* Back link from appendix: bottom-right, where the appendix buttons sit */
+.ws-back-link {
+    display: inline-block;
+    font-family: var(--font-body);
+    font-size: 16px;
+    line-height: 1.36;
+    color: #999;
+    text-decoration: none;
+    padding: 4px 14px;
+    border: 1.5px solid #ccc;
+    border-radius: 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: absolute;
+    bottom: 34px;
+    right: 72px;
+}
+
+.ws-back-link:hover {
+    color: #666;
+    border-color: #999;
+    background: rgba(0,0,0,0.03);
+}
+
+/* Appendix link container (for grouping multiple links) */
+.appendix-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 12px;
+}
+
+/* Pinned appendix links: bottom-right, clear of long titles (the name is
+   historical; they sat top-right, level with the h2, before 2026-10) */
+.header-links {
+    position: absolute;
+    bottom: 34px;
+    right: 72px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    justify-content: flex-end;
+}
+
+/* The button band (bottom 34px plus one ~41px row of buttons) overlaps the
+   bottom of the content area. On slides that also have a table (which the
+   engine may grow to the bottom) or a pinned footnote/source, end the content
+   area above the band. Slides with buttons over figures or text keep their
+   full height. */
+.slide:has(> .header-links):has(.table-container, > .footnote, > .source) {
+    padding-bottom: 78px;
+}
+
+/* ===== Equations (KaTeX integration) ===== */
+.katex-display {
+    margin: var(--ws-gap) 0;
+}
+
+.katex { font-size: 1.05em; }
+
+/* Equation in a box */
+.box .katex-display {
+    margin: 8px 0;
+}
+
+/* ===== Images ===== */
+.slide img {
+    max-width: 100%;
+    border-radius: 4px;
+}
+
+.slide img.full {
+    width: 100%;
+}
+
+.slide img.center {
+    display: block;
+    margin: 0 auto;
+}
+
+/* Side-by-side images */
+.image-row {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    justify-content: center;
+}
+
+.image-row img {
+    flex: 1;
+    max-width: 48%;
+}
+
+/* ===== Diagram / Flow ===== */
+.diagram-flow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin: var(--ws-gap) 0;
+    flex-wrap: wrap;
+}
+
+.diagram-flow .node {
+    background: var(--color-box-bg);
+    border: 2px solid var(--color-border);
+    border-radius: 8px;
+    padding: 14px 20px;
+    font-weight: 400;
+    text-align: center;
+    min-width: 120px;
+}
+
+.diagram-flow .node.accent-bg {
+    background: var(--color-accent);
+    border-color: var(--color-accent);
+    color: #fff;
+}
+
+.diagram-flow .node.result-bg {
+    background: var(--color-result-bg);
+    border-color: var(--color-result-border);
+}
+
+.diagram-flow .arrow {
+    font-size: 28px;
+    color: var(--color-muted);
+    font-weight: 300;
+}
+
+/* Vertical diagram */
+.diagram-vertical {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    margin: var(--ws-gap) 0;
+}
+
+.diagram-vertical .arrow {
+    font-size: 24px;
+    color: var(--color-muted);
+    transform: rotate(90deg);
+}
+
+/* ===== Small text: footnotes, sources, citations, table notes =====
+   The only sanctioned homes for text below the 20px floor on main slides
+   (the small-text allowlist shared with the font-size lint; never below 14px).
+   .footnote / .source — pinned to the bottom of the slide
+   .cite               — reference under a bullet or side note
+   .table-note         — note under a table (padding rather than margin,
+                         because the engine's table fitter ignores margins) */
+.footnote, .source {
+    font-size: 14px;
+    color: var(--color-muted);
+    margin-top: auto;
+    padding-top: 8px;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+.footnote .ws-appendix-link {
+    margin-left: 0;
+    margin-right: 0;
+}
+
+.source::before {
+    content: 'Source: ';
+}
+
+.cite {
+    display: block;
+    color: var(--color-faint);
+    font-size: 20px;
+    line-height: 1.25;
+    margin-top: 3px;
+}
+
+.table-note {
+    color: var(--color-muted);
+    font-size: 19px;
+    line-height: 1.3;
+    padding-top: 8px;
+}
+
+/* ===== Spacer ===== */
+.spacer { flex: 1; }
+.spacer-sm { height: 12px; }
+.spacer-md { height: 24px; }
+.spacer-lg { height: 40px; }
+
+/* ===== Code Blocks ===== */
+.slide code {
+    font-family: var(--font-mono);
+    font-size: 0.88em;
+    background: var(--color-box-bg);
+    padding: 2px 6px;
+    border-radius: 3px;
+}
+
+.slide pre {
+    background: #1e1e2e;
+    color: #cdd6f4;
+    padding: 16px 20px;
+    border-radius: 8px;
+    font-family: var(--font-mono);
+    font-size: 20px;
+    line-height: 1.5;
+    overflow-x: auto;
+    margin: var(--ws-gap) 0;
+}
+
+.slide pre code {
+    background: none;
+    padding: 0;
+    font-size: inherit;
+    color: inherit;
+}
+
+/* ===== Footer Theme ===== */
+#ws-footer {
+    font-family: var(--font-body);
+    font-size: 13px;
+    color: var(--color-muted);
+    padding: 10px 48px;
+}
+
+/* ===== Outline / TOC Slide ===== */
+.slide.outline h2 {
+    margin-bottom: 28px;
+}
+
+.slide.outline .toc-item {
+    display: flex;
+    align-items: baseline;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--color-border);
+    font-size: 22px;
+}
+
+.slide.outline .toc-item:last-child {
+    border-bottom: none;
+}
+
+.slide.outline .toc-number {
+    font-family: var(--font-heading);
+    font-weight: 700;
+    color: var(--color-accent);
+    min-width: 36px;
+    font-size: 24px;
+}
+
+.slide.outline .toc-label {
+    color: var(--color-heading);
+    font-weight: 400;
+}
+
+.slide.outline .toc-item.active .toc-label {
+    color: var(--color-accent);
+    font-weight: 700;
+}
+
+.slide.outline .toc-item.dimmed {
+    opacity: 0.35;
+}
+
+/* ===== Section Navigation Bar (theme) ===== */
+#ws-section-nav {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(4px);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.ws-section-nav-item {
+    color: var(--color-muted);
+    font-family: var(--font-body);
+    font-size: 12px;
+    font-weight: 400;
+    letter-spacing: 0.02em;
+}
+
+.ws-section-nav-item:hover {
+    color: var(--color-heading);
+    background: rgba(0, 0, 0, 0.04);
+}
+
+.ws-section-nav-item.active {
+    color: var(--color-heading);
+    font-weight: 700;
+    background: rgba(0, 0, 0, 0.06);
+    border-radius: 3px;
+}
+
+.ws-section-nav-sep {
+    color: var(--color-border);
+    font-size: 10px;
+}
+
+/* ===== Table + Commentary Layout ===== */
+.table-commentary {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    flex: 1;
+    align-items: start;
+}
+
+.table-commentary.table-left {
+    grid-template-columns: auto 1fr;
+}
+
+.table-commentary.table-right {
+    grid-template-columns: 2fr 3fr;
+}
+
+/* Wide table: 7:3 split for dense tables with short commentary */
+.table-commentary.wide-table {
+    grid-template-columns: 7fr 3fr;
+}
+
+.table-commentary .commentary {
+    font-size: 20px;
+    line-height: 1.5;
+}
+
+.table-commentary .commentary > *:first-child {
+    margin-top: 0;
+}
+
+/* Vertically center commentary alongside table */
+.table-commentary.commentary-center .commentary {
+    align-self: center;
+}
+
+.table-commentary .commentary ul {
+    padding-left: 20px;
+    margin-top: 0;
+}
+
+.table-commentary .commentary li {
+    font-size: 20px;
+    margin-bottom: 10px;
+    line-height: 1.45;
+}
+
+/* Full-Bleed Photo — see SLIDE TYPE: Photo above */
+
+/* ===== Figure With Side Notes =====
+   A figure on the left fills the height left below the title; two to four
+   short notes sit on the right. Replaces per-deck .bd-fig / .tf layouts.
+       <div class="fig-notes">                      (.wide / .narrow widen or narrow the figure)
+           <div class="fig-plot"><img src="figures/x.svg" data-inline alt="..."></div>
+           <div class="side-notes">
+               <div class="side-note" data-step="1"><b>Lead</b> — note</div>
+               <div class="side-note so-what" data-step="2">Implication</div>
+           </div>
+       </div>
+   .fig-plot also works on its own as a figure that fills the remaining
+   height and width; a .caption inside it sits under the figure. */
+.fig-notes {
+    display: grid;
+    grid-template-columns: 690px minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr);
+    gap: 34px;
+    align-items: center;
+    flex: 1 1 0;
+    min-height: 0;
+}
+.fig-notes.wide   { grid-template-columns: 740px minmax(0, 1fr); }
+.fig-notes.narrow { grid-template-columns: 540px minmax(0, 1fr); }
+
+.fig-plot {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    min-width: 0;
+    min-height: 0;
+}
+.slide > .fig-plot {
+    flex: 1 1 0;
+}
+.fig-plot > img,
+.fig-plot > svg {
+    display: block;
+    width: 100%;
+    height: auto;
+    max-height: 100%;
+    min-height: 0;
+    flex: 0 1 auto;
+    object-fit: contain;
+}
+
+.side-notes {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+.side-note {
+    font-size: 25px;
+    line-height: 1.3;
+}
+.side-note ul {
+    margin: 6px 0 0;
+}
+.side-note li {
+    font-size: 23px;
+    margin-bottom: 4px;
+}
+
+/* ===== Emphasis Blocks ===== */
+/* "So what" line: the implication beneath evidence, marked by a left rule */
+.so-what {
+    border-left: 4px solid var(--color-accent);
+    padding-left: 14px;
+}
+
+/* Research question, usually near the top of a "This paper" slide */
+.question-box {
+    font-size: 30px;
+    line-height: 1.3;
+    margin: 2px 0 22px;
+    padding: 14px 22px;
+    border-left: 5px solid var(--color-accent);
+    background: var(--color-card);
+}
+
+/* One boxed takeaway per slide; the tint follows the deck's accent */
+.takeaway-box {
+    margin-top: 10px;
+    padding: 14px 22px;
+    font-size: 27px;
+    line-height: 1.3;
+    border: 2px solid var(--color-accent);
+    border-radius: 12px;
+    background: var(--color-card);
+    background: color-mix(in srgb, var(--color-accent) 6.5%, #FFFFFF);
+}
+.takeaway-box ul {
+    margin: 0;
+}
+.takeaway-box li {
+    margin-bottom: 8px;
+}
+.takeaway-box li:last-child {
+    margin-bottom: 0;
+}
+
+/* Callout: an annotation box that steps in beside or over a figure,
+       <div class="callout" data-step="2">Text</div>
+   .callout-lg is the bigger box with bigger text. Over a figure, place it
+   with inline position styles (position: absolute; left/top). */
+.callout {
+    width: fit-content;
+    max-width: 100%;
+    padding: 12px 20px;
+    font-size: 24px;
+    line-height: 1.3;
+    color: var(--color-text);
+    background: var(--color-bg);
+    border: 2px solid var(--color-accent);
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+}
+.callout.callout-lg {
+    padding: 18px 28px;
+    font-size: 30px;
+    border-width: 3px;
+    border-radius: 12px;
+}
+.callout > :first-child {
+    margin-top: 0;
+}
+.callout > :last-child {
+    margin-bottom: 0;
+}
+.callout .callout-title {
+    font-weight: 700;
+    color: var(--color-accent);
+}
+
+/* Results preview list: one column of headline results, numbered with
+   <ol class="results-list"> or plain with <ul>. Each <li> holds a bold
+   headline and an optional <span class="detail"> line in muted text. */
+.slide :is(ul, ol).results-list:not(.section-toc):not(.ws-subsection-list) {
+    list-style: none;
+    padding-left: 0;
+    counter-reset: ws-result;
+}
+.slide :is(ul, ol).results-list:not(.section-toc):not(.ws-subsection-list) > li {
+    position: relative;
+    margin: 0;
+    padding: 16px 0;
+    font-size: 30px;
+    line-height: 1.3;
+    border-top: 1px solid var(--color-border);
+}
+.slide :is(ul, ol).results-list:not(.section-toc):not(.ws-subsection-list) > li:last-child {
+    border-bottom: 1px solid var(--color-border);
+}
+.slide :is(ul, ol).results-list:not(.section-toc):not(.ws-subsection-list) > li::before {
+    content: none;
+}
+.slide ol.results-list:not(.section-toc):not(.ws-subsection-list) > li {
+    counter-increment: ws-result;
+    padding-left: 64px;
+}
+.slide ol.results-list:not(.section-toc):not(.ws-subsection-list) > li::before {
+    content: counter(ws-result);
+    position: absolute;
+    left: 0;
+    top: 16px;
+    width: 40px;
+    text-align: right;
+    font-size: 30px;
+    font-weight: 700;
+    line-height: 1.3;
+    color: var(--color-accent);
+}
+.results-list b,
+.results-list strong {
+    color: var(--color-heading);
+}
+.results-list .detail {
+    display: block;
+    margin-top: 4px;
+    font-size: 24px;
+    color: var(--color-muted);
+}
+
+/* ===== Stacked Swap =====
+   Blocks share one grid cell and replace each other through ranged reveal
+   steps (data-step="1-2", data-step="3+"), so the layout does not jump. */
+.swap-stack {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+}
+.swap-stack > * {
+    grid-area: 1 / 1;
+}
+
+/* ===== SLIDE TYPE: Thank-you (closing slide) =====
+       <section class="slide thanks">
+           <h1>Thank you!</h1>
+           <div class="email">you@university.edu</div>
+       </section>
+   An h2 and a <p> work too. */
+.slide.thanks {
+    justify-content: center;
+}
+
+.slide.thanks h1,
+.slide.thanks h2 {
+    font-size: 60px;
+    line-height: 1.08;
+    margin-bottom: 24px;
+}
+
+.slide.thanks p,
+.slide.thanks .email {
+    font-size: 30px;
+}
+
+/* ===== Vertically Centered Content ===== */
+/* Title stays at normal top position; content below h2 is centered
+   in the remaining space via equal auto-margin spacers. Blocks keep their
+   natural height here (no flex growth), otherwise there is nothing left
+   to centre. */
+.slide.content.v-center {
+    justify-content: flex-start;
+}
+
+.slide.content.v-center > * {
+    flex: 0 1 auto;
+}
+
+.slide.content.v-center > h2 {
+    flex-shrink: 0;
+}
+
+.slide.content.v-center > h2 + * {
+    margin-top: auto;
+}
+
+.slide.content.v-center::after {
+    content: '';
+    margin-top: auto;
+}

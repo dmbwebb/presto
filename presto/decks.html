@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Presto — Decks</title>
+    <link rel="stylesheet" href="ui-tokens.css">
+    <link rel="stylesheet" href="decks.css">
+</head>
+<body>
+    <div id="decks-app">
+        <nav id="decks-side" aria-label="Library"></nav>
+        <main id="decks-lib">
+            <section id="decks-continue" hidden>
+                <h3 class="section-h"><span>Continue</span></h3>
+                <div id="decks-hero" class="hero" tabindex="-1">
+                    <div class="thumb hero-thumb">
+                        <div class="ph"><b></b><small></small></div>
+                        <img alt="" decoding="async" draggable="false">
+                    </div>
+                    <div class="meta">
+                        <div class="eyebrow"></div>
+                        <h4 class="hero-title"></h4>
+                        <p class="hero-facts"></p>
+                        <div class="where" hidden>
+                            <span class="where-thumb" hidden><img alt="" decoding="async" draggable="false"></span>
+                            <span class="where-text"></span>
+                        </div>
+                        <div class="acts">
+                            <button type="button" class="btn primary" data-act="edit" tabindex="-1"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M10.5 2.5l3 3L6 13H3v-3z"/></svg>Continue editing</button>
+                            <button type="button" class="btn" data-act="present" tabindex="-1"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M5 3.5v9l7-4.5z"/></svg>Present from start</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            <section id="decks-results">
+                <h3 class="section-h"><span id="decks-results-title">Recent</span><span id="decks-results-aside" class="aside">Sorted by last edited</span></h3>
+                <div id="decks-grid" role="list"></div>
+                <p id="decks-none" hidden></p>
+            </section>
+            <div id="decks-empty" hidden>
+                <svg class="empty-art" viewBox="0 0 64 48" aria-hidden="true"><rect x="13" y="4" width="44" height="28" rx="3"/><rect x="7" y="11" width="44" height="28" rx="3"/><path d="M15 21h20M15 27h13"/></svg>
+                <h2>No decks yet</h2>
+                <p>Open a deck, add a folder of decks, or drop a deck folder here.</p>
+                <div class="acts">
+                    <button type="button" class="btn primary" data-act="open-panel"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 4.5h4l1.5 1.5H14v6.5H2z"/></svg>Open…</button>
+                    <button type="button" class="btn" data-act="add-folder"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 3v10M3 8h10"/></svg>Add folder…</button>
+                </div>
+            </div>
+        </main>
+    </div>
+    <div id="decks-menu" role="menu" hidden></div>
+    <div id="decks-drop" hidden><div class="drop-card"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7.5 10.5L12 15l4.5-4.5"/><path d="M4 16v3.5h16V16"/></svg><b>Drop to open in Edit</b><small>A deck folder or its index.html</small></div></div>
+    <script src="decks.js"></script>
+</body>
+</html>

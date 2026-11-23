@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=1280">
+    <title>WYSIWYG E2E Deck</title>
+    <link rel="stylesheet" href="../engine/webslides.css">
+    <link rel="stylesheet" href="../engine/themes/academic.css">
+    <script defer src="../engine/webslides.js"></script>
+</head>
+<body>
+<div class="ws-deck">
+    <section class="slide title" id="e2e-title">
+        <h1>WYSIWYG E2E Deck</h1>
+        <p class="subtitle" id="e2e-subtitle">Real input events</p>
+    </section>
+    <section class="slide content" id="e2e-content">
+        <h2 id="e2e-heading">Editable Heading</h2>
+        <p id="e2e-para">A paragraph the harness drags around.</p>
+        <ul>
+            <li id="e2e-li">A bullet point</li>
+            <li data-step="1">A stepped bullet</li>
+        </ul>
+        <div class="box" id="e2e-box"><div class="box-title">Box</div><p>Box body text</p></div>
+        <img id="e2e-inline-svg" data-inline alt="figure"
+             style="position: absolute; left: 900px; top: 120px; width: 180px;"
+             src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2010%2010'%3E%3Ccircle%20cx='5'%20cy='5'%20r='4'/%3E%3C/svg%3E">
+        <div id="e2e-top" style="position: absolute; left: 1030px; top: 0px; width: 160px;">Top edge label</div>
+    </section>
+    <section class="slide content" id="e2e-media">
+        <h2>Media</h2>
+        <img id="e2e-svg" data-inline alt="figure"
+             src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2010%2010'%3E%3Ccircle%20cx='5'%20cy='5'%20r='4'/%3E%3C/svg%3E">
+    </section>
+</div>
+<div id="ws-footer">
+    <span id="ws-footer-left">WYSIWYG E2E</span>
+    <span id="ws-footer-right"></span>
+</div>
+</body>
+</html>
